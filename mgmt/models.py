@@ -10,6 +10,7 @@ class CustomUser(AbstractUser):
     ]
     
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='dentist')
+    lab_profile_id = models.IntegerField(null=True, blank=True, help_text="Link to labprofile.labID in external database")
     
     def is_admin_user(self):
         return self.user_type == 'admin'
@@ -26,7 +27,8 @@ class CustomUser(AbstractUser):
 
 class Dentist(models.Model):
     name = models.CharField(max_length=128)
-    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'})
+    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'}, related_name='lab_dentists')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'user_type': 'dentist'}, related_name='dentist_profile', help_text="Optional: Link to a user account for this dentist")
     
     def __str__(self):
         return self.name

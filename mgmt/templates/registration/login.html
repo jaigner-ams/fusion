@@ -8,12 +8,21 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h4>Login to Price Management System</h4>
+                    <h4>Lab Login - Price Management System</h4>
                 </div>
                 <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
                     {% if form.errors %}
                         <div class="alert alert-danger">
-                            Your username and password didn't match. Please try again.
+                            Invalid lab login credentials. Please try again.
                         </div>
                     {% endif %}
 
@@ -33,11 +42,12 @@
                     <form method="post" action="{% url 'login' %}">
                         {% csrf_token %}
                         <div class="form-group mb-3">
-                            <label for="{{ form.username.id_for_label }}">Username:</label>
+                            <label for="{{ form.username.id_for_label }}">Lab Login:</label>
                             {{ form.username }}
+                            <small class="text-muted">Use your existing lab login credentials</small>
                         </div>
                         <div class="form-group mb-3">
-                            <label for="{{ form.password.id_for_label }}">Password:</label>
+                            <label for="{{ form.password.id_for_label }}">Lab Password:</label>
                             {{ form.password }}
                         </div>
                         <button type="submit" class="btn btn-primary">Login</button>

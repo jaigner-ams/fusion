@@ -82,6 +82,14 @@ DATABASES = {
         'PASSWORD': 'Fjn32lGOo932JFJJASFlkjdfs',
         'HOST': 'localhost',
         'PORT': '3306'
+    },
+    'labprofile': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'dentallabprofile',
+        'USER': 'americasmiles',
+        'PASSWORD': 'smiles2003',
+        'HOST': '172.31.18.214',
+        'PORT': '3306'
     }
 }
 
@@ -135,3 +143,9 @@ AUTH_USER_MODEL = 'mgmt.CustomUser'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/prices/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'mgmt.backends.LabProfileBackend',  # Custom lab authentication
+    'django.contrib.auth.backends.ModelBackend',  # Default Django authentication
+]

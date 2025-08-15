@@ -5,8 +5,10 @@ from django.db import transaction
 from django.contrib import messages
 from .models import Dentist, DefaultPriceList, PriceList
 from .forms import DentistForm, DefaultPriceForm, CustomPriceForm
+from .decorators import lab_required
 
 @login_required
+@lab_required
 def price_management_view(request):
     dentists = Dentist.objects.filter(lab=request.user)
     default_prices = DefaultPriceList.objects.filter(lab=request.user).order_by('applied_after')
@@ -18,6 +20,7 @@ def price_management_view(request):
     return render(request, 'mgmt/price_management.html', context)
 
 @login_required
+@lab_required
 def default_prices_view(request):
     from django.forms import modelformset_factory
     
@@ -50,6 +53,7 @@ def default_prices_view(request):
     return render(request, 'mgmt/default_prices.html', context)
 
 @login_required
+@lab_required
 def add_dentist_view(request):
     if request.method == 'POST':
         form = DentistForm(request.POST)
@@ -69,6 +73,7 @@ def add_dentist_view(request):
     return render(request, 'mgmt/add_dentist.html', context)
 
 @login_required
+@lab_required
 def dentist_prices_view(request, dentist_id):
     dentist = get_object_or_404(Dentist, id=dentist_id, lab=request.user)
     
@@ -101,6 +106,7 @@ def dentist_prices_view(request, dentist_id):
     return render(request, 'mgmt/dentist_prices.html', context)
 
 @login_required
+@lab_required
 def delete_dentist_view(request, dentist_id):
     dentist = get_object_or_404(Dentist, id=dentist_id, lab=request.user)
     
