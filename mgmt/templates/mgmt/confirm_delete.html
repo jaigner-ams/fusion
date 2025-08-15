@@ -1,0 +1,35 @@
+{% extends 'mgmt/base.html' %}
+
+{% block title %}Delete {{ dentist.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Confirm Deletion</h4>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete <strong>{{ dentist.name }}</strong>?</p>
+                
+                {% with custom_count=dentist.custom_prices.count %}
+                {% if custom_count > 0 %}
+                <div class="alert alert-warning">
+                    <strong>Warning:</strong> This dentist has {{ custom_count }} custom price{{ custom_count|pluralize }} configured. 
+                    All custom pricing information will be permanently deleted.
+                </div>
+                {% endif %}
+                {% endwith %}
+                
+                <p>This action cannot be undone.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    <a href="{% url 'price_management' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

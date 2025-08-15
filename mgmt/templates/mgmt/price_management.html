@@ -1,0 +1,83 @@
+{% extends 'mgmt/base.html' %}
+
+{% block title %}Price Management Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Price Management Dashboard</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Default Prices</h4>
+            </div>
+            <div class="card-body">
+                {% if default_prices %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Applied After (Units)</th>
+                                    <th>Price per Unit</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for price in default_prices %}
+                                <tr>
+                                    <td>{{ price.applied_after }}+</td>
+                                    <td>${{ price.price }}</td>
+                                    <td>{{ price.get_type_display }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No default prices set yet.</p>
+                {% endif %}
+                <a href="{% url 'default_prices' %}" class="btn btn-primary">Manage Default Prices</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Dentists</h4>
+            </div>
+            <div class="card-body">
+                {% if dentists %}
+                    <div class="list-group">
+                        {% for dentist in dentists %}
+                        <div class="dentist-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">{{ dentist.name }}</h5>
+                                    <small class="text-muted">
+                                        {% with custom_count=dentist.custom_prices.count %}
+                                        {{ custom_count }} custom price{{ custom_count|pluralize }} set
+                                        {% endwith %}
+                                    </small>
+                                </div>
+                                <div>
+                                    <a href="{% url 'dentist_prices' dentist.id %}" class="btn btn-sm btn-outline-primary">Edit Prices</a>
+                                    <a href="{% url 'delete_dentist' dentist.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No dentists added yet.</p>
+                {% endif %}
+                <a href="{% url 'add_dentist' %}" class="btn btn-success mt-3">Add New Dentist</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

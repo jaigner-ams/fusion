@@ -127,3 +127,11 @@ STATIC_ROOT = '/var/www/fusion/static'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom User Model
+AUTH_USER_MODEL = 'mgmt.CustomUser'
+
+# Authentication settings
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/prices/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'

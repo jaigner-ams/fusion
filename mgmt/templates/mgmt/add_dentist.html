@@ -1,0 +1,53 @@
+{% extends 'mgmt/base.html' %}
+
+{% block title %}Add New Dentist{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Add New Dentist</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Add Dentist</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Dentist Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-success">Add Dentist</button>
+                    <a href="{% url 'price_management' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">About Dentist Pricing</h5>
+                <p class="card-text">After adding a dentist, you'll be able to:</p>
+                <ul>
+                    <li>Set custom prices specific to this dentist</li>
+                    <li>Override default pricing tiers</li>
+                    <li>Offer special rates for preferred clients</li>
+                </ul>
+                <p class="card-text"><small class="text-muted">If no custom prices are set, default prices will apply.</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

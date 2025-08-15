@@ -1,0 +1,124 @@
+{% extends 'mgmt/base.html' %}
+
+{% block title %}Manage Default Prices{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Manage Default Prices</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Default Prices</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" id="priceFormset">
+                    {% csrf_token %}
+                    {{ formset.management_form }}
+                    
+                    <div id="formset-container">
+                        {% for form in formset %}
+                        <div class="formset-row">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label>Applied After (Units)</label>
+                                    {{ form.applied_after }}
+                                    {{ form.applied_after.errors }}
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Price per Unit ($)</label>
+                                    {{ form.price }}
+                                    {{ form.price.errors }}
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Type</label>
+                                    {{ form.type }}
+                                    {{ form.type.errors }}
+                                </div>
+                                <div class="col-md-3">
+                                    <label>&nbsp;</label>
+                                    <div>
+                                        {% if form.instance.pk %}
+                                            {{ form.DELETE }} <label for="{{ form.DELETE.id_for_label }}">Delete</label>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-success" id="add-form">Add Another Price Tier</button>
+                        <a href="{% url 'price_management' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">How Pricing Works</h5>
+                <p class="card-text">Set different price tiers based on the number of units ordered.</p>
+                <ul>
+                    <li>Each tier applies when the order quantity meets or exceeds the "Applied After" value</li>
+                    <li>The system automatically selects the best price for the order quantity</li>
+                    <li>Lower unit prices for higher quantities encourage bulk orders</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('add-form').addEventListener('click', function() {
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    const formsetContainer = document.getElementById('formset-container');
+    const currentFormCount = parseInt(totalForms.value);
+    
+    const newFormHtml = `
+        <div class="formset-row">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>Applied After (Units)</label>
+                    <input type="number" name="form-${currentFormCount}-applied_after" class="form-control" min="0">
+                </div>
+                <div class="col-md-3">
+                    <label>Price per Unit ($)</label>
+                    <input type="number" name="form-${currentFormCount}-price" class="form-control" step="0.01" min="0">
+                </div>
+                <div class="col-md-3">
+                    <label>Type</label>
+                    <select name="form-${currentFormCount}-type" class="form-control">
+                        <option value="economy">Economy</option>
+                        <option value="premium">Premium Quality</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>&nbsp;</label>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
+    totalForms.value = currentFormCount + 1;
+});
+</script>
+{% endblock %}
