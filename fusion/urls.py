@@ -18,12 +18,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
-from mgmt.auth_views import LabLoginView
+from mgmt.auth_views import LabLoginView, CustomLogoutView
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/prices/', permanent=False)),
     path('admin/', admin.site.urls),
     path('prices/', include('mgmt.urls')),
     path('accounts/login/', LabLoginView.as_view(), name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('accounts/logout/', CustomLogoutView.as_view(), name='logout'),
 ]

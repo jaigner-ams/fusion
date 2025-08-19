@@ -1,0 +1,198 @@
+{% extends 'mgmt/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">{{ title }}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Credit Management</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Revenue</h5>
+                <h2 class="text-success">${{ total_revenue }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Credits Sold</h5>
+                <h2 class="text-primary">{{ total_credits_sold }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Pending Purchases</h5>
+                <h2 class="text-warning">{{ pending_purchases }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Active Dentists</h5>
+                <h2 class="text-info">{{ dentists.count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Credit Purchases</h4>
+            </div>
+            <div class="card-body">
+                {% if purchases %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Dentist</th>
+                                <th>User</th>
+                                <th>Quantity</th>
+                                <th>Quality</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in purchases %}
+                            <tr class="{% if purchase.status == 'pending' %}table-warning{% endif %}">
+                                <td>{{ purchase.created_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <strong>{{ purchase.dentist.name }}</strong>
+                                    {% if not user.is_admin_user and purchase.dentist.lab != user %}
+                                        <small class="text-muted">({{ purchase.dentist.lab.username }})</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ purchase.user.first_name|default:purchase.user.username }}</td>
+                                <td>{{ purchase.quantity }}</td>
+                                <td>
+                                    <span class="badge bg-{% if purchase.quality_type == 'premium' %}warning{% else %}info{% endif %}">
+                                        {{ purchase.get_quality_type_display }}
+                                    </span>
+                                </td>
+                                <td>${{ purchase.unit_price }}</td>
+                                <td><strong>${{ purchase.total_price }}</strong></td>
+                                <td>
+                                    <span class="badge bg-{% if purchase.status == 'completed' %}success{% elif purchase.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                        {{ purchase.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if purchase.status == 'pending' %}
+                                        <form method="post" action="{% url 'toggle_purchase_status' purchase.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success" 
+                                                    onclick="return confirm('Complete this purchase and add {{ purchase.quantity }} credits to {{ purchase.user.first_name|default:purchase.user.username }}?')">
+                                                Complete
+                                            </button>
+                                        </form>
+                                    {% elif purchase.status == 'completed' %}
+                                        <form method="post" action="{% url 'toggle_purchase_status' purchase.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="return confirm('Cancel this purchase and remove {{ purchase.quantity }} credits from {{ purchase.user.first_name|default:purchase.user.username }}?')">
+                                                Cancel
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <h5 class="text-muted">No credit purchases yet</h5>
+                    <p class="text-muted">Credit purchases will appear here when dentists start buying credits.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if dentists %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Dentist Credit Balances</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Dentist</th>
+                                <th>Username</th>
+                                <th>Current Credits</th>
+                                <th>Total Purchased</th>
+                                <th>Total Spent</th>
+                                <th>Last Purchase</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dentist in dentists %}
+                            {% if dentist.user %}
+                            <tr>
+                                <td><strong>{{ dentist.name }}</strong></td>
+                                <td>{{ dentist.user.username }}</td>
+                                <td>
+                                    <span class="badge bg-success">{{ dentist.user.credits }}</span>
+                                </td>
+                                <td>
+                                    {% with total_purchased=dentist.credit_purchases.filter|safe %}
+                                        {% for purchase in dentist.credit_purchases.all %}
+                                            {% if purchase.status == 'completed' %}
+                                                {% if forloop.first %}{{ purchase.quantity }}{% else %}+ {{ purchase.quantity }}{% endif %}
+                                            {% endif %}
+                                        {% empty %}
+                                            0
+                                        {% endfor %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    ${% for purchase in dentist.credit_purchases.all %}{% if purchase.status == 'completed' %}{% if forloop.first %}{{ purchase.total_price }}{% else %}{{ purchase.total_price|add:forloop.parentloop.counter0 }}{% endif %}{% endif %}{% empty %}0{% endfor %}
+                                </td>
+                                <td>
+                                    {% with last_purchase=dentist.credit_purchases.first %}
+                                        {% if last_purchase %}
+                                            {{ last_purchase.created_at|date:"M d, Y" }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

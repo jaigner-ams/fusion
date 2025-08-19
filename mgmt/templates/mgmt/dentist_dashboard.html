@@ -1,0 +1,146 @@
+{% extends 'mgmt/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Welcome, Dr. {{ dentist.name }}</h2>
+                    <p class="text-muted">Your lab: {{ lab.first_name|default:lab.username }}</p>
+                </div>
+                <div class="text-end">
+                    <h3>Credit Balance: <span class="badge bg-success">{{ credits }}</span></h3>
+                    <a href="{% url 'purchase_credits' %}" class="btn btn-primary mt-2">Purchase Credits</a>
+                    <a href="{% url 'purchase_history' %}" class="btn btn-outline-secondary mt-2">View History</a>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Your Custom Prices</h4>
+                        </div>
+                        <div class="card-body">
+                            {% if custom_prices %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Units After</th>
+                                            <th>Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for price in custom_prices %}
+                                        <tr>
+                                            <td>{{ price.get_type_display }}</td>
+                                            <td>{{ price.applied_after }}+</td>
+                                            <td>${{ price.price }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No custom prices have been set for you. Default lab prices apply.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Lab Default Prices</h4>
+                        </div>
+                        <div class="card-body">
+                            {% if default_prices %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Units After</th>
+                                            <th>Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for price in default_prices %}
+                                        <tr>
+                                            <td>{{ price.get_type_display }}</td>
+                                            <td>{{ price.applied_after }}+</td>
+                                            <td>${{ price.price }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No default prices have been set by your lab.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Recent Purchases</h4>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_purchases %}
+                            <div class="list-group list-group-flush">
+                                {% for purchase in recent_purchases %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ purchase.quantity }} credits</strong>
+                                        <small class="text-muted d-block">{{ purchase.get_quality_type_display }} - {{ purchase.created_at|date:"M d, Y" }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{% if purchase.status == 'completed' %}success{% elif purchase.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                            {{ purchase.get_status_display }}
+                                        </span>
+                                        <div><small>${{ purchase.total_price }}</small></div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-3">
+                                <a href="{% url 'purchase_history' %}" class="btn btn-sm btn-outline-primary">View All Purchases</a>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No purchases yet. <a href="{% url 'purchase_credits' %}">Purchase your first credits!</a></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Account Information</h4>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Username:</strong> {{ user.username }}</p>
+                            <p><strong>Email:</strong> {{ user.email }}</p>
+                            <p><strong>Lab Contact:</strong> {{ lab.email|default:"Not provided" }}</p>
+                            <p><strong>Current Credits:</strong> <span class="badge bg-success">{{ credits }}</span></p>
+                            
+                            <div class="mt-3">
+                                <a href="{% url 'purchase_credits' %}" class="btn btn-primary me-2">Buy Credits</a>
+                                <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

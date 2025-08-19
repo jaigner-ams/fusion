@@ -1,18 +1,18 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Dentist, DefaultPriceList, PriceList, CustomUser
+from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ['username', 'email', 'user_type', 'is_staff', 'is_active']
+    list_display = ['username', 'email', 'user_type', 'credits', 'is_staff', 'is_active']
     list_filter = ['user_type', 'is_staff', 'is_active']
     
     fieldsets = UserAdmin.fieldsets + (
-        ('User Type', {'fields': ('user_type',)}),
+        ('User Information', {'fields': ('user_type', 'credits', 'lab_profile_id')}),
     )
     
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('User Type', {'fields': ('user_type',)}),
+        ('User Information', {'fields': ('user_type', 'credits', 'lab_profile_id')}),
     )
     
     def get_queryset(self, request):
@@ -99,3 +99,19 @@ class PriceListAdmin(admin.ModelAdmin):
         if db_field.name == "dentist" and request.user.is_lab_user():
             kwargs["queryset"] = Dentist.objects.filter(lab=request.user)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+@admin.register(CreditPurchase)
+class CreditPurchaseAdmin(admin.ModelAdmin):
+    list_display = ['dentist', 'user', 'quantity', 'quality_type', 'unit_price', 'total_price', 'status', 'created_at']
+    list_filter = ['status', 'quality_type', 'created_at']
+    search_fields = ['dentist__name', 'user__username']
+    readonly_fields = ['created_at', 'completed_at']
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser or request.user.is_admin_user():
+            return qs
+        elif request.user.is_lab_user():
+            return qs.filter(dentist__lab=request.user)
+        else:
+            return qs.none()

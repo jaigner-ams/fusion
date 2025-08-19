@@ -1,0 +1,216 @@
+{% extends 'mgmt/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Purchase Credits</h2>
+                <div>
+                    <span class="text-muted">Current Balance: </span>
+                    <span class="badge bg-success fs-6">{{ current_credits }} credits</span>
+                </div>
+            </div>
+            
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dentist_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Purchase Credits</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Credit Purchase Form</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="credit-form">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">Number of Credits</label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="text-danger">{{ form.quantity.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Enter the number of credits you want to purchase</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.quality_type.id_for_label }}" class="form-label">Quality Type</label>
+                                {{ form.quality_type }}
+                                {% if form.quality_type.errors %}
+                                    <div class="text-danger">{{ form.quality_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div id="price-preview" class="alert alert-info" style="display: none;">
+                            <h5>Price Preview</h5>
+                            <div id="price-details"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dentist_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success" id="purchase-btn" disabled>
+                                Purchase Credits
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Your Pricing</h5>
+                </div>
+                <div class="card-body">
+                    {% if custom_prices %}
+                    <h6 class="text-success">Custom Prices</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Credits</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for price in custom_prices %}
+                                <tr>
+                                    <td>{{ price.get_type_display }}</td>
+                                    <td>{{ price.applied_after }}+</td>
+                                    <td>${{ price.price }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    
+                    {% if default_prices %}
+                    <h6 class="text-info">{% if custom_prices %}Default Prices{% else %}Available Prices{% endif %}</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Credits</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for price in default_prices %}
+                                <tr>
+                                    <td>{{ price.get_type_display }}</td>
+                                    <td>{{ price.applied_after }}+</td>
+                                    <td>${{ price.price }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not custom_prices and not default_prices %}
+                    <p class="text-muted">No pricing configured. Please contact your lab.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityField = document.getElementById('{{ form.quantity.id_for_label }}');
+    const qualityField = document.getElementById('{{ form.quality_type.id_for_label }}');
+    const pricePreview = document.getElementById('price-preview');
+    const priceDetails = document.getElementById('price-details');
+    const purchaseBtn = document.getElementById('purchase-btn');
+    
+    function updatePricePreview() {
+        const quantity = parseInt(quantityField.value) || 0;
+        const quality = qualityField.value;
+        
+        if (quantity > 0 && quality) {
+            // Calculate price based on pricing tiers
+            let pricePerUnit = 0;
+            let priceSource = '';
+            
+            // Custom prices take precedence
+            {% if custom_prices %}
+            const customPrices = [
+                {% for price in custom_prices %}
+                {type: '{{ price.type }}', applied_after: {{ price.applied_after }}, price: {{ price.price }}},
+                {% endfor %}
+            ];
+            
+            const customPrice = customPrices
+                .filter(p => p.type === quality && quantity >= p.applied_after)
+                .sort((a, b) => b.applied_after - a.applied_after)[0];
+            
+            if (customPrice) {
+                pricePerUnit = customPrice.price;
+                priceSource = `Custom pricing: ${quantity} credits @ $${pricePerUnit}/credit`;
+            }
+            {% endif %}
+            
+            // Fall back to default prices if no custom price found
+            if (pricePerUnit === 0) {
+                {% if default_prices %}
+                const defaultPrices = [
+                    {% for price in default_prices %}
+                    {type: '{{ price.type }}', applied_after: {{ price.applied_after }}, price: {{ price.price }}},
+                    {% endfor %}
+                ];
+                
+                const defaultPrice = defaultPrices
+                    .filter(p => p.type === quality && quantity >= p.applied_after)
+                    .sort((a, b) => b.applied_after - a.applied_after)[0];
+                
+                if (defaultPrice) {
+                    pricePerUnit = defaultPrice.price;
+                    priceSource = `Default pricing: ${quantity} credits @ $${pricePerUnit}/credit`;
+                }
+                {% endif %}
+            }
+            
+            if (pricePerUnit > 0) {
+                const totalPrice = (pricePerUnit * quantity).toFixed(2);
+                priceDetails.innerHTML = `
+                    <div><strong>${priceSource}</strong></div>
+                    <div class="mt-2">
+                        <span class="fs-5">Total: <strong>$${totalPrice}</strong></span>
+                    </div>
+                `;
+                pricePreview.style.display = 'block';
+                purchaseBtn.disabled = false;
+            } else {
+                priceDetails.innerHTML = '<div class="text-warning">No pricing available for this quantity and type.</div>';
+                pricePreview.style.display = 'block';
+                purchaseBtn.disabled = true;
+            }
+        } else {
+            pricePreview.style.display = 'none';
+            purchaseBtn.disabled = true;
+        }
+    }
+    
+    quantityField.addEventListener('input', updatePricePreview);
+    qualityField.addEventListener('change', updatePricePreview);
+    
+    // Initial update
+    updatePricePreview();
+});
+</script>
+{% endblock %}

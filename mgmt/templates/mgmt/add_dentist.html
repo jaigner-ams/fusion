@@ -28,6 +28,66 @@
                             <div class="text-danger">{{ form.name.errors }}</div>
                         {% endif %}
                     </div>
+                    
+                    {% if form.lab %}
+                    <div class="mb-3">
+                        <label for="{{ form.lab.id_for_label }}" class="form-label">Lab</label>
+                        {{ form.lab }}
+                        {% if form.lab.errors %}
+                            <div class="text-danger">{{ form.lab.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card mt-4 mb-3">
+                        <div class="card-header">
+                            <h5>User Account (Optional)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                {{ form.create_user_account }}
+                                <label class="form-check-label" for="{{ form.create_user_account.id_for_label }}">
+                                    {{ form.create_user_account.label }}
+                                </label>
+                                <small class="form-text text-muted d-block">{{ form.create_user_account.help_text }}</small>
+                            </div>
+                            
+                            <div id="user-account-fields" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger">{{ form.username.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger">{{ form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.password1.id_for_label }}" class="form-label">{{ form.password1.label }}</label>
+                                    {{ form.password1 }}
+                                    {% if form.password1.errors %}
+                                        <div class="text-danger">{{ form.password1.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.password2.id_for_label }}" class="form-label">{{ form.password2.label }}</label>
+                                    {{ form.password2 }}
+                                    {% if form.password2.errors %}
+                                        <div class="text-danger">{{ form.password2.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button type="submit" class="btn btn-success">Add Dentist</button>
                     <a href="{% url 'price_management' %}" class="btn btn-secondary">Cancel</a>
                 </form>
@@ -50,4 +110,22 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const createUserCheckbox = document.getElementById('{{ form.create_user_account.id_for_label }}');
+    const userAccountFields = document.getElementById('user-account-fields');
+    
+    function toggleUserFields() {
+        if (createUserCheckbox.checked) {
+            userAccountFields.style.display = 'block';
+        } else {
+            userAccountFields.style.display = 'none';
+        }
+    }
+    
+    createUserCheckbox.addEventListener('change', toggleUserFields);
+    toggleUserFields(); // Initial state
+});
+</script>
 {% endblock %}

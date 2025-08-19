@@ -18,3 +18,37 @@ def lab_required(view_func):
         return view_func(request, *args, **kwargs)
     
     return wrapper
+
+def lab_or_admin_required(view_func):
+    """
+    Decorator to ensure only lab users or admins can access the view
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        if not (request.user.is_lab_user() or request.user.is_admin_user()):
+            messages.error(request, 'You must be a lab user or admin to access this page.')
+            return redirect('login')
+        
+        return view_func(request, *args, **kwargs)
+    
+    return wrapper
+
+def dentist_required(view_func):
+    """
+    Decorator to ensure only dentist users can access the view
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        if not request.user.is_dentist_user():
+            messages.error(request, 'You must be a dentist user to access this page.')
+            return redirect('login')
+        
+        return view_func(request, *args, **kwargs)
+    
+    return wrapper

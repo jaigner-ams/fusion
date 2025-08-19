@@ -1,0 +1,115 @@
+{% extends 'mgmt/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Purchase History</h2>
+                <div>
+                    <span class="text-muted">Current Balance: </span>
+                    <span class="badge bg-success fs-6">{{ current_credits }} credits</span>
+                </div>
+            </div>
+            
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dentist_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Purchase History</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Credits Purchased</h5>
+                    <h2 class="text-primary">{{ total_credits }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Amount Spent</h5>
+                    <h2 class="text-success">${{ total_spent }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Current Balance</h5>
+                    <h2 class="text-info">{{ current_credits }}</h2>
+                    <a href="{% url 'purchase_credits' %}" class="btn btn-primary btn-sm mt-2">Buy More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>All Purchases</h4>
+                </div>
+                <div class="card-body">
+                    {% if purchases %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Quantity</th>
+                                    <th>Quality Type</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Price</th>
+                                    <th>Status</th>
+                                    <th>Completed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for purchase in purchases %}
+                                <tr>
+                                    <td>{{ purchase.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>{{ purchase.quantity }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if purchase.quality_type == 'premium' %}warning{% else %}info{% endif %}">
+                                            {{ purchase.get_quality_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>${{ purchase.unit_price }}</td>
+                                    <td><strong>${{ purchase.total_price }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if purchase.status == 'completed' %}success{% elif purchase.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                            {{ purchase.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if purchase.completed_at %}
+                                            {{ purchase.completed_at|date:"M d, Y H:i" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <h5 class="text-muted">No purchases yet</h5>
+                        <p class="text-muted">Start by purchasing your first credits!</p>
+                        <a href="{% url 'purchase_credits' %}" class="btn btn-primary">Purchase Credits</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

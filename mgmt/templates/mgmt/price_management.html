@@ -62,10 +62,14 @@
                                         {% with custom_count=dentist.custom_prices.count %}
                                         {{ custom_count }} custom price{{ custom_count|pluralize }} set
                                         {% endwith %}
+                                        {% if dentist.user %}
+                                        <span class="badge bg-info ms-2">Has Login</span>
+                                        {% endif %}
                                     </small>
                                 </div>
                                 <div>
-                                    <a href="{% url 'dentist_prices' dentist.id %}" class="btn btn-sm btn-outline-primary">Edit Prices</a>
+                                    <a href="{% url 'edit_dentist' dentist.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                    <a href="{% url 'dentist_prices' dentist.id %}" class="btn btn-sm btn-outline-primary">Prices</a>
                                     <a href="{% url 'delete_dentist' dentist.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
                                 </div>
                             </div>
@@ -76,6 +80,7 @@
                     <p class="text-muted">No dentists added yet.</p>
                 {% endif %}
                 <a href="{% url 'add_dentist' %}" class="btn btn-success mt-3">Add New Dentist</a>
+                <a href="{% url 'credit_management' %}" class="btn btn-info mt-3 ms-2">Manage Credits</a>
             </div>
         </div>
     </div>
