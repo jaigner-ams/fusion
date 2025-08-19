@@ -57,6 +57,9 @@ def default_prices_view(request):
                 obj.delete()
             messages.success(request, 'Default prices updated successfully!')
             return redirect('price_management')
+        else:
+            # Handle formset errors here if needed
+            messages.error(request, 'Please correct the errors below.')
     else:
         if request.user.is_admin_user():
             formset = DefaultPriceFormSet(queryset=DefaultPriceList.objects.all())
@@ -116,6 +119,9 @@ def dentist_prices_view(request, dentist_id):
             formset.save()
             messages.success(request, f'Prices for {dentist.name} updated successfully!')
             return redirect('price_management')
+        else:
+            # Handle formset errors here if needed
+            messages.error(request, 'Please correct the errors below.')
     else:
         formset = CustomPriceFormSet(instance=dentist)
     

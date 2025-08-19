@@ -162,18 +162,10 @@
                                     <span class="badge bg-success">{{ dentist.user.credits }}</span>
                                 </td>
                                 <td>
-                                    {% with total_purchased=dentist.credit_purchases.filter|safe %}
-                                        {% for purchase in dentist.credit_purchases.all %}
-                                            {% if purchase.status == 'completed' %}
-                                                {% if forloop.first %}{{ purchase.quantity }}{% else %}+ {{ purchase.quantity }}{% endif %}
-                                            {% endif %}
-                                        {% empty %}
-                                            0
-                                        {% endfor %}
-                                    {% endwith %}
+                                    0
                                 </td>
                                 <td>
-                                    ${% for purchase in dentist.credit_purchases.all %}{% if purchase.status == 'completed' %}{% if forloop.first %}{{ purchase.total_price }}{% else %}{{ purchase.total_price|add:forloop.parentloop.counter0 }}{% endif %}{% endif %}{% empty %}0{% endfor %}
+                                    $0
                                 </td>
                                 <td>
                                     {% with last_purchase=dentist.credit_purchases.first %}

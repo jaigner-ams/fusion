@@ -37,7 +37,11 @@
                                 <label for="{{ form.quantity.id_for_label }}" class="form-label">Number of Credits</label>
                                 {{ form.quantity }}
                                 {% if form.quantity.errors %}
-                                    <div class="text-danger">{{ form.quantity.errors }}</div>
+                                    <div class="text-danger">
+                                        {% for error in form.quantity.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
                                 {% endif %}
                                 <div class="form-text">Enter the number of credits you want to purchase</div>
                             </div>
@@ -46,7 +50,11 @@
                                 <label for="{{ form.quality_type.id_for_label }}" class="form-label">Quality Type</label>
                                 {{ form.quality_type }}
                                 {% if form.quality_type.errors %}
-                                    <div class="text-danger">{{ form.quality_type.errors }}</div>
+                                    <div class="text-danger">
+                                        {% for error in form.quality_type.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
                                 {% endif %}
                             </div>
                         </div>
