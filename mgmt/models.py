@@ -145,3 +145,103 @@ class CreditPurchase(models.Model):
         ordering = ['-created_at']
         verbose_name = "Credit Purchase"
         verbose_name_plural = "Credit Purchases"
+
+class CreditTransaction(models.Model):
+    TRANSACTION_TYPE_CHOICES = [
+        ('purchase', 'Purchase'),
+        ('deduction', 'Deduction'),
+        ('adjustment', 'Adjustment'),
+    ]
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='credit_transactions')
+    dentist = models.ForeignKey(Dentist, on_delete=models.CASCADE, related_name='credit_transactions', null=True, blank=True)
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
+    amount = models.IntegerField(help_text="Credit amount (positive for addition, negative for deduction)")
+    reason = models.CharField(max_length=255, help_text="Reason for the transaction")
+    notes = models.TextField(blank=True, help_text="Additional notes about the transaction")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='transactions_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+    balance_after = models.IntegerField(help_text="User's credit balance after this transaction")
+    reversed_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reversal_of', help_text="Transaction that reversed this one")
+    is_reversed = models.BooleanField(default=False, help_text="Whether this transaction has been reversed")
+    
+    def __str__(self):
+        action = "+" if self.amount >= 0 else ""
+        return f"{self.user.username} - {action}{self.amount} credits ({self.get_transaction_type_display()})"
+    
+    def save(self, *args, **kwargs):
+        # Update user's credit balance
+        if self.pk is None:  # New transaction
+            self.user.credits += self.amount
+            self.user.credits = max(0, self.user.credits)  # Don't allow negative credits
+            self.balance_after = self.user.credits
+            self.user.save()
+        super().save(*args, **kwargs)
+    
+    def can_be_reversed(self):
+        """Check if this transaction can be reversed"""
+        return (
+            self.transaction_type == 'deduction' and 
+            not self.is_reversed and 
+            self.amount < 0  # Should be negative for deductions
+        )
+    
+    def reverse_transaction(self, reversed_by_user, reason=None):
+        """Create a reversal transaction"""
+        if not self.can_be_reversed():
+            raise ValueError("This transaction cannot be reversed")
+        
+        # Create reversal transaction
+        reversal = CreditTransaction.objects.create(
+            user=self.user,
+            dentist=self.dentist,
+            transaction_type='adjustment',
+            amount=abs(self.amount),  # Positive amount to add credits back
+            reason=reason or f"Reversal of deduction: {self.reason}",
+            notes=f"Reversal of transaction #{self.id}",
+            created_by=reversed_by_user
+        )
+        
+        # Mark original transaction as reversed
+        self.is_reversed = True
+        self.reversed_by = reversal
+        self.save()
+        
+        return reversal
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Credit Transaction"
+        verbose_name_plural = "Credit Transactions"
+
+class FileUpload(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('downloaded', 'Downloaded'),
+    ]
+    
+    dentist = models.ForeignKey(Dentist, on_delete=models.CASCADE, related_name='uploaded_files')
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='files_uploaded')
+    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'}, related_name='received_files')
+    file = models.FileField(upload_to='dentist_uploads/%Y/%m/%d/')
+    original_filename = models.CharField(max_length=255)
+    description = models.TextField(blank=True, help_text="Optional description of the file")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    downloaded_at = models.DateTimeField(null=True, blank=True)
+    downloaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='files_downloaded')
+    
+    def __str__(self):
+        return f"{self.dentist.name} - {self.original_filename} ({self.get_status_display()})"
+    
+    def mark_as_downloaded(self, user):
+        if self.status == 'pending':
+            self.status = 'downloaded'
+            self.downloaded_at = timezone.now()
+            self.downloaded_by = user
+            self.save()
+    
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = "File Upload"
+        verbose_name_plural = "File Uploads"

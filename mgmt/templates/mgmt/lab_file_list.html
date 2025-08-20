@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    
+    {% if files %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Dentist</th>
+                        <th>File Name</th>
+                        <th>Description</th>
+                        <th>Uploaded At</th>
+                        <th>Status</th>
+                        <th>Downloaded By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                        <tr>
+                            <td>{{ file.dentist.name }}</td>
+                            <td>{{ file.original_filename }}</td>
+                            <td>{{ file.description|default:"-" }}</td>
+                            <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                {% if file.status == 'downloaded' %}
+                                    <span class="badge bg-success">Downloaded</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if file.downloaded_by %}
+                                    {{ file.downloaded_by.username }}
+                                    <br>
+                                    <small>{{ file.downloaded_at|date:"Y-m-d H:i" }}</small>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'download_file' file.id %}" class="btn btn-sm btn-primary">
+                                    Download
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No files have been uploaded by dentists yet.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

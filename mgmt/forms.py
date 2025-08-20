@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase
+from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase, CreditTransaction, FileUpload
 from decimal import Decimal
 
 class DentistForm(forms.ModelForm):
@@ -291,3 +291,168 @@ class CreditPurchaseForm(forms.ModelForm):
             'total_price': total_price,
             'price_source': price_source
         }
+
+class CreditDeductionForm(forms.ModelForm):
+    class Meta:
+        model = CreditTransaction
+        fields = ['amount', 'reason', 'notes']
+        widgets = {
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'min': '1',
+                'placeholder': 'Enter number of credits to deduct'
+            }),
+            'reason': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Reason for credit deduction'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes (optional)'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        self.lab_user = kwargs.pop('lab_user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Set field labels and help text
+        self.fields['amount'].label = 'Credits to Deduct'
+        self.fields['amount'].help_text = f'Current balance: {self.user.credits if self.user else 0} credits'
+        self.fields['reason'].label = 'Reason'
+        self.fields['reason'].help_text = 'Please provide a reason for this deduction'
+        self.fields['notes'].label = 'Notes'
+        self.fields['notes'].required = False
+    
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount and amount < 1:
+            raise forms.ValidationError('Amount must be at least 1 credit')
+        
+        if self.user and amount > self.user.credits:
+            raise forms.ValidationError(f'Cannot deduct {amount} credits. User only has {self.user.credits} credits available.')
+        
+        return amount
+    
+    def clean_reason(self):
+        reason = self.cleaned_data.get('reason')
+        if not reason or len(reason.strip()) < 3:
+            raise forms.ValidationError('Please provide a clear reason for the deduction (minimum 3 characters)')
+        return reason.strip()
+    
+    def save(self, commit=True):
+        transaction = super().save(commit=False)
+        transaction.user = self.user
+        transaction.created_by = self.lab_user
+        transaction.transaction_type = 'deduction'
+        transaction.amount = -abs(transaction.amount)  # Make sure it's negative for deduction
+        
+        if commit:
+            transaction.save()
+        
+        return transaction
+
+class DentistPasswordChangeForm(forms.Form):
+    new_password1 = forms.CharField(
+        label="New Password",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter new password'
+        }),
+        help_text="Password must be at least 8 characters long"
+    )
+    new_password2 = forms.CharField(
+        label="Confirm Password", 
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirm new password'
+        }),
+        help_text="Enter the same password as before, for verification"
+    )
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        self.lab_user = kwargs.pop('lab_user', None)
+        super().__init__(*args, **kwargs)
+    
+    def clean_new_password1(self):
+        password = self.cleaned_data.get('new_password1')
+        
+        if not password:
+            raise forms.ValidationError('Password is required')
+        
+        if len(password) < 8:
+            raise forms.ValidationError('Password must be at least 8 characters long')
+        
+        # Basic password strength validation
+        if password.isdigit():
+            raise forms.ValidationError('Password cannot be entirely numeric')
+        
+        if password.lower() in ['password', '12345678', 'password123']:
+            raise forms.ValidationError('This password is too common')
+        
+        return password
+    
+    def clean_new_password2(self):
+        password1 = self.cleaned_data.get('new_password1')
+        password2 = self.cleaned_data.get('new_password2')
+        
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError('The two password fields didn\'t match')
+        
+        return password2
+    
+    def save(self):
+        """Change the user's password"""
+        if not self.user:
+            raise ValueError("No user specified")
+        
+        new_password = self.cleaned_data['new_password1']
+        self.user.set_password(new_password)
+        self.user.save()
+        
+        return self.user
+
+class FileUploadForm(forms.ModelForm):
+    class Meta:
+        model = FileUpload
+        fields = ['file', 'description']
+        widgets = {
+            'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Optional description of the file'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        self.dentist = kwargs.pop('dentist', None)
+        super().__init__(*args, **kwargs)
+        
+        self.fields['file'].label = 'Select File'
+        self.fields['file'].help_text = 'Choose a file to upload for the lab'
+        self.fields['description'].required = False
+    
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+        if file:
+            # Check file size (limit to 50MB)
+            if file.size > 50 * 1024 * 1024:
+                raise forms.ValidationError('File size cannot exceed 50MB')
+        return file
+    
+    def save(self, commit=True):
+        upload = super().save(commit=False)
+        upload.uploaded_by = self.user
+        upload.dentist = self.dentist
+        upload.lab = self.dentist.lab
+        upload.original_filename = self.cleaned_data['file'].name
+        
+        if commit:
+            upload.save()
+        
+        return upload

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase
+from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase, CreditTransaction, FileUpload
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -115,3 +115,91 @@ class CreditPurchaseAdmin(admin.ModelAdmin):
             return qs.filter(dentist__lab=request.user)
         else:
             return qs.none()
+
+@admin.register(CreditTransaction)
+class CreditTransactionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'transaction_type', 'amount', 'balance_after', 'reason', 'is_reversed', 'created_by', 'created_at']
+    list_filter = ['transaction_type', 'is_reversed', 'created_at']
+    search_fields = ['user__username', 'reason', 'created_by__username']
+    readonly_fields = ['created_at', 'balance_after', 'is_reversed', 'reversed_by']
+    ordering = ['-created_at']
+    
+    fieldsets = (
+        ('Transaction Details', {
+            'fields': ('user', 'transaction_type', 'amount', 'dentist')
+        }),
+        ('Reason & Notes', {
+            'fields': ('reason', 'notes')
+        }),
+        ('System Information', {
+            'fields': ('created_by', 'created_at', 'balance_after', 'is_reversed', 'reversed_by'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser or request.user.is_admin_user():
+            return qs
+        elif request.user.is_lab_user():
+            # Show transactions for dentists belonging to this lab
+            # Include transactions where dentist is None but user belongs to their dentists
+            from django.db.models import Q
+            return qs.filter(
+                Q(dentist__lab=request.user) | 
+                Q(dentist__isnull=True, user__dentist_profile__lab=request.user)
+            )
+        else:
+            return qs.none()
+    
+    def has_add_permission(self, request):
+        # Prevent adding transactions through admin - should be done through the app
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        # Prevent editing transactions through admin - they should be immutable
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deleting transactions through admin
+        return False
+
+@admin.register(FileUpload)
+class FileUploadAdmin(admin.ModelAdmin):
+    list_display = ['dentist', 'original_filename', 'uploaded_by', 'lab', 'status', 'uploaded_at', 'downloaded_at']
+    list_filter = ['status', 'uploaded_at', 'lab']
+    search_fields = ['dentist__name', 'original_filename', 'uploaded_by__username']
+    readonly_fields = ['uploaded_at', 'downloaded_at', 'downloaded_by']
+    
+    fieldsets = (
+        ('File Information', {
+            'fields': ('dentist', 'file', 'original_filename', 'description')
+        }),
+        ('Upload Details', {
+            'fields': ('uploaded_by', 'lab', 'uploaded_at')
+        }),
+        ('Download Information', {
+            'fields': ('status', 'downloaded_at', 'downloaded_by')
+        })
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser or request.user.is_admin_user():
+            return qs
+        elif request.user.is_lab_user():
+            return qs.filter(lab=request.user)
+        else:
+            return qs.none()
+    
+    def has_add_permission(self, request):
+        # Files should be uploaded through the app
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        # Allow viewing but not editing
+        return request.user.is_superuser or request.user.is_admin_user()
+    
+    def has_delete_permission(self, request, obj=None):
+        # Allow deletion for admin users
+        return request.user.is_superuser or request.user.is_admin_user()

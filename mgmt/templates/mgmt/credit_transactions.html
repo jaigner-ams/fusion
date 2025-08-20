@@ -1,0 +1,124 @@
+{% extends 'mgmt/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">{{ title }}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'credit_management' %}">Credit Management</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Transaction History</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Credit Transaction History</h4>
+            </div>
+            <div class="card-body">
+                {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Dentist</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Balance After</th>
+                                <th>Reason</th>
+                                <th>Created By</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr class="{% if transaction.is_reversed %}table-secondary{% endif %}">
+                                <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <strong>{{ transaction.user.first_name|default:transaction.user.username }}</strong>
+                                    <br><small class="text-muted">{{ transaction.user.username }}</small>
+                                </td>
+                                <td>
+                                    {% if transaction.dentist %}
+                                        {{ transaction.dentist.name }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if transaction.transaction_type == 'purchase' %}success{% elif transaction.transaction_type == 'deduction' %}warning{% else %}info{% endif %}">
+                                        {{ transaction.get_transaction_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong class="{% if transaction.amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {% if transaction.amount >= 0 %}+{% endif %}{{ transaction.amount }}
+                                    </strong>
+                                </td>
+                                <td>{{ transaction.balance_after }}</td>
+                                <td>
+                                    <span title="{{ transaction.reason }}">
+                                        {% if transaction.reason|length > 30 %}
+                                            {{ transaction.reason|slice:":27" }}...
+                                        {% else %}
+                                            {{ transaction.reason }}
+                                        {% endif %}
+                                    </span>
+                                    {% if transaction.notes %}
+                                        <br><small class="text-muted" title="{{ transaction.notes }}">
+                                            {% if transaction.notes|length > 20 %}
+                                                {{ transaction.notes|slice:":17" }}...
+                                            {% else %}
+                                                {{ transaction.notes }}
+                                            {% endif %}
+                                        </small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ transaction.created_by.username }}</td>
+                                <td>
+                                    {% if transaction.is_reversed %}
+                                        <span class="badge bg-secondary">Reversed</span>
+                                        {% if transaction.reversed_by %}
+                                            <br><small class="text-muted">by #{{ transaction.reversed_by.id }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if transaction.can_be_reversed %}
+                                        <a href="{% url 'undo_deduction' transaction.id %}" class="btn btn-sm btn-outline-info" title="Undo this deduction">
+                                            <i class="fas fa-undo"></i> Undo
+                                        </a>
+                                    {% elif transaction.transaction_type == 'adjustment' and transaction.reversal_of.exists %}
+                                        <span class="text-muted small">Reversal</span>
+                                    {% else %}
+                                        <span class="text-muted small">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <h5 class="text-muted">No credit transactions yet</h5>
+                    <p class="text-muted">Credit transactions will appear here when users purchase or have credits deducted.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -23,13 +23,10 @@
             </div>
             <div class="card-body">
                 <form method="post" id="priceFormset">
-                    <!-- DEBUG: After form opening -->
                     {% csrf_token %}
-                    <!-- DEBUG: After CSRF token -->
                     {% for field in formset.management_form %}
                         {{ field }}
                     {% endfor %}
-                    <!-- DEBUG: After management form -->
                     
                     <div id="formset-container">
                         {% for form in formset %}

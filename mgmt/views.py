@@ -3,8 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
 from django.db import transaction
 from django.contrib import messages
-from .models import Dentist, DefaultPriceList, PriceList, CreditPurchase
-from .forms import DentistForm, DefaultPriceForm, CustomPriceForm, DentistWithUserForm, CreditPurchaseForm
+from django.http import HttpResponse, FileResponse
+from django.utils import timezone
+import os
+from .models import Dentist, DefaultPriceList, PriceList, CreditPurchase, CreditTransaction, FileUpload
+from .forms import DentistForm, DefaultPriceForm, CustomPriceForm, DentistWithUserForm, CreditPurchaseForm, CreditDeductionForm, DentistPasswordChangeForm, FileUploadForm
 from .decorators import lab_required, lab_or_admin_required, dentist_required
 
 @login_required
@@ -344,3 +347,224 @@ def toggle_purchase_status(request, purchase_id):
         return redirect('credit_management')
     
     return redirect('credit_management')
+
+@login_required
+@lab_or_admin_required
+def deduct_credits_view(request, dentist_id):
+    """Allow lab users to deduct credits from dentists"""
+    if request.user.is_admin_user():
+        dentist = get_object_or_404(Dentist, id=dentist_id)
+    else:
+        dentist = get_object_or_404(Dentist, id=dentist_id, lab=request.user)
+    
+    if not dentist.user:
+        messages.error(request, f'{dentist.name} does not have a user account. Cannot deduct credits.')
+        return redirect('credit_management')
+    
+    if request.method == 'POST':
+        form = CreditDeductionForm(request.POST, user=dentist.user, lab_user=request.user)
+        if form.is_valid():
+            transaction_obj = form.save()
+            messages.success(request, f'Successfully deducted {abs(transaction_obj.amount)} credits from {dentist.user.first_name or dentist.user.username}. New balance: {transaction_obj.balance_after} credits.')
+            return redirect('credit_management')
+    else:
+        form = CreditDeductionForm(user=dentist.user, lab_user=request.user)
+    
+    # Get recent transactions for this user
+    recent_transactions = CreditTransaction.objects.filter(user=dentist.user).order_by('-created_at')[:10]
+    
+    context = {
+        'form': form,
+        'dentist': dentist,
+        'user_to_deduct': dentist.user,
+        'recent_transactions': recent_transactions,
+        'title': f'Deduct Credits - {dentist.name}'
+    }
+    return render(request, 'mgmt/deduct_credits.html', context)
+
+@login_required
+@lab_or_admin_required
+def undo_deduction_view(request, transaction_id):
+    """Allow lab users to undo credit deductions"""
+    # Get the transaction with better error handling
+    try:
+        if request.user.is_admin_user():
+            transaction = CreditTransaction.objects.get(id=transaction_id)
+        else:
+            # Lab users can only undo deductions for their dentists
+            # Include transactions where dentist is None but user belongs to their dentists
+            from django.db.models import Q
+            transaction = CreditTransaction.objects.get(
+                Q(id=transaction_id) & 
+                (Q(dentist__lab=request.user) | 
+                 Q(dentist__isnull=True, user__dentist_profile__lab=request.user))
+            )
+    except CreditTransaction.DoesNotExist:
+        messages.error(request, f'Transaction #{transaction_id} not found or you do not have permission to access it.')
+        return redirect('credit_management')
+    
+    # Check if transaction can be reversed
+    if not transaction.can_be_reversed():
+        messages.error(request, 'This transaction cannot be undone. It may have already been reversed or is not a deduction.')
+        return redirect('credit_management')
+    
+    if request.method == 'POST':
+        try:
+            # Create reversal transaction
+            reversal = transaction.reverse_transaction(
+                reversed_by_user=request.user,
+                reason=f"Undo deduction requested by {request.user.username}"
+            )
+            messages.success(
+                request, 
+                f'Successfully undid deduction of {abs(transaction.amount)} credits. '
+                f'{transaction.user.first_name or transaction.user.username} now has {reversal.balance_after} credits.'
+            )
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('credit_management')
+    
+    # Calculate values for display
+    credits_to_add_back = abs(transaction.amount)  # Convert negative to positive
+    new_balance = transaction.user.credits + credits_to_add_back
+    
+    context = {
+        'transaction': transaction,
+        'credits_to_add_back': credits_to_add_back,
+        'new_balance': new_balance,
+        'title': f'Undo Credit Deduction'
+    }
+    return render(request, 'mgmt/undo_deduction.html', context)
+
+@login_required
+@lab_or_admin_required
+def credit_transactions_view(request):
+    """View all credit transactions for lab's dentists"""
+    if request.user.is_admin_user():
+        transactions = CreditTransaction.objects.all()
+        title = "All Credit Transactions"
+    else:
+        # Lab users see transactions for their dentists only
+        # Include transactions where dentist is None but user belongs to their dentists
+        from django.db.models import Q
+        transactions = CreditTransaction.objects.filter(
+            Q(dentist__lab=request.user) | 
+            Q(dentist__isnull=True, user__dentist_profile__lab=request.user)
+        )
+        title = "Credit Transactions - Your Dentists"
+    
+    transactions = transactions.select_related('user', 'dentist', 'created_by', 'reversed_by').order_by('-created_at')
+    
+    context = {
+        'transactions': transactions,
+        'title': title
+    }
+    return render(request, 'mgmt/credit_transactions.html', context)
+
+@login_required
+@lab_or_admin_required
+def change_dentist_password_view(request, dentist_id):
+    """Allow lab users to change dentist passwords"""
+    if request.user.is_admin_user():
+        dentist = get_object_or_404(Dentist, id=dentist_id)
+    else:
+        dentist = get_object_or_404(Dentist, id=dentist_id, lab=request.user)
+    
+    if not dentist.user:
+        messages.error(request, f'{dentist.name} does not have a user account. Cannot change password.')
+        return redirect('price_management')
+    
+    if request.method == 'POST':
+        form = DentistPasswordChangeForm(request.POST, user=dentist.user, lab_user=request.user)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(
+                    request, 
+                    f'Successfully changed password for {dentist.user.first_name or dentist.user.username}. '
+                    f'They should use their new password for the next login.'
+                )
+                return redirect('price_management')
+            except Exception as e:
+                messages.error(request, f'Error changing password: {str(e)}')
+    else:
+        form = DentistPasswordChangeForm(user=dentist.user, lab_user=request.user)
+    
+    context = {
+        'form': form,
+        'dentist': dentist,
+        'user_to_change': dentist.user,
+        'title': f'Change Password - {dentist.name}'
+    }
+    return render(request, 'mgmt/change_dentist_password.html', context)
+
+@login_required
+@dentist_required
+def upload_file_view(request):
+    dentist = get_object_or_404(Dentist, user=request.user)
+    
+    if request.method == 'POST':
+        form = FileUploadForm(request.POST, request.FILES, user=request.user, dentist=dentist)
+        if form.is_valid():
+            upload = form.save()
+            messages.success(request, f'File "{upload.original_filename}" uploaded successfully!')
+            return redirect('dentist_file_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = FileUploadForm(user=request.user, dentist=dentist)
+    
+    context = {
+        'form': form,
+        'title': 'Upload File for Lab'
+    }
+    return render(request, 'mgmt/upload_file.html', context)
+
+@login_required
+@dentist_required
+def dentist_file_list_view(request):
+    dentist = get_object_or_404(Dentist, user=request.user)
+    files = FileUpload.objects.filter(dentist=dentist).order_by('-uploaded_at')
+    
+    context = {
+        'files': files,
+        'title': 'My Uploaded Files'
+    }
+    return render(request, 'mgmt/dentist_file_list.html', context)
+
+@login_required
+@lab_or_admin_required
+def lab_file_list_view(request):
+    if request.user.is_admin_user():
+        files = FileUpload.objects.all().order_by('-uploaded_at')
+    else:
+        files = FileUpload.objects.filter(lab=request.user).order_by('-uploaded_at')
+    
+    context = {
+        'files': files,
+        'title': 'Files from Dentists'
+    }
+    return render(request, 'mgmt/lab_file_list.html', context)
+
+@login_required
+@lab_or_admin_required
+def download_file_view(request, file_id):
+    file_upload = get_object_or_404(FileUpload, id=file_id)
+    
+    # Check permissions
+    if not request.user.is_admin_user() and file_upload.lab != request.user:
+        messages.error(request, 'You do not have permission to download this file.')
+        return redirect('lab_file_list')
+    
+    # Mark as downloaded
+    file_upload.mark_as_downloaded(request.user)
+    
+    # Serve the file
+    if os.path.exists(file_upload.file.path):
+        response = FileResponse(open(file_upload.file.path, 'rb'))
+        response['Content-Disposition'] = f'attachment; filename="{file_upload.original_filename}"'
+        return response
+    else:
+        messages.error(request, 'File not found on server.')
+        return redirect('lab_file_list')

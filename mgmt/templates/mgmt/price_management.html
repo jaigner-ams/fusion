@@ -70,6 +70,11 @@
                                 <div>
                                     <a href="{% url 'edit_dentist' dentist.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
                                     <a href="{% url 'dentist_prices' dentist.id %}" class="btn btn-sm btn-outline-primary">Prices</a>
+                                    {% if dentist.user %}
+                                        <a href="{% url 'change_dentist_password' dentist.id %}" class="btn btn-sm btn-outline-warning">
+                                            <i class="fas fa-key"></i> Password
+                                        </a>
+                                    {% endif %}
                                     <a href="{% url 'delete_dentist' dentist.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
                                 </div>
                             </div>

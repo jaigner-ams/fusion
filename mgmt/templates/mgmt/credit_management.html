@@ -53,8 +53,11 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>Credit Purchases</h4>
+                <a href="{% url 'credit_transactions' %}" class="btn btn-outline-info btn-sm">
+                    <i class="fas fa-history"></i> View All Transactions
+                </a>
             </div>
             <div class="card-body">
                 {% if purchases %}
@@ -150,6 +153,7 @@
                                 <th>Total Purchased</th>
                                 <th>Total Spent</th>
                                 <th>Last Purchase</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -175,6 +179,18 @@
                                             Never
                                         {% endif %}
                                     {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="btn-group-sm" role="group">
+                                        {% if dentist.user.credits > 0 %}
+                                            <a href="{% url 'deduct_credits' dentist.id %}" class="btn btn-sm btn-outline-warning me-1">
+                                                <i class="fas fa-minus-circle"></i> Deduct
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'change_dentist_password' dentist.id %}" class="btn btn-sm btn-outline-primary" title="Change Password">
+                                            <i class="fas fa-key"></i> Password
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             {% endif %}
