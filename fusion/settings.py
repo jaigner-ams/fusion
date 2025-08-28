@@ -140,6 +140,11 @@ MEDIA_ROOT = '/var/www/fusion/media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# File Upload Settings
+# Maximum size for file uploads (500MB)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB
+
 # Custom User Model
 AUTH_USER_MODEL = 'mgmt.CustomUser'
 

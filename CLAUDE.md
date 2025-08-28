@@ -41,6 +41,12 @@ source /var/www/fusion/venv/bin/activate
 
 ## Common Commands
 
+### IMPORTANT: Restart Apache After Code Changes
+**After making any Python code changes (models, views, forms, etc.), Apache must be restarted:**
+```bash
+sudo systemctl restart apache2
+```
+
 ### Run Development Server
 ```bash
 source /var/www/fusion/venv/bin/activate
@@ -75,9 +81,14 @@ python manage.py collectstatic
 - `/prices/credit-management/` - Credit management interface
 
 ## File Upload Configuration
-- **Max file size**: 50MB
+- **Max file size**: 500MB (configurable in `mgmt/forms.py` and `fusion/settings.py`)
 - **Upload directory**: `/var/www/fusion/media/dentist_uploads/`
 - **Media URL**: `/media/`
+
+### To change file upload size limit:
+1. Edit `/var/www/fusion/mgmt/forms.py` line ~407 (change the MB value in `FileUploadForm.clean_file()`)
+2. Edit `/var/www/fusion/fusion/settings.py` lines ~145-146 (update `FILE_UPLOAD_MAX_MEMORY_SIZE` and `DATA_UPLOAD_MAX_MEMORY_SIZE`)
+3. Restart Apache: `sudo systemctl restart apache2`
 
 ## Development Notes
 

@@ -2,6 +2,10 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+import random
+import string
 
 class CustomUser(AbstractUser):
     USER_TYPE_CHOICES = [
@@ -245,3 +249,49 @@ class FileUpload(models.Model):
         ordering = ['-uploaded_at']
         verbose_name = "File Upload"
         verbose_name_plural = "File Uploads"
+
+
+@receiver(post_save, sender=Dentist)
+def create_user_for_dentist(sender, instance, created, **kwargs):
+    """Automatically create a user account when a new dentist is created"""
+    if created and not instance.user:
+        # Check if custom username/email were provided (set by the form)
+        if hasattr(instance, '_custom_username'):
+            username = instance._custom_username
+        else:
+            # Generate a unique username from the dentist's name
+            base_username = ''.join(instance.name.lower().split())[:20]  # Remove spaces, limit to 20 chars
+            username = base_username
+            counter = 1
+            
+            # Ensure username is unique
+            while CustomUser.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+        
+        # Use custom email if provided, otherwise use default
+        if hasattr(instance, '_custom_email'):
+            email = instance._custom_email
+        else:
+            email = f"{username}@dental-lab.com"
+        
+        # Generate a random password
+        password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+        
+        # Create the user account
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            user_type='dentist',
+            first_name=instance.name
+        )
+        
+        # Link the user to the dentist
+        instance.user = user
+        instance.save()
+        
+        # Store generated credentials temporarily (not persisted to DB)
+        # This allows the view to access them for display
+        instance._generated_username = username
+        instance._generated_password = password

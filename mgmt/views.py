@@ -31,6 +31,11 @@ def price_management_view(request):
 def default_prices_view(request):
     from django.forms import modelformset_factory
     
+    # Create a custom form class that passes the user
+    class DefaultPriceFormWithUser(DefaultPriceForm):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, user=request.user, **kwargs)
+    
     if request.user.is_admin_user():
         fields = ['lab', 'applied_after', 'price', 'type']
     else:
@@ -38,7 +43,7 @@ def default_prices_view(request):
     
     DefaultPriceFormSet = modelformset_factory(
         model=DefaultPriceList,
-        form=DefaultPriceForm,
+        form=DefaultPriceFormWithUser,
         extra=1,
         can_delete=True,
         fields=fields
@@ -85,7 +90,18 @@ def add_dentist_view(request):
             if not request.user.is_admin_user():
                 dentist.lab = request.user
             dentist.save()
-            if dentist.user:
+            
+            # Check if credentials were auto-generated (for new dentists)
+            if hasattr(dentist, '_generated_username') and hasattr(dentist, '_generated_password'):
+                messages.success(
+                    request, 
+                    f'Dentist {dentist.name} added successfully! '
+                    f'Auto-generated login credentials: '
+                    f'Username: {dentist._generated_username}, '
+                    f'Password: {dentist._generated_password} '
+                    f'(Please save these credentials securely and share them with the dentist)'
+                )
+            elif dentist.user:
                 messages.success(request, f'Dentist {dentist.name} added successfully with user account!')
             else:
                 messages.success(request, f'Dentist {dentist.name} added successfully!')

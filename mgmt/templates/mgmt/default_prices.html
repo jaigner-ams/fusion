@@ -30,7 +30,20 @@
                         {% for form in formset %}
                         <div class="formset-row">
                             <div class="row">
+                                {% if user.is_admin_user %}
                                 <div class="col-md-3">
+                                    <label>Lab</label>
+                                    {{ form.lab }}
+                                    {% if form.lab.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.lab.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                <div class="col-md-{% if user.is_admin_user %}2{% else %}3{% endif %}">
                                     <label>Applied After (Units)</label>
                                     {{ form.applied_after }}
                                     {% if form.applied_after.errors %}
@@ -41,7 +54,7 @@
                                         </div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-{% if user.is_admin_user %}2{% else %}3{% endif %}">
                                     <label>Price per Unit ($)</label>
                                     {{ form.price }}
                                     {% if form.price.errors %}
@@ -52,7 +65,7 @@
                                         </div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-{% if user.is_admin_user %}2{% else %}3{% endif %}">
                                     <label>Type</label>
                                     {{ form.type }}
                                     {% if form.type.errors %}
@@ -63,7 +76,7 @@
                                         </div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-{% if user.is_admin_user %}3{% else %}3{% endif %}">
                                     <label>&nbsp;</label>
                                     <div>
                                         {% if form.instance.pk %}
@@ -111,32 +124,68 @@ document.getElementById('add-form').addEventListener('click', function() {
     const totalForms = document.getElementById('id_form-TOTAL_FORMS');
     const formsetContainer = document.getElementById('formset-container');
     const currentFormCount = parseInt(totalForms.value);
+    const isAdmin = {{ user.is_admin_user|lower }};
     
-    const newFormHtml = `
-        <div class="formset-row">
-            <div class="row">
-                <div class="col-md-3">
-                    <label>Applied After (Units)</label>
-                    <input type="number" name="form-${currentFormCount}-applied_after" class="form-control" min="0">
-                </div>
-                <div class="col-md-3">
-                    <label>Price per Unit ($)</label>
-                    <input type="number" name="form-${currentFormCount}-price" class="form-control" step="0.01" min="0">
-                </div>
-                <div class="col-md-3">
-                    <label>Type</label>
-                    <select name="form-${currentFormCount}-type" class="form-control">
-                        <option value="economy">Economy</option>
-                        <option value="premium">Premium Quality</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label>&nbsp;</label>
-                    <div></div>
-                </div>
+    let newFormHtml = `<div class="formset-row"><div class="row">`;
+    
+    if (isAdmin) {
+        // Get the lab select options from the first form
+        const firstLabSelect = document.querySelector('select[name*="-lab"]');
+        let labOptions = '<option value="">---------</option>';
+        if (firstLabSelect) {
+            labOptions = firstLabSelect.innerHTML;
+        }
+        
+        newFormHtml += `
+            <div class="col-md-3">
+                <label>Lab</label>
+                <select name="form-${currentFormCount}-lab" class="form-control">
+                    ${labOptions}
+                </select>
             </div>
-        </div>
-    `;
+            <div class="col-md-2">
+                <label>Applied After (Units)</label>
+                <input type="number" name="form-${currentFormCount}-applied_after" class="form-control" min="0">
+            </div>
+            <div class="col-md-2">
+                <label>Price per Unit ($)</label>
+                <input type="number" name="form-${currentFormCount}-price" class="form-control" step="0.01" min="0">
+            </div>
+            <div class="col-md-2">
+                <label>Type</label>
+                <select name="form-${currentFormCount}-type" class="form-control">
+                    <option value="economy">Economy</option>
+                    <option value="premium">Premium Quality</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label>&nbsp;</label>
+                <div></div>
+            </div>`;
+    } else {
+        newFormHtml += `
+            <div class="col-md-3">
+                <label>Applied After (Units)</label>
+                <input type="number" name="form-${currentFormCount}-applied_after" class="form-control" min="0">
+            </div>
+            <div class="col-md-3">
+                <label>Price per Unit ($)</label>
+                <input type="number" name="form-${currentFormCount}-price" class="form-control" step="0.01" min="0">
+            </div>
+            <div class="col-md-3">
+                <label>Type</label>
+                <select name="form-${currentFormCount}-type" class="form-control">
+                    <option value="economy">Economy</option>
+                    <option value="premium">Premium Quality</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label>&nbsp;</label>
+                <div></div>
+            </div>`;
+    }
+    
+    newFormHtml += `</div></div>`;
     
     formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
     totalForms.value = currentFormCount + 1;

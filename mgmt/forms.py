@@ -91,29 +91,16 @@ class DentistUserCreationForm(CustomUserCreationForm):
         self.fields['user_type'].widget = forms.HiddenInput()
 
 class DentistWithUserForm(forms.ModelForm):
-    create_user_account = forms.BooleanField(
-        required=False,
-        initial=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        help_text='Create a user account for this dentist to allow them to log in'
-    )
+    # Optional fields to update the auto-generated user account
     username = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username for dentist login'})
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username (optional - will be auto-generated if left blank)'}),
+        help_text='Leave blank to auto-generate a username'
     )
     email = forms.EmailField(
         required=False,
-        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email address'})
-    )
-    password1 = forms.CharField(
-        label='Password',
-        required=False,
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'})
-    )
-    password2 = forms.CharField(
-        label='Confirm Password',
-        required=False,
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm password'})
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email address (optional)'}),
+        help_text='Leave blank to use default email'
     )
     
     class Meta:
@@ -134,72 +121,48 @@ class DentistWithUserForm(forms.ModelForm):
         
         # If editing existing dentist with user account
         if self.instance.pk and self.instance.user:
-            self.fields['create_user_account'].initial = True
             self.fields['username'].initial = self.instance.user.username
             self.fields['email'].initial = self.instance.user.email
-            # Hide password fields for existing users
-            self.fields.pop('password1', None)
-            self.fields.pop('password2', None)
     
-    def clean(self):
-        cleaned_data = super().clean()
-        create_account = cleaned_data.get('create_user_account')
-        
-        if create_account:
-            username = cleaned_data.get('username')
-            email = cleaned_data.get('email')
-            password1 = cleaned_data.get('password1')
-            password2 = cleaned_data.get('password2')
-            
-            if not username:
-                self.add_error('username', 'Username is required when creating a user account')
-            elif CustomUser.objects.filter(username=username).exclude(pk=self.instance.user.pk if self.instance.user else None).exists():
-                self.add_error('username', 'A user with this username already exists')
-            
-            if not email:
-                self.add_error('email', 'Email is required when creating a user account')
-            
-            # Only validate passwords for new users
-            if not self.instance.user:
-                if not password1:
-                    self.add_error('password1', 'Password is required when creating a user account')
-                elif password1 != password2:
-                    self.add_error('password2', 'Passwords do not match')
-        
-        return cleaned_data
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username:
+            # Check if username already exists (excluding current user if editing)
+            existing = CustomUser.objects.filter(username=username)
+            if self.instance.pk and self.instance.user:
+                existing = existing.exclude(pk=self.instance.user.pk)
+            if existing.exists():
+                raise forms.ValidationError('A user with this username already exists')
+        return username
     
     def save(self, commit=True):
         dentist = super().save(commit=False)
         
-        if self.cleaned_data.get('create_user_account'):
-            if not dentist.user:
-                # Create new user account
-                user = CustomUser.objects.create_user(
-                    username=self.cleaned_data['username'],
-                    email=self.cleaned_data['email'],
-                    password=self.cleaned_data['password1'],
-                    user_type='dentist'
-                )
-                user.first_name = dentist.name
-                user.save()
-                dentist.user = user
-            else:
-                # Update existing user account
-                dentist.user.username = self.cleaned_data['username']
-                dentist.user.email = self.cleaned_data['email']
-                dentist.user.first_name = dentist.name
-                dentist.user.save()
-        elif dentist.user:
-            # Remove user account if unchecked
-            user = dentist.user
-            dentist.user = None
-            if commit:
-                dentist.save()
-            user.delete()
-            return dentist
+        # If this is a new dentist, pass custom username/email to the model
+        if not self.instance.pk:
+            username = self.cleaned_data.get('username')
+            email = self.cleaned_data.get('email')
+            
+            if username:
+                dentist._custom_username = username
+            if email:
+                dentist._custom_email = email
+        
+        # Update existing user account if dentist already has one
+        elif self.instance.user:
+            username = self.cleaned_data.get('username')
+            email = self.cleaned_data.get('email')
+            
+            if username:
+                dentist.user.username = username
+            if email:
+                dentist.user.email = email
+            dentist.user.first_name = dentist.name
+            dentist.user.save()
         
         if commit:
             dentist.save()
+            # Note: For new dentists, the signal will automatically create a user account
         
         return dentist
 
@@ -210,8 +173,8 @@ class CreditPurchaseForm(forms.ModelForm):
         widgets = {
             'quantity': forms.NumberInput(attrs={
                 'class': 'form-control', 
-                'min': '1',
-                'placeholder': 'Enter number of credits'
+                'min': '5',
+                'placeholder': 'Enter number of credits (minimum 5)'
             }),
             'quality_type': forms.Select(attrs={'class': 'form-control'})
         }
@@ -241,8 +204,8 @@ class CreditPurchaseForm(forms.ModelForm):
     
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
-        if quantity and quantity < 1:
-            raise forms.ValidationError('Quantity must be at least 1')
+        if quantity and quantity < 5:
+            raise forms.ValidationError('Minimum purchase is 5 credits')
         return quantity
     
     def get_price_info(self):
@@ -440,9 +403,9 @@ class FileUploadForm(forms.ModelForm):
     def clean_file(self):
         file = self.cleaned_data.get('file')
         if file:
-            # Check file size (limit to 50MB)
-            if file.size > 50 * 1024 * 1024:
-                raise forms.ValidationError('File size cannot exceed 50MB')
+            # Check file size (limit to 500MB)
+            if file.size > 500 * 1024 * 1024:
+                raise forms.ValidationError('File size cannot exceed 500MB')
         return file
     
     def save(self, commit=True):
