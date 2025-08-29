@@ -1,0 +1,18 @@
+# Alternative SSL Configuration for Rackspace Email
+# If TLS (port 587) doesn't work, use these settings in settings.py:
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'secure.emailsrvr.com'
+EMAIL_PORT = 465  # SSL port
+EMAIL_USE_TLS = False  # Disable TLS
+EMAIL_USE_SSL = True   # Enable SSL
+EMAIL_HOST_USER = 'info@amsfusion.com'
+EMAIL_HOST_PASSWORD = 'asdf FDSA23t2AGFA'
+DEFAULT_FROM_EMAIL = 'AMS Fusion <info@amsfusion.com>'
+SERVER_EMAIL = 'AMS Fusion <info@amsfusion.com>'
+
+# To switch to SSL:
+# 1. Edit /var/www/fusion/fusion/settings.py
+# 2. Replace lines 167-170 with the above SSL settings
+# 3. Run: sudo systemctl restart apache2
+# 4. Test: python test_email.py your-email@example.com

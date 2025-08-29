@@ -21,4 +21,5 @@ urlpatterns = [
     path('my-files/', views.dentist_file_list_view, name='dentist_file_list'),
     path('lab-files/', views.lab_file_list_view, name='lab_file_list'),
     path('download-file/<int:file_id>/', views.download_file_view, name='download_file'),
+    path('stl-viewer/', views.stl_viewer, name='stl_viewer'),
 ]

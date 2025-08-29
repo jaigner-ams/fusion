@@ -4,8 +4,12 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.urls import reverse
 import random
 import string
+from datetime import datetime
 
 class CustomUser(AbstractUser):
     USER_TYPE_CHOICES = [
@@ -295,3 +299,43 @@ def create_user_for_dentist(sender, instance, created, **kwargs):
         # This allows the view to access them for display
         instance._generated_username = username
         instance._generated_password = password
+        
+        # Send email with credentials if email is available
+        if email and email != f"{username}@dental-lab.com":
+            try:
+                # Build the login URL
+                login_url = f"{settings.DEFAULT_FROM_EMAIL.split('<')[0].strip()}/accounts/login/"
+                if hasattr(settings, 'SITE_URL'):
+                    login_url = f"{settings.SITE_URL}/accounts/login/"
+                else:
+                    login_url = "http://your-domain.com/accounts/login/"  # Update with actual domain
+                
+                # Prepare context for email template
+                context = {
+                    'dentist_name': instance.name,
+                    'username': username,
+                    'password': password,
+                    'lab_name': instance.lab.first_name or instance.lab.username,
+                    'login_url': login_url,
+                    'current_year': datetime.now().year,
+                }
+                
+                # Render email templates
+                html_message = render_to_string('mgmt/email/new_dentist_credentials.html', context)
+                plain_message = render_to_string('mgmt/email/new_dentist_credentials.txt', context)
+                
+                # Send email
+                send_mail(
+                    subject='Your AMS Fusion Account Has Been Created',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                
+                print(f"Credentials email sent to {email} for dentist {instance.name}")
+            except Exception as e:
+                print(f"Failed to send email to {email}: {str(e)}")
+                # Don't fail the user creation if email fails
+                pass

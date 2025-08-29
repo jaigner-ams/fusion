@@ -1,7 +1,7 @@
-# Fusion Project - Development Guide
+# AMS Fusion - Development Guide
 
 ## Project Overview
-This is a Django-based dental lab management system that handles pricing, credit management, and file sharing between dentists and labs.
+AMS Fusion is a Django-based dental lab management system that handles pricing, credit management, and file sharing between dentists and labs.
 
 ## Environment Setup
 
@@ -127,3 +127,24 @@ All templates are in `mgmt/templates/mgmt/` and extend `base.html`
 3. `mgmt/forms.py` - Form definitions and validation
 4. `mgmt/urls.py` - URL routing
 5. `fusion/settings.py` - Django configuration
+
+## Email Configuration
+AMS Fusion sends automatic emails to new dentists with their login credentials.
+
+### Quick Setup
+1. Edit `/var/www/fusion/fusion/settings.py` (lines 166-179)
+2. Set your SMTP server details:
+   - EMAIL_HOST (e.g., smtp.gmail.com)
+   - EMAIL_HOST_USER (your email)
+   - EMAIL_HOST_PASSWORD (your password/app password)
+   - SITE_URL (your domain)
+3. Restart Apache: `sudo systemctl restart apache2`
+
+### Testing Email
+To test without sending (prints to console):
+```python
+# In settings.py, uncomment:
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+```
+
+For detailed configuration, see `/var/www/fusion/email_config_guide.md`

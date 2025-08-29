@@ -2,6 +2,11 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase, CreditTransaction, FileUpload
 
+# Configure admin site branding
+admin.site.site_header = "AMS Fusion Administration"
+admin.site.site_title = "AMS Fusion Admin"
+admin.site.index_title = "Welcome to AMS Fusion Administration"
+
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     list_display = ['username', 'email', 'user_type', 'credits', 'is_staff', 'is_active']

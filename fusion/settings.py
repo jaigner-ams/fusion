@@ -158,3 +158,23 @@ AUTHENTICATION_BACKENDS = [
     'mgmt.backends.LabProfileBackend',  # Custom lab authentication
     'django.contrib.auth.backends.ModelBackend',  # Default Django authentication
 ]
+
+# Email Configuration
+# For Rackspace: secure.emailsrvr.com, port 587 (TLS) or 465 (SSL)
+# For Gmail, use: smtp.gmail.com, port 587
+# For SendGrid, use: smtp.sendgrid.net, port 587
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'secure.emailsrvr.com'  # Rackspace email server
+EMAIL_PORT = 587  # Using TLS port
+EMAIL_USE_TLS = True  # Enable TLS
+EMAIL_USE_SSL = False  # Don't use SSL when using TLS
+EMAIL_HOST_USER = 'info@amsfusion.com'  # Your email address
+EMAIL_HOST_PASSWORD = 'asdf FDSA23t2AGFA'  # Your email password
+DEFAULT_FROM_EMAIL = 'AMS Fusion <info@amsfusion.com>'
+SERVER_EMAIL = 'AMS Fusion <info@amsfusion.com>'
+
+# For development/testing, uncomment this to print emails to console instead
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Site URL for email links (update with your actual domain)
+SITE_URL = 'http://your-domain.com'  # Change to https://yourdomain.com in production

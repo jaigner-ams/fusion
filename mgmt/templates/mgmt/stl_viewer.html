@@ -1,0 +1,390 @@
+{% extends 'mgmt/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>3D STL Model Viewer</h2>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0">STL File Viewer</h5>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <input type="file" id="stl-file-input" accept=".stl" class="form-control" style="max-width: 300px; display: inline-block;">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="viewer-container" style="position: relative; background: linear-gradient(#e8e8e8, #ffffff);">
+                        <canvas id="stl-canvas" style="width: 100%; height: 600px; display: block;"></canvas>
+                        <div id="loading-indicator" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading 3D model...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-secondary" id="reset-view">Reset View</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="toggle-wireframe">Toggle Wireframe</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="toggle-rotation">Toggle Auto-Rotate</button>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Controls: Left-click + drag to rotate | Right-click + drag to pan | Scroll to zoom
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div id="model-info" class="mt-3" style="display: none;">
+                        <h6>Model Information:</h6>
+                        <ul class="list-unstyled">
+                            <li>File: <span id="file-name"></span></li>
+                            <li>Size: <span id="file-size"></span></li>
+                            <li>Vertices: <span id="vertex-count"></span></li>
+                            <li>Faces: <span id="face-count"></span></li>
+                            <li>Dimensions: <span id="dimensions"></span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            {% if uploaded_files %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Recent STL Files</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for file in uploaded_files %}
+                            {% if file.file.name|slice:"-4:" == ".stl" or file.file.name|slice:"-4:" == ".STL" %}
+                            <a href="#" class="list-group-item list-group-item-action load-stl-file" 
+                               data-url="{{ file.file.url }}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ file.file.name|slice:"16:" }}</h6>
+                                    <small>{{ file.uploaded_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <p class="mb-1">Uploaded by: {{ file.dentist.name }}</p>
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Three.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// STL Viewer Application
+let scene, camera, renderer, controls;
+let mesh, wireframe;
+let autoRotate = false;
+let container = document.getElementById('viewer-container');
+let canvas = document.getElementById('stl-canvas');
+
+// Initialize Three.js scene
+function initScene() {
+    // Scene setup
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0f0f0);
+    
+    // Camera setup
+    camera = new THREE.PerspectiveCamera(
+        75,
+        container.clientWidth / 600,
+        0.1,
+        1000
+    );
+    camera.position.z = 100;
+    
+    // Renderer setup
+    renderer = new THREE.WebGLRenderer({ 
+        canvas: canvas,
+        antialias: true 
+    });
+    renderer.setSize(container.clientWidth, 600);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Controls setup
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.5;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
+    
+    // Lighting setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight1.position.set(100, 100, 50);
+    directionalLight1.castShadow = true;
+    scene.add(directionalLight1);
+    
+    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+    directionalLight2.position.set(-100, 100, -50);
+    scene.add(directionalLight2);
+    
+    // Add grid helper
+    const gridHelper = new THREE.GridHelper(200, 20, 0x888888, 0xcccccc);
+    scene.add(gridHelper);
+    
+    animate();
+}
+
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    
+    if (autoRotate && mesh) {
+        mesh.rotation.y += 0.005;
+        if (wireframe) {
+            wireframe.rotation.y += 0.005;
+        }
+    }
+    
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+// Load STL file
+function loadSTL(url) {
+    const loader = new THREE.STLLoader();
+    const loadingIndicator = document.getElementById('loading-indicator');
+    
+    loadingIndicator.style.display = 'block';
+    
+    loader.load(
+        url,
+        function(geometry) {
+            // Remove existing mesh
+            if (mesh) {
+                scene.remove(mesh);
+                scene.remove(wireframe);
+            }
+            
+            // Center and scale geometry
+            geometry.computeBoundingBox();
+            geometry.center();
+            
+            const bbox = geometry.boundingBox;
+            const size = new THREE.Vector3();
+            bbox.getSize(size);
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 100 / maxDim;
+            
+            // Create material and mesh
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x0066cc,
+                specular: 0x111111,
+                shininess: 200,
+                side: THREE.DoubleSide
+            });
+            
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.scale.set(scale, scale, scale);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            
+            // Update model info
+            updateModelInfo(geometry, size);
+            
+            // Reset camera view
+            resetView();
+            
+            loadingIndicator.style.display = 'none';
+        },
+        function(xhr) {
+            // Progress callback
+            if (xhr.lengthComputable) {
+                const percentComplete = xhr.loaded / xhr.total * 100;
+                console.log('Loading: ' + Math.round(percentComplete, 2) + '%');
+            }
+        },
+        function(error) {
+            console.error('Error loading STL:', error);
+            loadingIndicator.style.display = 'none';
+            alert('Error loading STL file. Please try again.');
+        }
+    );
+}
+
+// Load STL from file input
+function loadSTLFromFile(file) {
+    const reader = new FileReader();
+    const loadingIndicator = document.getElementById('loading-indicator');
+    
+    loadingIndicator.style.display = 'block';
+    
+    reader.onload = function(e) {
+        const loader = new THREE.STLLoader();
+        const geometry = loader.parse(e.target.result);
+        
+        // Remove existing mesh
+        if (mesh) {
+            scene.remove(mesh);
+            if (wireframe) scene.remove(wireframe);
+        }
+        
+        // Center and scale geometry
+        geometry.computeBoundingBox();
+        geometry.center();
+        
+        const bbox = geometry.boundingBox;
+        const size = new THREE.Vector3();
+        bbox.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 100 / maxDim;
+        
+        // Create material and mesh
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x0066cc,
+            specular: 0x111111,
+            shininess: 200,
+            side: THREE.DoubleSide
+        });
+        
+        mesh = new THREE.Mesh(geometry, material);
+        mesh.scale.set(scale, scale, scale);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+        
+        // Update model info with file details
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = formatFileSize(file.size);
+        updateModelInfo(geometry, size);
+        
+        // Reset camera view
+        resetView();
+        
+        loadingIndicator.style.display = 'none';
+    };
+    
+    reader.readAsArrayBuffer(file);
+}
+
+// Update model information display
+function updateModelInfo(geometry, size) {
+    const vertexCount = geometry.attributes.position.count;
+    const faceCount = geometry.attributes.position.count / 3;
+    
+    document.getElementById('vertex-count').textContent = vertexCount.toLocaleString();
+    document.getElementById('face-count').textContent = Math.floor(faceCount).toLocaleString();
+    document.getElementById('dimensions').textContent = 
+        `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} mm`;
+    
+    document.getElementById('model-info').style.display = 'block';
+}
+
+// Reset camera view
+function resetView() {
+    if (mesh) {
+        const box = new THREE.Box3().setFromObject(mesh);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxDim / 2 * Math.tan(fov * 2));
+        
+        camera.position.set(cameraZ, cameraZ * 0.5, cameraZ);
+        camera.lookAt(center);
+        
+        controls.target = center;
+        controls.update();
+    }
+}
+
+// Toggle wireframe
+function toggleWireframe() {
+    if (!mesh) return;
+    
+    if (wireframe) {
+        scene.remove(wireframe);
+        wireframe = null;
+    } else {
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            wireframe: true
+        });
+        wireframe = new THREE.Mesh(mesh.geometry, wireframeMaterial);
+        wireframe.scale.copy(mesh.scale);
+        wireframe.position.copy(mesh.position);
+        wireframe.rotation.copy(mesh.rotation);
+        scene.add(wireframe);
+    }
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Event listeners
+document.getElementById('stl-file-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file && file.name.toLowerCase().endsWith('.stl')) {
+        loadSTLFromFile(file);
+    }
+});
+
+document.getElementById('reset-view').addEventListener('click', resetView);
+
+document.getElementById('toggle-wireframe').addEventListener('click', toggleWireframe);
+
+document.getElementById('toggle-rotation').addEventListener('click', function() {
+    autoRotate = !autoRotate;
+    this.classList.toggle('btn-primary');
+    this.classList.toggle('btn-outline-secondary');
+});
+
+// Load STL from server files
+document.querySelectorAll('.load-stl-file').forEach(function(element) {
+    element.addEventListener('click', function(e) {
+        e.preventDefault();
+        const url = this.dataset.url;
+        const filename = this.querySelector('h6').textContent;
+        document.getElementById('file-name').textContent = filename;
+        document.getElementById('file-size').textContent = 'Server file';
+        loadSTL(url);
+    });
+});
+
+// Handle window resize
+window.addEventListener('resize', function() {
+    camera.aspect = container.clientWidth / 600;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, 600);
+});
+
+// Initialize the scene
+initScene();
+
+// Load a sample STL if available
+{% if sample_stl_url %}
+loadSTL('{{ sample_stl_url }}');
+{% endif %}
+</script>
+{% endblock %}

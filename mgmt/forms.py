@@ -123,6 +123,9 @@ class DentistWithUserForm(forms.ModelForm):
         if self.instance.pk and self.instance.user:
             self.fields['username'].initial = self.instance.user.username
             self.fields['email'].initial = self.instance.user.email
+            # Also update the widget value attribute for proper display
+            self.fields['username'].widget.attrs['value'] = self.instance.user.username
+            self.fields['email'].widget.attrs['value'] = self.instance.user.email
     
     def clean_username(self):
         username = self.cleaned_data.get('username')
@@ -153,10 +156,15 @@ class DentistWithUserForm(forms.ModelForm):
             username = self.cleaned_data.get('username')
             email = self.cleaned_data.get('email')
             
+            # Update username if provided or keep existing
             if username:
                 dentist.user.username = username
-            if email:
+            
+            # Update email - allow empty string to clear email
+            if email is not None:  # Check for None, not empty string
                 dentist.user.email = email
+            
+            # Always update the first name to match dentist name
             dentist.user.first_name = dentist.name
             dentist.user.save()
         

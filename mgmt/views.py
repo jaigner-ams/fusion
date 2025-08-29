@@ -93,13 +93,17 @@ def add_dentist_view(request):
             
             # Check if credentials were auto-generated (for new dentists)
             if hasattr(dentist, '_generated_username') and hasattr(dentist, '_generated_password'):
+                email_msg = ""
+                if dentist.user and dentist.user.email and dentist.user.email != f"{dentist._generated_username}@dental-lab.com":
+                    email_msg = f" An email with login credentials has been sent to {dentist.user.email}."
+                
                 messages.success(
                     request, 
                     f'Dentist {dentist.name} added successfully! '
                     f'Auto-generated login credentials: '
                     f'Username: {dentist._generated_username}, '
                     f'Password: {dentist._generated_password} '
-                    f'(Please save these credentials securely and share them with the dentist)'
+                    f'(Please save these credentials securely){email_msg}'
                 )
             elif dentist.user:
                 messages.success(request, f'Dentist {dentist.name} added successfully with user account!')
@@ -584,3 +588,20 @@ def download_file_view(request, file_id):
     else:
         messages.error(request, 'File not found on server.')
         return redirect('lab_file_list')
+
+@login_required
+def stl_viewer(request):
+    """View for displaying the STL viewer."""
+    # Get recent STL files if user is lab or admin
+    uploaded_files = []
+    if request.user.user_type in ['lab', 'admin']:
+        # Get recent STL files
+        uploaded_files = FileUpload.objects.filter(
+            file__iendswith='.stl'
+        ).select_related('dentist').order_by('-uploaded_at')[:10]
+    
+    context = {
+        'uploaded_files': uploaded_files,
+    }
+    
+    return render(request, 'mgmt/stl_viewer.html', context)
