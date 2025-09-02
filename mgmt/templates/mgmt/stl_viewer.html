@@ -83,12 +83,21 @@
     </div>
 </div>
 
-<!-- Three.js from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/STLLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+<!-- Three.js ES Modules -->
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.150.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.0/examples/jsm/"
+    }
+}
+</script>
 
-<script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
 // STL Viewer Application
 let scene, camera, renderer, controls;
 let mesh, wireframe;
@@ -121,7 +130,7 @@ function initScene() {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     
     // Controls setup
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.rotateSpeed = 0.5;
@@ -165,7 +174,7 @@ function animate() {
 
 // Load STL file
 function loadSTL(url) {
-    const loader = new THREE.STLLoader();
+    const loader = new STLLoader();
     const loadingIndicator = document.getElementById('loading-indicator');
     
     loadingIndicator.style.display = 'block';
@@ -234,7 +243,7 @@ function loadSTLFromFile(file) {
     loadingIndicator.style.display = 'block';
     
     reader.onload = function(e) {
-        const loader = new THREE.STLLoader();
+        const loader = new STLLoader();
         const geometry = loader.parse(e.target.result);
         
         // Remove existing mesh
@@ -342,49 +351,62 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Event listeners
-document.getElementById('stl-file-input').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file && file.name.toLowerCase().endsWith('.stl')) {
-        loadSTLFromFile(file);
-    }
-});
-
-document.getElementById('reset-view').addEventListener('click', resetView);
-
-document.getElementById('toggle-wireframe').addEventListener('click', toggleWireframe);
-
-document.getElementById('toggle-rotation').addEventListener('click', function() {
-    autoRotate = !autoRotate;
-    this.classList.toggle('btn-primary');
-    this.classList.toggle('btn-outline-secondary');
-});
-
-// Load STL from server files
-document.querySelectorAll('.load-stl-file').forEach(function(element) {
-    element.addEventListener('click', function(e) {
-        e.preventDefault();
-        const url = this.dataset.url;
-        const filename = this.querySelector('h6').textContent;
-        document.getElementById('file-name').textContent = filename;
-        document.getElementById('file-size').textContent = 'Server file';
-        loadSTL(url);
+// Setup event listeners
+function setupEventListeners() {
+    // File input
+    document.getElementById('stl-file-input').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.name.toLowerCase().endsWith('.stl')) {
+            loadSTLFromFile(file);
+        }
     });
+
+    // Control buttons
+    document.getElementById('reset-view').addEventListener('click', resetView);
+    document.getElementById('toggle-wireframe').addEventListener('click', toggleWireframe);
+    document.getElementById('toggle-rotation').addEventListener('click', function() {
+        autoRotate = !autoRotate;
+        this.classList.toggle('btn-primary');
+        this.classList.toggle('btn-outline-secondary');
+    });
+
+    // Server file links
+    document.querySelectorAll('.load-stl-file').forEach(function(element) {
+        element.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.dataset.url;
+            const filename = this.querySelector('h6').textContent;
+            document.getElementById('file-name').textContent = filename;
+            document.getElementById('file-size').textContent = 'Server file';
+            loadSTL(url);
+        });
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (camera && renderer) {
+            camera.aspect = container.clientWidth / 600;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, 600);
+        }
+    });
+}
+
+// Make functions globally available
+window.loadSTL = loadSTL;
+window.loadSTLFromFile = loadSTLFromFile;
+window.resetView = resetView;
+window.toggleWireframe = toggleWireframe;
+
+// Initialize the scene when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initScene();
+    setupEventListeners();
+    
+    // Load a sample STL if available
+    {% if sample_stl_url %}
+    loadSTL('{{ sample_stl_url }}');
+    {% endif %}
 });
-
-// Handle window resize
-window.addEventListener('resize', function() {
-    camera.aspect = container.clientWidth / 600;
-    camera.updateProjectionMatrix();
-    renderer.setSize(container.clientWidth, 600);
-});
-
-// Initialize the scene
-initScene();
-
-// Load a sample STL if available
-{% if sample_stl_url %}
-loadSTL('{{ sample_stl_url }}');
-{% endif %}
 </script>
 {% endblock %}

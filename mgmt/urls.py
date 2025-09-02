@@ -17,6 +17,7 @@ urlpatterns = [
     path('undo-deduction/<int:transaction_id>/', views.undo_deduction_view, name='undo_deduction'),
     path('credit-transactions/', views.credit_transactions_view, name='credit_transactions'),
     path('dentist/<int:dentist_id>/change-password/', views.change_dentist_password_view, name='change_dentist_password'),
+    path('change-password/', views.dentist_change_password_view, name='dentist_change_password'),
     path('upload-file/', views.upload_file_view, name='upload_file'),
     path('my-files/', views.dentist_file_list_view, name='dentist_file_list'),
     path('lab-files/', views.lab_file_list_view, name='lab_file_list'),

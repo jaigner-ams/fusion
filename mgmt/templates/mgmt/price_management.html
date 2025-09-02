@@ -13,7 +13,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Default Prices</h4>
+                <h4 class="mb-0">{% if lab_name == 'All Labs' %}Default Prices{% else %}{{ lab_name|title }} Default Prices{% endif %}</h4>
             </div>
             <div class="card-body">
                 {% if default_prices %}
@@ -48,7 +48,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header bg-success text-white">
-                <h4 class="mb-0">Dentists</h4>
+                <h4 class="mb-0">{% if lab_name == 'All Labs' %}All Dentists{% else %}{{ lab_name|title }} Dentists{% endif %}</h4>
             </div>
             <div class="card-body">
                 {% if dentists %}

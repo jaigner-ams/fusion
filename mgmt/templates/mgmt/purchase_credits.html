@@ -106,7 +106,7 @@
                     {% endif %}
                     
                     {% if default_prices %}
-                    <h6 class="text-info">{% if custom_prices %}Default Prices{% else %}Available Prices{% endif %}</h6>
+                    <h6 class="text-info">{% if custom_prices %}{{ lab_name|title }} Default Prices{% else %}{{ lab_name|title }} Prices{% endif %}</h6>
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>

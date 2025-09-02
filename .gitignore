@@ -176,3 +176,5 @@ ehthumbs.db
 .env.local
 .env.production
 .env.*.local
+
+wordpress/

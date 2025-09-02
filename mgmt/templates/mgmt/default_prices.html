@@ -1,11 +1,11 @@
 {% extends 'mgmt/base.html' %}
 
-{% block title %}Manage Default Prices{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h1 class="mb-4">Manage Default Prices</h1>
+        <h1 class="mb-4">{{ title }}</h1>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>

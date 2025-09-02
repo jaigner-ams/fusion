@@ -16,13 +16,16 @@ def price_management_view(request):
     if request.user.is_admin_user():
         dentists = Dentist.objects.all()
         default_prices = DefaultPriceList.objects.all().order_by('lab', 'applied_after')
+        lab_name = 'All Labs'
     else:
         dentists = Dentist.objects.filter(lab=request.user)
         default_prices = DefaultPriceList.objects.filter(lab=request.user).order_by('applied_after')
+        lab_name = request.user.first_name or request.user.username
     
     context = {
         'dentists': dentists,
         'default_prices': default_prices,
+        'lab_name': lab_name,
     }
     return render(request, 'mgmt/price_management.html', context)
 
@@ -30,6 +33,9 @@ def price_management_view(request):
 @lab_or_admin_required
 def default_prices_view(request):
     from django.forms import modelformset_factory
+    
+    # Get lab name for display
+    lab_name = request.user.first_name or request.user.username if request.user.user_type == 'lab' else 'Lab'
     
     # Create a custom form class that passes the user
     class DefaultPriceFormWithUser(DefaultPriceForm):
@@ -76,7 +82,8 @@ def default_prices_view(request):
     
     context = {
         'formset': formset,
-        'title': 'Manage Default Prices'
+        'title': f'Manage {lab_name} Default Prices',
+        'lab_name': lab_name
     }
     return render(request, 'mgmt/default_prices.html', context)
 
@@ -277,13 +284,17 @@ def purchase_credits_view(request):
     custom_prices = PriceList.objects.filter(dentist=dentist).order_by('type', 'applied_after')
     default_prices = DefaultPriceList.objects.filter(lab=dentist.lab).order_by('type', 'applied_after')
     
+    # Get lab name for display
+    lab_name = dentist.lab.first_name or dentist.lab.username
+    
     context = {
         'form': form,
         'dentist': dentist,
         'custom_prices': custom_prices,
         'default_prices': default_prices,
         'current_credits': request.user.credits,
-        'title': 'Purchase Credits'
+        'title': 'Purchase Credits',
+        'lab_name': lab_name
     }
     return render(request, 'mgmt/purchase_credits.html', context)
 
@@ -518,6 +529,32 @@ def change_dentist_password_view(request, dentist_id):
         'title': f'Change Password - {dentist.name}'
     }
     return render(request, 'mgmt/change_dentist_password.html', context)
+
+@login_required
+@dentist_required
+def dentist_change_password_view(request):
+    """Allow dentists to change their own password"""
+    from django.contrib.auth.forms import PasswordChangeForm
+    from django.contrib.auth import update_session_auth_hash
+    
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Keep the user logged in after password change
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password has been successfully changed!')
+            return redirect('dentist_dashboard')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    
+    context = {
+        'form': form,
+        'title': 'Change Password'
+    }
+    return render(request, 'mgmt/dentist_change_password.html', context)
 
 @login_required
 @dentist_required
