@@ -1,4 +1,5 @@
 {% extends 'mgmt/base.html' %}
+{% load dict_extras %}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -55,9 +56,14 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>Credit Purchases</h4>
-                <a href="{% url 'credit_transactions' %}" class="btn btn-outline-info btn-sm">
-                    <i class="fas fa-history"></i> View All Transactions
-                </a>
+                <div>
+                    <a href="{% url 'credit_deductions' %}" class="btn btn-outline-warning btn-sm me-2">
+                        <i class="fas fa-minus-circle"></i> View Deductions
+                    </a>
+                    <a href="{% url 'credit_transactions' %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-history"></i> View All Transactions
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 {% if purchases %}
@@ -166,10 +172,14 @@
                                     <span class="badge bg-success">{{ dentist.user.credits }}</span>
                                 </td>
                                 <td>
-                                    0
+                                    {% with stats=dentist_stats|get_item:dentist.id %}
+                                        {{ stats.total_purchased|default:0 }}
+                                    {% endwith %}
                                 </td>
                                 <td>
-                                    $0
+                                    {% with stats=dentist_stats|get_item:dentist.id %}
+                                        ${{ stats.total_spent|default:0|floatformat:2 }}
+                                    {% endwith %}
                                 </td>
                                 <td>
                                     {% with last_purchase=dentist.credit_purchases.first %}

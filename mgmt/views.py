@@ -343,9 +343,22 @@ def credit_management_view(request):
     total_credits_sold = sum(p.quantity for p in purchases if p.status == 'completed')
     pending_purchases = purchases.filter(status='pending').count()
     
+    # Calculate per-dentist statistics
+    dentist_stats = {}
+    for dentist in dentists:
+        completed_purchases = CreditPurchase.objects.filter(
+            dentist=dentist, 
+            status='completed'
+        )
+        dentist_stats[dentist.id] = {
+            'total_purchased': sum(p.quantity for p in completed_purchases),
+            'total_spent': sum(p.total_price for p in completed_purchases)
+        }
+    
     context = {
         'purchases': purchases,
         'dentists': dentists,
+        'dentist_stats': dentist_stats,
         'total_revenue': total_revenue,
         'total_credits_sold': total_credits_sold,
         'pending_purchases': pending_purchases,
@@ -642,3 +655,61 @@ def stl_viewer(request):
     }
     
     return render(request, 'mgmt/stl_viewer.html', context)
+
+@login_required
+@lab_or_admin_required
+def credit_deductions_view(request):
+    """View all credit deductions with reasons"""
+    from django.db.models import Q
+    
+    # Get deductions based on user type
+    if request.user.is_admin_user():
+        # Admin sees all deductions
+        deductions = CreditTransaction.objects.filter(
+            transaction_type='deduction'
+        ).select_related('user', 'dentist', 'created_by').order_by('-created_at')
+        title = "All Credit Deductions"
+    else:
+        # Lab users see only their dentists' deductions
+        deductions = CreditTransaction.objects.filter(
+            Q(transaction_type='deduction') & 
+            (Q(dentist__lab=request.user) | 
+             Q(dentist__isnull=True, user__dentist_profile__lab=request.user))
+        ).select_related('user', 'dentist', 'created_by').order_by('-created_at')
+        title = "Credit Deductions - Your Dentists"
+    
+    # Force evaluation of the queryset
+    deductions = list(deductions)
+    
+    # Calculate totals
+    total_deductions = abs(sum(d.amount for d in deductions))
+    total_deduction_count = len(deductions)
+    
+    # Group deductions by dentist
+    dentist_deductions = {}
+    for deduction in deductions:
+        dentist_name = deduction.dentist.name if deduction.dentist else (
+            deduction.user.dentist_profile.name if hasattr(deduction.user, 'dentist_profile') else 
+            f"{deduction.user.first_name} {deduction.user.last_name}".strip() or deduction.user.username
+        )
+        
+        if dentist_name not in dentist_deductions:
+            dentist_deductions[dentist_name] = {
+                'deductions': [],
+                'total': 0,
+                'count': 0
+            }
+        
+        dentist_deductions[dentist_name]['deductions'].append(deduction)
+        dentist_deductions[dentist_name]['total'] += abs(deduction.amount)
+        dentist_deductions[dentist_name]['count'] += 1
+    
+    context = {
+        'deductions': deductions,
+        'dentist_deductions': dentist_deductions,
+        'total_deductions': total_deductions,
+        'total_deduction_count': total_deduction_count,
+        'title': title
+    }
+    
+    return render(request, 'mgmt/credit_deductions.html', context)
