@@ -1,0 +1,360 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AMS Fusion Prospects{% endblock %}</title>
+    <link rel="icon" href="data:,">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-navy: #1a2332;
+            --secondary-navy: #2a3544;
+            --accent-pink: #e91e8c;
+            --accent-purple: #6366f1;
+            --text-light: #ffffff;
+            --card-bg: #2d3748;
+            --border-color: #4a5568;
+        }
+
+        body {
+            background-color: var(--primary-navy);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-navy) 100%) !important;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-light) !important;
+        }
+
+        .navbar-brand img {
+            height: 40px;
+            width: auto;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85) !important;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-light) !important;
+        }
+
+        .btn-primary, .btn-success, .btn-info, .btn-warning {
+            background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-purple) 100%);
+            border: none;
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 0.6rem 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover, .btn-success:hover, .btn-info:hover, .btn-warning:hover {
+            background: linear-gradient(135deg, #d11b7c 0%, #5558e3 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(233, 30, 140, 0.4);
+            color: var(--text-light);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-navy);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+        }
+
+        .btn-secondary:hover {
+            background-color: #3a4556;
+            border-color: var(--border-color);
+            color: var(--text-light);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        .prospect-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .prospect-card:hover {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transform: translateY(-4px);
+        }
+
+        .table {
+            color: var(--text-light);
+            background-color: var(--card-bg);
+            --bs-table-bg: var(--card-bg);
+            --bs-table-color: var(--text-light);
+            --bs-table-striped-bg: rgba(255,255,255,0.05);
+            --bs-table-striped-color: var(--text-light);
+            --bs-table-hover-bg: rgba(255,255,255,0.08);
+            --bs-table-hover-color: var(--text-light);
+            --bs-table-border-color: var(--border-color);
+        }
+
+        .table thead th {
+            background-color: var(--secondary-navy);
+            border-color: var(--border-color);
+            color: var(--text-light);
+        }
+
+        .table td, .table th {
+            border-color: var(--border-color);
+            color: var(--text-light);
+        }
+
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: var(--bs-table-striped-bg);
+            color: var(--text-light);
+        }
+
+        .table-striped > tbody > tr:nth-of-type(even) > * {
+            background-color: var(--card-bg);
+            color: var(--text-light);
+        }
+
+        .table-hover > tbody > tr:hover > * {
+            background-color: var(--bs-table-hover-bg);
+            color: var(--text-light);
+        }
+
+        .form-control, .form-select {
+            background-color: var(--secondary-navy);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--secondary-navy);
+            border-color: var(--accent-pink);
+            color: var(--text-light);
+            box-shadow: 0 0 0 0.2rem rgba(233, 30, 140, 0.25);
+        }
+
+        .form-label {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .form-check-label {
+            color: var(--text-light);
+        }
+
+        .alert {
+            border-radius: 0.5rem;
+            border: none;
+        }
+
+        .alert-success {
+            background-color: #1e4d2b;
+            color: #86efac;
+            border-left: 4px solid #22c55e;
+        }
+
+        .alert-danger {
+            background-color: #4d1e1e;
+            color: #fca5a5;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-info {
+            background-color: #1e3a4d;
+            color: #93c5fd;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alert-warning {
+            background-color: #4d3d1e;
+            color: #fcd34d;
+            border-left: 4px solid #f59e0b;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        .badge {
+            font-weight: 600;
+        }
+
+        .badge-prospect {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .badge-member {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        .badge-declined {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .navbar-text {
+            color: rgba(255,255,255,0.85) !important;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-purple) 100%) !important;
+            color: var(--text-light) !important;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem 0.5rem 0 0 !important;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .stat-card h2 {
+            font-size: 2.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card p {
+            margin-bottom: 0;
+            color: #94a3b8;
+        }
+
+        .notes-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .note-item {
+            background-color: var(--secondary-navy);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .note-date {
+            color: var(--accent-pink);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .btn-outline-primary, .btn-outline-secondary, .btn-outline-info, .btn-outline-warning, .btn-outline-danger {
+            background-color: var(--secondary-navy) !important;
+            border: 2px solid var(--border-color) !important;
+            color: var(--text-light) !important;
+            font-weight: 500;
+        }
+
+        .btn-outline-primary:hover, .btn-outline-secondary:hover, .btn-outline-info:hover, .btn-outline-warning:hover {
+            background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-purple) 100%) !important;
+            border-color: var(--accent-pink) !important;
+            color: var(--text-light) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(233, 30, 140, 0.4);
+        }
+
+        .btn-outline-danger:hover {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: var(--text-light) !important;
+        }
+
+        /* Print styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white;
+                color: black;
+            }
+            .card {
+                background-color: white;
+                border: 1px solid #ddd;
+                box-shadow: none;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary no-print">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'prospects:prospect_list' %}">
+                <img src="{% static 'mgmt/logo.png' %}" alt="AMS Fusion"> Prospects
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav me-auto">
+                    <a class="nav-link" href="{% url 'prospects:prospect_list' %}">All Prospects</a>
+                    <a class="nav-link" href="{% url 'prospects:prospect_add' %}">Add Prospect</a>
+                    <a class="nav-link" href="{% url 'prospects:contact_schedule' %}">Contact Schedule</a>
+                </div>
+                <div class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <span class="navbar-text text-white me-3">Welcome, {{ user.username }}</span>
+                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show no-print" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

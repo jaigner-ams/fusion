@@ -26,6 +26,7 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/prices/', permanent=False)),
     path('admin/', admin.site.urls),
     path('prices/', include('mgmt.urls')),
+    path('prospects/', include('prospects.urls', namespace='prospects')),
     path('accounts/login/', LabLoginView.as_view(), name='login'),
     path('accounts/logout/', CustomLogoutView.as_view(), name='logout'),
 ]

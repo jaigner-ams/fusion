@@ -1,0 +1,128 @@
+{% extends 'prospects/base_prospects.html' %}
+
+{% block title %}{{ title }} - AMS Fusion Prospects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ title }}</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'prospects:export_csv' %}{% if status_filter %}?status={{ status_filter }}{% endif %}" class="btn btn-secondary">Export CSV</a>
+        <a href="{% url 'prospects:prospect_add' %}" class="btn btn-primary">Add New Prospect</a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <h2>{{ status_counts.total }}</h2>
+            <p>Total Prospects</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <h2 class="text-primary">{{ status_counts.prospect }}</h2>
+            <p>Prospects</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <h2 class="text-success">{{ status_counts.member }}</h2>
+            <p>Members</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <h2 class="text-danger">{{ status_counts.declined }}</h2>
+            <p>Declined</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <form method="get" class="d-flex gap-2">
+                <select name="status" class="form-select" style="width: auto;">
+                    <option value="">All Statuses</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                {% if status_filter %}
+                    <a href="{% url 'prospects:prospect_list' %}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+        <div class="col-md-6 text-end">
+            <span class="text-muted">Showing {{ prospects.count }} prospect{{ prospects.count|pluralize }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Prospects Table -->
+<div class="card">
+    {% if prospects %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Lab Name</th>
+                        <th>Contact Person</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Next Contact</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prospect in prospects %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="text-white text-decoration-none">
+                                    <strong>{{ prospect.lab_name }}</strong>
+                                </a>
+                            </td>
+                            <td>{{ prospect.person_name }}</td>
+                            <td>{{ prospect.city }}{% if prospect.city and prospect.state %}, {% endif %}{{ prospect.state }}</td>
+                            <td>
+                                {% if prospect.status == 'prospect' %}
+                                    <span class="badge badge-prospect">Fusion Prospect</span>
+                                {% elif prospect.status == 'member' %}
+                                    <span class="badge badge-member">Fusion Member</span>
+                                {% elif prospect.status == 'declined' %}
+                                    <span class="badge badge-declined">Fusion Declined</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if prospect.next_contact_date %}
+                                    {{ prospect.next_contact_date|date:"M d, Y" }}
+                                {% else %}
+                                    <span class="text-muted">Not set</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="btn btn-sm btn-outline-info">View</a>
+                                <a href="{% url 'prospects:prospect_edit' prospect.pk %}" class="btn btn-sm btn-outline-warning">Edit</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <h4 class="text-muted">No prospects found</h4>
+            <p class="text-muted">
+                {% if status_filter %}
+                    No prospects with status "{{ status_filter }}" found. <a href="{% url 'prospects:prospect_list' %}">View all prospects</a>
+                {% else %}
+                    Get started by <a href="{% url 'prospects:prospect_add' %}">adding your first prospect</a>.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

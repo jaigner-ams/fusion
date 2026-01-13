@@ -1,0 +1,173 @@
+{% extends 'prospects/base_prospects.html' %}
+
+{% block title %}{{ title }} - AMS Fusion Prospects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ prospect.lab_name }}</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'prospects:prospect_edit' prospect.pk %}" class="btn btn-warning">Edit</a>
+        <a href="{% url 'prospects:prospect_print' prospect.pk %}" class="btn btn-info" target="_blank">Print</a>
+        <a href="{% url 'prospects:prospect_delete' prospect.pk %}" class="btn btn-danger">Delete</a>
+        <a href="{% url 'prospects:prospect_list' %}" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column - Prospect Details -->
+    <div class="col-md-8">
+        <div class="card">
+            <!-- Status Badge -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Prospect Details</h4>
+                {% if prospect.status == 'prospect' %}
+                    <span class="badge badge-prospect fs-6">Fusion Prospect</span>
+                {% elif prospect.status == 'member' %}
+                    <span class="badge badge-member fs-6">Fusion Member</span>
+                {% elif prospect.status == 'declined' %}
+                    <span class="badge badge-declined fs-6">Fusion Declined</span>
+                {% endif %}
+            </div>
+
+            <hr class="border-secondary">
+
+            <!-- Contact Info -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Lab Name</p>
+                    <p class="fw-bold">{{ prospect.lab_name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Contact Person</p>
+                    <p class="fw-bold">{{ prospect.person_name }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <p class="text-muted mb-1">Address</p>
+                    <p class="fw-bold">
+                        {% if prospect.address %}{{ prospect.address }}<br>{% endif %}
+                        {{ prospect.city }}{% if prospect.city and prospect.state %}, {% endif %}{{ prospect.state }} {{ prospect.zip_code }}
+                    </p>
+                </div>
+            </div>
+
+            <hr class="border-secondary">
+
+            <!-- Business Details -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Monthly Fee</p>
+                    <p class="fw-bold fs-5">
+                        {% if prospect.monthly_fee %}
+                            ${{ prospect.monthly_fee }}
+                        {% else %}
+                            <span class="text-muted">Not set</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Has Mill</p>
+                    <p class="fw-bold">
+                        {% if prospect.has_mill %}
+                            <span class="text-success">Yes</span>
+                        {% else %}
+                            <span class="text-danger">No</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Dentists Requested</p>
+                    <p class="fw-bold">{{ prospect.dentists_requested|default:"Not set" }}</p>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <p class="text-muted mb-1">Service Types</p>
+                <p class="fw-bold">
+                    {% if prospect.service_types.all %}
+                        {% for st in prospect.service_types.all %}
+                            <span class="badge bg-secondary me-1">{{ st.get_service_type_display }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="text-muted">None selected</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <hr class="border-secondary">
+
+            <!-- Protected Zip Codes -->
+            <div class="mb-3">
+                <p class="text-muted mb-1">Protected Zip Codes</p>
+                <p class="fw-bold">
+                    {% with zips=prospect.get_protected_zip_codes %}
+                        {% if zips %}
+                            {% for zip in zips %}
+                                <span class="badge bg-info me-1">{{ zip }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">None specified</span>
+                        {% endif %}
+                    {% endwith %}
+                </p>
+            </div>
+
+            <hr class="border-secondary">
+
+            <!-- Scheduling -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Next Contact Date</p>
+                    <p class="fw-bold">
+                        {% if prospect.next_contact_date %}
+                            {{ prospect.next_contact_date|date:"F d, Y" }}
+                        {% else %}
+                            <span class="text-muted">Not scheduled</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Created</p>
+                    <p class="fw-bold">{{ prospect.created_at|date:"F d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Notes -->
+    <div class="col-md-4">
+        <div class="card">
+            <h4 class="mb-3">Notes</h4>
+
+            <!-- Add Note Form -->
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+                <div class="mb-2">
+                    <label class="form-label text-muted small">Add New Note ({{ "now"|date:"M d, Y" }})</label>
+                    {{ note_form.note_text }}
+                    <div class="form-text text-muted">Max 500 characters</div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Add Note</button>
+            </form>
+
+            <hr class="border-secondary">
+
+            <!-- Notes History -->
+            <div class="notes-container">
+                {% if notes %}
+                    {% for note in notes %}
+                        <div class="note-item">
+                            <div class="note-date">{{ note.created_at|date:"M d, Y g:i A" }}</div>
+                            <div class="mt-2">{{ note.note_text }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center py-3">No notes yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

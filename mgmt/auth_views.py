@@ -33,7 +33,8 @@ class UniversalLoginView(View):
     
     def get(self, request):
         form = UniversalLoginForm()
-        return render(request, self.template_name, {'form': form})
+        next_url = request.GET.get('next', '')
+        return render(request, self.template_name, {'form': form, 'next': next_url})
     
     def post(self, request):
         form = UniversalLoginForm(request.POST)

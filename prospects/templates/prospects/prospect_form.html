@@ -1,0 +1,151 @@
+{% extends 'prospects/base_prospects.html' %}
+
+{% block title %}{{ title }} - AMS Fusion Prospects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ title }}</h1>
+    <a href="{% url 'prospects:prospect_list' %}" class="btn btn-secondary">Back to List</a>
+</div>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Status Selection -->
+        <div class="mb-4">
+            <label class="form-label fw-bold">Status</label>
+            <div class="d-flex gap-4">
+                {% for value, label in form.fields.status.choices %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="status" id="status_{{ value }}" value="{{ value }}"
+                               {% if form.instance.status == value or forloop.first and not form.instance.pk %}checked{% endif %}>
+                        <label class="form-check-label" for="status_{{ value }}">{{ label }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <hr class="border-secondary">
+
+        <!-- Monthly Fee -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="id_monthly_fee" class="form-label">Monthly Fee</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-secondary border-secondary text-white">$</span>
+                    {{ form.monthly_fee }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="id_lab_name" class="form-label">Lab Name <span class="text-danger">*</span></label>
+                {{ form.lab_name }}
+            </div>
+            <div class="col-md-6">
+                <label for="id_person_name" class="form-label">Person Name <span class="text-danger">*</span></label>
+                {{ form.person_name }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_address" class="form-label">Address</label>
+            {{ form.address }}
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-5">
+                <label for="id_city" class="form-label">City</label>
+                {{ form.city }}
+            </div>
+            <div class="col-md-3">
+                <label for="id_state" class="form-label">State</label>
+                {{ form.state }}
+            </div>
+            <div class="col-md-4">
+                <label for="id_zip_code" class="form-label">Zip Code</label>
+                {{ form.zip_code }}
+            </div>
+        </div>
+
+        <hr class="border-secondary">
+
+        <!-- Service Types -->
+        <div class="mb-4">
+            <label class="form-label fw-bold">Service Types</label>
+            <div class="d-flex gap-4">
+                {% for value, label in form.fields.service_types.choices %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="service_types" id="service_{{ value }}" value="{{ value }}"
+                               {% if value in form.initial.service_types %}checked{% endif %}>
+                        <label class="form-check-label" for="service_{{ value }}">{{ label }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Has Mill -->
+        <div class="mb-3">
+            <div class="form-check">
+                {{ form.has_mill }}
+                <label class="form-check-label" for="id_has_mill">Has Mill</label>
+            </div>
+        </div>
+
+        <!-- Number of Dentists -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="id_dentists_requested" class="form-label">Number of Dentists Requested</label>
+                {{ form.dentists_requested }}
+            </div>
+        </div>
+
+        <hr class="border-secondary">
+
+        <!-- Zip Codes to Protect -->
+        <div class="mb-4">
+            <label class="form-label fw-bold">Zip Codes to Protect</label>
+            <div class="row g-2">
+                <div class="col-auto">{{ form.zip_protect_1 }}</div>
+                <div class="col-auto">{{ form.zip_protect_2 }}</div>
+                <div class="col-auto">{{ form.zip_protect_3 }}</div>
+                <div class="col-auto">{{ form.zip_protect_4 }}</div>
+                <div class="col-auto">{{ form.zip_protect_5 }}</div>
+            </div>
+            <div class="row g-2 mt-2">
+                <div class="col-auto">{{ form.zip_protect_6 }}</div>
+                <div class="col-auto">{{ form.zip_protect_7 }}</div>
+                <div class="col-auto">{{ form.zip_protect_8 }}</div>
+                <div class="col-auto">{{ form.zip_protect_9 }}</div>
+                <div class="col-auto">{{ form.zip_protect_10 }}</div>
+            </div>
+        </div>
+
+        <hr class="border-secondary">
+
+        <!-- Next Contact Date -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <label for="id_next_contact_date" class="form-label">Next Contact Date</label>
+                {{ form.next_contact_date }}
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex justify-content-between">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    {% if prospect %}Update Prospect{% else %}Add Prospect{% endif %}
+                </button>
+                <a href="{% url 'prospects:prospect_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+            {% if prospect %}
+                <a href="{% url 'prospects:prospect_delete' prospect.pk %}" class="btn btn-danger">Delete Prospect</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}

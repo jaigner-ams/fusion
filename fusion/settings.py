@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-v%5(kxa49m1tp4d96-xufy9dhq40_vk!^7+%e$ur#a)nklr(wf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.amsfusion.com','amsfusion.com']
+ALLOWED_HOSTS = ['www.amsfusion.com', 'amsfusion.com', 'prospects.amsfusion.com']
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'mgmt',
+    'prospects',
 ]
 
 MIDDLEWARE = [
