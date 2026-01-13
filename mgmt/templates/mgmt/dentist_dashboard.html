@@ -11,8 +11,13 @@
                     <p class="text-muted">Your lab: {{ lab.first_name|default:lab.username|title }}</p>
                 </div>
                 <div class="text-end">
-                    <h3>Credit Balance: <span class="badge bg-success">{{ credits }}</span></h3>
-                    <a href="{% url 'purchase_credits' %}" class="btn btn-primary mt-2">Purchase Credits</a>
+                    <h3>Crown Credit Balance:</h3>
+                    <div class="mb-2">
+                        <span class="badge bg-info me-2">Economy: {{ user.economy_credits }}</span>
+                        <span class="badge bg-warning">Premium: {{ user.premium_credits }}</span>
+                        <span class="badge bg-success ms-2">Total: {{ user.get_total_credits }}</span>
+                    </div>
+                    <a href="{% url 'purchase_credits' %}" class="btn btn-primary mt-2">Purchase Crown Credits</a>
                     <a href="{% url 'purchase_history' %}" class="btn btn-outline-secondary mt-2">View History</a>
                     <a href="{% url 'upload_file' %}" class="btn btn-success mt-2">Upload File</a>
                     <a href="{% url 'dentist_file_list' %}" class="btn btn-outline-info mt-2">My Files</a>

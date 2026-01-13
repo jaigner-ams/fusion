@@ -29,9 +29,9 @@
                             <tbody>
                                 {% for price in default_prices %}
                                 <tr>
-                                    <td>{{ price.applied_after }}+</td>
+                                    <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
                                     <td>${{ price.price }}</td>
-                                    <td>{{ price.get_type_display }}</td>
+                                    <td>{{ price.get_type_display }}{% if price.product_description %} - {{ price.product_description }}{% endif %}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -85,8 +85,11 @@
                     <p class="text-muted">No dentists added yet.</p>
                 {% endif %}
                 <a href="{% url 'add_dentist' %}" class="btn btn-success mt-3">Add New Dentist</a>
-                <a href="{% url 'credit_management' %}" class="btn btn-info mt-3 ms-2">Manage Credits</a>
+                <a href="{% url 'credit_management' %}" class="btn btn-info mt-3 ms-2">Manage Crown Credits</a>
                 <a href="{% url 'lab_file_list' %}" class="btn btn-warning mt-3 ms-2">Files from Dentists</a>
+                <a href="{% url 'lab_upload_file' %}" class="btn btn-primary mt-3 ms-2">
+                    <i class="fas fa-upload"></i> Upload File for Dentist
+                </a>
             </div>
         </div>
     </div>

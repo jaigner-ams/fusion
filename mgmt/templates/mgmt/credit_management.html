@@ -28,7 +28,7 @@
     <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
-                <h5 class="card-title">Credits Sold</h5>
+                <h5 class="card-title">Crown Credits Sold</h5>
                 <h2 class="text-primary">{{ total_credits_sold }}</h2>
             </div>
         </div>
@@ -55,7 +55,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>Credit Purchases</h4>
+                <h4>Crown Credit Purchases</h4>
                 <div>
                     <a href="{% url 'credit_deductions' %}" class="btn btn-outline-warning btn-sm me-2">
                         <i class="fas fa-minus-circle"></i> View Deductions
@@ -146,7 +146,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h4>Dentist Credit Balances</h4>
+                <h4>Dentist Crown Credit Balances</h4>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -155,7 +155,7 @@
                             <tr>
                                 <th>Dentist</th>
                                 <th>Username</th>
-                                <th>Current Credits</th>
+                                <th>Current Crown Credits</th>
                                 <th>Total Purchased</th>
                                 <th>Total Spent</th>
                                 <th>Last Purchase</th>
@@ -169,7 +169,9 @@
                                 <td><strong>{{ dentist.name }}</strong></td>
                                 <td>{{ dentist.user.username }}</td>
                                 <td>
-                                    <span class="badge bg-success">{{ dentist.user.credits }}</span>
+                                    <span class="badge bg-info">E: {{ dentist.user.economy_credits }}</span>
+                                    <span class="badge bg-warning">P: {{ dentist.user.premium_credits }}</span>
+                                    <span class="badge bg-success">T: {{ dentist.user.get_total_credits }}</span>
                                 </td>
                                 <td>
                                     {% with stats=dentist_stats|get_item:dentist.id %}

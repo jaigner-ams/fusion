@@ -16,6 +16,7 @@
                     <tr>
                         <th>File Name</th>
                         <th>Description</th>
+                        <th>Uploaded By</th>
                         <th>Uploaded At</th>
                         <th>Status</th>
                         <th>Downloaded At</th>
@@ -26,6 +27,13 @@
                         <tr>
                             <td>{{ file.original_filename }}</td>
                             <td>{{ file.description|default:"-" }}</td>
+                            <td>
+                                {% if file.uploaded_by.user_type == 'lab' %}
+                                    <span class="badge bg-info">Your Lab</span>
+                                {% else %}
+                                    <span class="badge bg-success">You</span>
+                                {% endif %}
+                            </td>
                             <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
                             <td>
                                 {% if file.status == 'downloaded' %}

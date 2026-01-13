@@ -21,7 +21,7 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-body text-center">
-                <h5 class="card-title">Total Deductions</h5>
+                <h5 class="card-title">Total Crown Credit Deductions</h5>
                 <h2 class="text-warning">{{ total_deduction_count }}</h2>
             </div>
         </div>
@@ -29,7 +29,7 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-body text-center">
-                <h5 class="card-title">Total Credits Deducted</h5>
+                <h5 class="card-title">Total Crown Credits Deducted</h5>
                 <h2 class="text-danger">{{ total_deductions }}</h2>
             </div>
         </div>
@@ -49,7 +49,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>All Credit Deductions</h4>
+                <h4>All Crown Credit Deductions</h4>
                 <div>
                     <a href="{% url 'credit_transactions' %}" class="btn btn-outline-info btn-sm me-2">
                         <i class="fas fa-history"></i> All Transactions
@@ -67,7 +67,8 @@
                             <tr>
                                 <th>Date & Time</th>
                                 <th>Dentist</th>
-                                <th>Credits Deducted</th>
+                                <th>Type</th>
+                                <th>Crown Credits Deducted</th>
                                 <th>Reason</th>
                                 <th>Balance After</th>
                                 <th>Deducted By</th>
@@ -91,6 +92,11 @@
                                     <small class="text-muted">{{ deduction.user.username }}</small>
                                 </td>
                                 <td>
+                                    <span class="badge bg-{% if deduction.credit_type == 'premium' %}warning{% else %}info{% endif %}">
+                                        {{ deduction.get_credit_type_display }}
+                                    </span>
+                                </td>
+                                <td>
                                     <span class="badge bg-danger">{{ deduction.amount|floatformat:0 }}</span>
                                 </td>
                                 <td>
@@ -104,7 +110,10 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge bg-info">{{ deduction.balance_after }}</span>
+                                    <small>
+                                        E: {{ deduction.economy_balance_after }}<br>
+                                        P: {{ deduction.premium_balance_after }}
+                                    </small>
                                 </td>
                                 <td>
                                     {% if deduction.created_by %}

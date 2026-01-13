@@ -24,74 +24,64 @@
                     {% for field in formset.management_form %}
                         {{ field }}
                     {% endfor %}
-                    
-                    
+
                     <div id="formset-container">
                         {% for form in formset %}
-                        <div class="formset-row">
-                            <div class="row">
+                        <div class="formset-row mb-3 pb-3 border-bottom">
+                            <div class="row align-items-end">
                                 {% if user.is_admin_user %}
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label>Lab</label>
                                     {{ form.lab }}
-                                    {% if form.lab.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.lab.errors %}
-                                                <div>{{ error }}</div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
                                 {% endif %}
-                                <div class="col-md-{% if user.is_admin_user %}2{% else %}3{% endif %}">
-                                    <label>Applied After (Units)</label>
+                                <div class="col-md-1">
+                                    <label>COD</label>
+                                    <div class="form-check mt-2">
+                                        {{ form.is_cod }}
+                                    </div>
+                                </div>
+                                <div class="col-md-2 applied-after-container" style="{% if form.is_cod.value %}display:none;{% endif %}">
+                                    <label>Applied After</label>
                                     {{ form.applied_after }}
-                                    {% if form.applied_after.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.applied_after.errors %}
-                                                <div>{{ error }}</div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
-                                <div class="col-md-{% if user.is_admin_user %}2{% else %}3{% endif %}">
-                                    <label>Price per Unit ($)</label>
+                                <div class="col-md-2">
+                                    <label>Price ($)</label>
                                     {{ form.price }}
-                                    {% if form.price.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.price.errors %}
-                                                <div>{{ error }}</div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
-                                <div class="col-md-{% if user.is_admin_user %}2{% else %}3{% endif %}">
+                                <div class="col-md-2">
                                     <label>Type</label>
                                     {{ form.type }}
-                                    {% if form.type.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.type.errors %}
-                                                <div>{{ error }}</div>
-                                            {% endfor %}
+                                </div>
+                                <div class="col-md-2 product-desc-container" style="{% if form.type.value != 'premium' %}display:none;{% endif %}">
+                                    <label>Description</label>
+                                    {{ form.product_description }}
+                                </div>
+                                <div class="col-md-1">
+                                    {% if form.instance.pk %}
+                                        <label>Del</label>
+                                        <div class="form-check">
+                                            {{ form.DELETE }}
                                         </div>
                                     {% endif %}
-                                </div>
-                                <div class="col-md-{% if user.is_admin_user %}3{% else %}3{% endif %}">
-                                    <label>&nbsp;</label>
-                                    <div>
-                                        {% if form.instance.pk %}
-                                            {{ form.DELETE }} <label for="{{ form.DELETE.id_for_label }}">Delete</label>
-                                        {% endif %}
-                                    </div>
                                 </div>
                             </div>
                             {% for hidden in form.hidden_fields %}
                                 {{ hidden }}
                             {% endfor %}
+                            {% if form.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <div>{{ field }}: {{ error }}</div>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
-                    
+
                     <div class="mt-3">
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                         <button type="button" class="btn btn-success" id="add-form">Add Another Price Tier</button>
@@ -101,16 +91,16 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
-        <div class="card bg-light">
+        <div class="card">
             <div class="card-body">
                 <h5 class="card-title">How Pricing Works</h5>
                 <p class="card-text">Set different price tiers based on the number of units ordered.</p>
                 <ul>
-                    <li>Each tier applies when the order quantity meets or exceeds the "Applied After" value</li>
-                    <li>The system automatically selects the best price for the order quantity</li>
-                    <li>Lower unit prices for higher quantities encourage bulk orders</li>
+                    <li><strong>COD</strong> - Collect on Delivery, a flat rate price</li>
+                    <li><strong>Applied After</strong> - Price applies when order meets this quantity</li>
+                    <li>For Premium Crowns, add a product description</li>
                 </ul>
             </div>
         </div>
@@ -120,73 +110,90 @@
 
 {% block extra_js %}
 <script>
+// Show/hide Applied After based on COD checkbox
+function toggleAppliedAfter(checkbox) {
+    const row = checkbox.closest('.formset-row') || checkbox.closest('.row').parentElement;
+    const appliedAfterContainer = row.querySelector('.applied-after-container');
+    if (appliedAfterContainer) {
+        appliedAfterContainer.style.display = checkbox.checked ? 'none' : '';
+    }
+}
+
+// Show/hide product description based on type selection
+function toggleProductDescription(selectElement) {
+    const row = selectElement.closest('.formset-row') || selectElement.closest('.row').parentElement;
+    const descContainer = row.querySelector('.product-desc-container');
+    if (descContainer) {
+        descContainer.style.display = selectElement.value === 'premium' ? '' : 'none';
+    }
+}
+
+// Initialize existing forms
+document.querySelectorAll('.cod-checkbox, input[name*="-is_cod"]').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+        toggleAppliedAfter(this);
+    });
+    toggleAppliedAfter(checkbox);
+});
+
+document.querySelectorAll('.type-select, select[name*="-type"]').forEach(function(select) {
+    select.addEventListener('change', function() {
+        toggleProductDescription(this);
+    });
+    toggleProductDescription(select);
+});
+
+// Add new form functionality
 document.getElementById('add-form').addEventListener('click', function() {
     const totalForms = document.getElementById('id_form-TOTAL_FORMS');
     const formsetContainer = document.getElementById('formset-container');
     const currentFormCount = parseInt(totalForms.value);
     const isAdmin = {{ user.is_admin_user|lower }};
-    
-    let newFormHtml = `<div class="formset-row"><div class="row">`;
-    
+
+    let newFormHtml = `<div class="formset-row mb-3 pb-3 border-bottom"><div class="row align-items-end">`;
+
     if (isAdmin) {
-        // Get the lab select options from the first form
         const firstLabSelect = document.querySelector('select[name*="-lab"]');
         let labOptions = '<option value="">---------</option>';
         if (firstLabSelect) {
             labOptions = firstLabSelect.innerHTML;
         }
-        
         newFormHtml += `
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label>Lab</label>
-                <select name="form-${currentFormCount}-lab" class="form-control">
-                    ${labOptions}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label>Applied After (Units)</label>
-                <input type="number" name="form-${currentFormCount}-applied_after" class="form-control" min="0">
-            </div>
-            <div class="col-md-2">
-                <label>Price per Unit ($)</label>
-                <input type="number" name="form-${currentFormCount}-price" class="form-control" step="0.01" min="0">
-            </div>
-            <div class="col-md-2">
-                <label>Type</label>
-                <select name="form-${currentFormCount}-type" class="form-control">
-                    <option value="economy">Economy</option>
-                    <option value="premium">Premium Quality</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label>&nbsp;</label>
-                <div></div>
-            </div>`;
-    } else {
-        newFormHtml += `
-            <div class="col-md-3">
-                <label>Applied After (Units)</label>
-                <input type="number" name="form-${currentFormCount}-applied_after" class="form-control" min="0">
-            </div>
-            <div class="col-md-3">
-                <label>Price per Unit ($)</label>
-                <input type="number" name="form-${currentFormCount}-price" class="form-control" step="0.01" min="0">
-            </div>
-            <div class="col-md-3">
-                <label>Type</label>
-                <select name="form-${currentFormCount}-type" class="form-control">
-                    <option value="economy">Economy</option>
-                    <option value="premium">Premium Quality</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label>&nbsp;</label>
-                <div></div>
+                <select name="form-${currentFormCount}-lab" class="form-control">${labOptions}</select>
             </div>`;
     }
-    
-    newFormHtml += `</div></div>`;
-    
+
+    newFormHtml += `
+        <div class="col-md-1">
+            <label>COD</label>
+            <div class="form-check mt-2">
+                <input type="checkbox" name="form-${currentFormCount}-is_cod" class="form-check-input cod-checkbox" onchange="toggleAppliedAfter(this)">
+            </div>
+        </div>
+        <div class="col-md-2 applied-after-container">
+            <label>Applied After</label>
+            <input type="number" name="form-${currentFormCount}-applied_after" class="form-control applied-after-input" min="0" value="0">
+        </div>
+        <div class="col-md-2">
+            <label>Price ($)</label>
+            <input type="number" name="form-${currentFormCount}-price" class="form-control" step="0.01" min="0">
+        </div>
+        <div class="col-md-2">
+            <label>Type</label>
+            <select name="form-${currentFormCount}-type" class="form-control type-select" onchange="toggleProductDescription(this)">
+                <option value="economy">Economy Crowns</option>
+                <option value="premium">Premium Crowns</option>
+            </select>
+        </div>
+        <div class="col-md-2 product-desc-container" style="display:none;">
+            <label>Description</label>
+            <input type="text" name="form-${currentFormCount}-product_description" class="form-control product-desc" placeholder="e.g., Layered Zirconia">
+        </div>
+        <div class="col-md-1"></div>
+    </div></div>`;
+
     formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
     totalForms.value = currentFormCount + 1;
 });

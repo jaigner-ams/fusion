@@ -20,17 +20,40 @@ class DentistForm(forms.ModelForm):
         elif 'lab' in self.fields:
             self.fields['lab'].queryset = CustomUser.objects.filter(user_type='lab')
 
+class LabProfileForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'email', 'phone', 'address', 'website', 'lab_logo']
+        labels = {
+            'first_name': 'Lab Name',
+            'email': 'Contact Email',
+            'phone': 'Phone Number',
+            'address': 'Business Address',
+            'website': 'Website URL',
+            'lab_logo': 'Lab Logo'
+        }
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter lab name'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter contact email'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter business address', 'rows': 3}),
+            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com'}),
+            'lab_logo': forms.FileInput(attrs={'class': 'form-control'})
+        }
+
 class DefaultPriceForm(forms.ModelForm):
     class Meta:
         model = DefaultPriceList
-        fields = ['lab', 'applied_after', 'price', 'type']
+        fields = ['lab', 'is_cod', 'applied_after', 'price', 'type', 'product_description']
         widgets = {
             'lab': forms.Select(attrs={'class': 'form-control'}),
-            'applied_after': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'is_cod': forms.CheckboxInput(attrs={'class': 'form-check-input cod-checkbox'}),
+            'applied_after': forms.NumberInput(attrs={'class': 'form-control applied-after-input', 'min': '0'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
-            'type': forms.Select(attrs={'class': 'form-control'})
+            'type': forms.Select(attrs={'class': 'form-control type-select'}),
+            'product_description': forms.TextInput(attrs={'class': 'form-control product-desc', 'placeholder': 'e.g., Layered Zirconia, Emax Layered'})
         }
-    
+
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
@@ -42,11 +65,13 @@ class DefaultPriceForm(forms.ModelForm):
 class CustomPriceForm(forms.ModelForm):
     class Meta:
         model = PriceList
-        fields = ['applied_after', 'price', 'type']
+        fields = ['is_cod', 'applied_after', 'price', 'type', 'product_description']
         widgets = {
-            'applied_after': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'is_cod': forms.CheckboxInput(attrs={'class': 'form-check-input cod-checkbox'}),
+            'applied_after': forms.NumberInput(attrs={'class': 'form-control applied-after-input', 'min': '0'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
-            'type': forms.Select(attrs={'class': 'form-control'})
+            'type': forms.Select(attrs={'class': 'form-control type-select'}),
+            'product_description': forms.TextInput(attrs={'class': 'form-control product-desc', 'placeholder': 'e.g., Layered Zirconia, Emax Layered'})
         }
 
 class CustomUserCreationForm(UserCreationForm):
@@ -182,7 +207,7 @@ class CreditPurchaseForm(forms.ModelForm):
             'quantity': forms.NumberInput(attrs={
                 'class': 'form-control', 
                 'min': '5',
-                'placeholder': 'Enter number of credits (minimum 5)'
+                'placeholder': 'Enter number of crown credits (minimum 5)'
             }),
             'quality_type': forms.Select(attrs={'class': 'form-control'})
         }
@@ -213,7 +238,7 @@ class CreditPurchaseForm(forms.ModelForm):
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
         if quantity and quantity < 5:
-            raise forms.ValidationError('Minimum purchase is 5 credits')
+            raise forms.ValidationError('Minimum purchase is 5 crown credits')
         return quantity
     
     def get_price_info(self):
@@ -237,7 +262,7 @@ class CreditPurchaseForm(forms.ModelForm):
             for price in custom_prices:
                 if quantity >= price.applied_after:
                     price_per_unit = price.price
-                    price_source = f'Custom price: {quantity} credits @ ${price.price}/credit'
+                    price_source = f'Custom price: {quantity} crown credits @ ${price.price}/crown credit'
                     break
         
         # Fall back to default prices if no custom price found
@@ -250,7 +275,7 @@ class CreditPurchaseForm(forms.ModelForm):
             for price in default_prices:
                 if quantity >= price.applied_after:
                     price_per_unit = price.price
-                    price_source = f'Default price: {quantity} credits @ ${price.price}/credit'
+                    price_source = f'Default price: {quantity} crown credits @ ${price.price}/crown credit'
                     break
         
         total_price = price_per_unit * quantity
@@ -266,16 +291,19 @@ class CreditPurchaseForm(forms.ModelForm):
 class CreditDeductionForm(forms.ModelForm):
     class Meta:
         model = CreditTransaction
-        fields = ['amount', 'reason', 'notes']
+        fields = ['credit_type', 'amount', 'reason', 'notes']
         widgets = {
+            'credit_type': forms.Select(attrs={
+                'class': 'form-control'
+            }),
             'amount': forms.NumberInput(attrs={
                 'class': 'form-control', 
                 'min': '1',
-                'placeholder': 'Enter number of credits to deduct'
+                'placeholder': 'Enter number of crown credits to deduct'
             }),
             'reason': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Reason for credit deduction'
+                'placeholder': 'Reason for crown credit deduction'
             }),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -290,22 +318,32 @@ class CreditDeductionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Set field labels and help text
-        self.fields['amount'].label = 'Credits to Deduct'
-        self.fields['amount'].help_text = f'Current balance: {self.user.credits if self.user else 0} credits'
+        self.fields['credit_type'].label = 'Crown Credit Type'
+        self.fields['credit_type'].help_text = f'Economy: {self.user.economy_credits if self.user else 0} | Premium: {self.user.premium_credits if self.user else 0}'
+        self.fields['amount'].label = 'Crown Credits to Deduct'
         self.fields['reason'].label = 'Reason'
         self.fields['reason'].help_text = 'Please provide a reason for this deduction'
         self.fields['notes'].label = 'Notes'
         self.fields['notes'].required = False
     
-    def clean_amount(self):
-        amount = self.cleaned_data.get('amount')
+    def clean(self):
+        cleaned_data = super().clean()
+        amount = cleaned_data.get('amount')
+        credit_type = cleaned_data.get('credit_type')
+        
         if amount and amount < 1:
-            raise forms.ValidationError('Amount must be at least 1 credit')
+            raise forms.ValidationError('Amount must be at least 1 crown credit')
         
-        if self.user and amount > self.user.credits:
-            raise forms.ValidationError(f'Cannot deduct {amount} credits. User only has {self.user.credits} credits available.')
+        if self.user and amount and credit_type:
+            if credit_type == 'premium':
+                available = self.user.premium_credits
+            else:
+                available = self.user.economy_credits
+            
+            if amount > available:
+                raise forms.ValidationError(f'Cannot deduct {amount} {credit_type} crown credits. User only has {available} {credit_type} crown credits available.')
         
-        return amount
+        return cleaned_data
     
     def clean_reason(self):
         reason = self.cleaned_data.get('reason')

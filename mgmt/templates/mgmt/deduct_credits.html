@@ -10,7 +10,7 @@
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
                 <li class="breadcrumb-item"><a href="{% url 'credit_management' %}">Credit Management</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Deduct Credits</li>
+                <li class="breadcrumb-item active" aria-current="page">Deduct Crown Credits</li>
             </ol>
         </nav>
     </div>
@@ -21,17 +21,41 @@
         <div class="card">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">
-                    <i class="fas fa-minus-circle"></i> Deduct Credits from {{ dentist.name }}
+                    <i class="fas fa-minus-circle"></i> Deduct Crown Credits from {{ dentist.name }}
                 </h5>
             </div>
             <div class="card-body">
                 <div class="alert alert-info mb-4">
-                    <strong>Current Balance:</strong> {{ user_to_deduct.credits }} credits<br>
+                    <strong>Current Balance:</strong><br>
+                    <span class="badge bg-info fs-6 me-2">Economy: {{ user_to_deduct.economy_credits }}</span>
+                    <span class="badge bg-warning fs-6 me-2">Premium: {{ user_to_deduct.premium_credits }}</span>
+                    <span class="badge bg-success fs-6">Total: {{ user_to_deduct.get_total_credits }}</span><br>
                     <strong>User:</strong> {{ user_to_deduct.first_name|default:user_to_deduct.username }} ({{ user_to_deduct.username }})
                 </div>
 
                 <form method="post">
                     {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.credit_type.id_for_label }}" class="form-label">{{ form.credit_type.label }}</label>
+                        {{ form.credit_type }}
+                        {% if form.credit_type.errors %}
+                            <div class="text-danger">
+                                {% for error in form.credit_type.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.credit_type.help_text %}
+                            <div class="form-text">{{ form.credit_type.help_text }}</div>
+                        {% endif %}
+                    </div>
                     
                     <div class="mb-3">
                         <label for="{{ form.amount.id_for_label }}" class="form-label">{{ form.amount.label }}</label>
@@ -76,8 +100,8 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to deduct these credits? This action cannot be undone.');">
-                            <i class="fas fa-minus-circle"></i> Deduct Credits
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to deduct these crown credits? This action cannot be undone.');">
+                            <i class="fas fa-minus-circle"></i> Deduct Crown Credits
                         </button>
                         <a href="{% url 'credit_management' %}" class="btn btn-secondary">Cancel</a>
                     </div>
@@ -107,12 +131,15 @@
                                     <span class="badge bg-{% if transaction.transaction_type == 'purchase' %}success{% elif transaction.transaction_type == 'deduction' %}warning{% else %}info{% endif %} ms-2">
                                         {{ transaction.get_transaction_type_display }}
                                     </span>
+                                    <span class="badge bg-{% if transaction.credit_type == 'premium' %}warning{% else %}info{% endif %} ms-1">
+                                        {{ transaction.get_credit_type_display }}
+                                    </span>
                                 </div>
                                 <small class="text-muted">{{ transaction.created_at|date:"M d" }}</small>
                             </div>
                             <div class="small text-muted mt-1">{{ transaction.reason }}</div>
                             <div class="small text-muted">
-                                Balance: {{ transaction.balance_after }}
+                                Balance: E:{{ transaction.economy_balance_after }} P:{{ transaction.premium_balance_after }}
                                 {% if transaction.can_be_reversed %}
                                     <a href="{% url 'undo_deduction' transaction.id %}" class="btn btn-sm btn-outline-info ms-2" title="Undo this deduction">
                                         <i class="fas fa-undo"></i> Undo
@@ -137,7 +164,7 @@
                     <li>Credit deductions are permanent and cannot be undone</li>
                     <li>Always provide a clear reason for the deduction</li>
                     <li>The user will see this transaction in their history</li>
-                    <li>Credits cannot go below zero</li>
+                    <li>Crown credits cannot go below zero</li>
                 </ul>
             </div>
         </div>

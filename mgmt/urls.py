@@ -20,8 +20,11 @@ urlpatterns = [
     path('dentist/<int:dentist_id>/change-password/', views.change_dentist_password_view, name='change_dentist_password'),
     path('change-password/', views.dentist_change_password_view, name='dentist_change_password'),
     path('upload-file/', views.upload_file_view, name='upload_file'),
+    path('lab-upload-file/', views.lab_upload_file_view, name='lab_upload_file'),
     path('my-files/', views.dentist_file_list_view, name='dentist_file_list'),
     path('lab-files/', views.lab_file_list_view, name='lab_file_list'),
     path('download-file/<int:file_id>/', views.download_file_view, name='download_file'),
     path('stl-viewer/', views.stl_viewer, name='stl_viewer'),
+    path('lab-profile/', views.lab_profile, name='lab_profile'),
+    path('lab/<str:username>/', views.lab_public_page, name='lab_public_page'),
 ]

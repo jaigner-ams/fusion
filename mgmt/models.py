@@ -20,8 +20,16 @@ class CustomUser(AbstractUser):
     
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='dentist')
     lab_profile_id = models.IntegerField(null=True, blank=True, help_text="Link to labprofile.labID in external database")
-    credits = models.IntegerField(default=0, help_text="User account credits")
-    
+    credits = models.IntegerField(default=0, help_text="DEPRECATED - Use economy_credits and premium_credits instead")
+    economy_credits = models.IntegerField(default=0, help_text="Economy crown credit balance")
+    premium_credits = models.IntegerField(default=0, help_text="Premium crown credit balance")
+    lab_logo = models.ImageField(upload_to='lab_logos/', null=True, blank=True, help_text="Lab logo image")
+
+    # Contact info fields (primarily for labs)
+    phone = models.CharField(max_length=20, blank=True, help_text="Phone number")
+    address = models.TextField(blank=True, help_text="Business address")
+    website = models.URLField(blank=True, help_text="Website URL")
+
     def is_admin_user(self):
         return self.user_type == 'admin'
     
@@ -30,6 +38,40 @@ class CustomUser(AbstractUser):
     
     def is_dentist_user(self):
         return self.user_type == 'dentist'
+    
+    def get_total_credits(self):
+        """Get total crown credits (economy + premium)"""
+        return self.economy_credits + self.premium_credits
+    
+    def add_credits(self, amount, credit_type='economy'):
+        """Add crown credits of specified type"""
+        if credit_type == 'premium':
+            self.premium_credits += amount
+        else:
+            self.economy_credits += amount
+        self.save()
+    
+    def deduct_credits(self, amount, credit_type='economy'):
+        """Deduct crown credits of specified type. Returns True if successful, False if insufficient credits."""
+        if credit_type == 'premium':
+            if self.premium_credits >= amount:
+                self.premium_credits -= amount
+                self.save()
+                return True
+            return False
+        else:
+            if self.economy_credits >= amount:
+                self.economy_credits -= amount
+                self.save()
+                return True
+            return False
+    
+    def has_sufficient_credits(self, amount, credit_type='economy'):
+        """Check if user has sufficient crown credits of specified type"""
+        if credit_type == 'premium':
+            return self.premium_credits >= amount
+        else:
+            return self.economy_credits >= amount
     
     class Meta:
         verbose_name = 'User'
@@ -48,17 +90,22 @@ class Dentist(models.Model):
 
 class DefaultPriceList(models.Model):
     TYPE_CHOICES = [
-        ('economy', 'Economy'),
-        ('premium', 'Premium Quality'),
+        ('economy', 'Economy Crowns'),
+        ('premium', 'Premium Crowns'),
     ]
-    
+
     lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'})
-    applied_after = models.IntegerField(help_text="Number of units after which this price applies")
+    applied_after = models.IntegerField(default=0, help_text="Number of units after which this price applies")
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price per unit")
     type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='economy', help_text="Price type")
-    
+    product_description = models.CharField(max_length=100, blank=True, help_text="Product description (e.g., Layered Zirconia, Emax Layered)")
+    is_cod = models.BooleanField(default=False, help_text="Collect on Delivery - flat rate pricing")
+
     def __str__(self):
-        return f"Default ({self.get_type_display()}): {self.applied_after}+ units @ ${self.price}"
+        desc = f" - {self.product_description}" if self.product_description else ""
+        if self.is_cod:
+            return f"Default ({self.get_type_display()}{desc}): COD @ ${self.price}"
+        return f"Default ({self.get_type_display()}{desc}): {self.applied_after}+ units @ ${self.price}"
     
     class Meta:
         ordering = ['type', 'applied_after']
@@ -67,17 +114,22 @@ class DefaultPriceList(models.Model):
 
 class PriceList(models.Model):
     TYPE_CHOICES = [
-        ('economy', 'Economy'),
-        ('premium', 'Premium Quality'),
+        ('economy', 'Economy Crowns'),
+        ('premium', 'Premium Crowns'),
     ]
-    
+
     dentist = models.ForeignKey(Dentist, on_delete=models.CASCADE, related_name='custom_prices')
-    applied_after = models.IntegerField(help_text="Number of units after which this price applies")
+    applied_after = models.IntegerField(default=0, help_text="Number of units after which this price applies")
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price per unit")
     type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='economy', help_text="Price type")
-    
+    product_description = models.CharField(max_length=100, blank=True, help_text="Product description (e.g., Layered Zirconia, Emax Layered)")
+    is_cod = models.BooleanField(default=False, help_text="Collect on Delivery - flat rate pricing")
+
     def __str__(self):
-        return f"{self.dentist.name} ({self.get_type_display()}): {self.applied_after}+ units @ ${self.price}"
+        desc = f" - {self.product_description}" if self.product_description else ""
+        if self.is_cod:
+            return f"{self.dentist.name} ({self.get_type_display()}{desc}): COD @ ${self.price}"
+        return f"{self.dentist.name} ({self.get_type_display()}{desc}): {self.applied_after}+ units @ ${self.price}"
     
     class Meta:
         ordering = ['dentist', 'type', 'applied_after']
@@ -93,15 +145,16 @@ class CreditPurchase(models.Model):
     ]
     
     QUALITY_CHOICES = [
-        ('economy', 'Economy'),
-        ('premium', 'Premium Quality'),
+        ('economy', 'Economy Crowns'),
+        ('premium', 'Premium Crowns'),
     ]
-    
+
     dentist = models.ForeignKey(Dentist, on_delete=models.CASCADE, related_name='credit_purchases')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='purchases_made')
-    quantity = models.IntegerField(help_text="Number of credits to purchase")
+    quantity = models.IntegerField(help_text="Number of crown credits to purchase")
     quality_type = models.CharField(max_length=10, choices=QUALITY_CHOICES, default='economy')
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price per credit at time of purchase")
+    product_description = models.CharField(max_length=100, blank=True, help_text="Product description for premium crowns")
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price per crown credit at time of purchase")
     total_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Total price for this purchase")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -109,7 +162,7 @@ class CreditPurchase(models.Model):
     notes = models.TextField(blank=True, help_text="Optional notes about the purchase")
     
     def __str__(self):
-        return f"{self.dentist.name} - {self.quantity} credits @ ${self.unit_price} ({self.get_status_display()})"
+        return f"{self.dentist.name} - {self.quantity} crown credits @ ${self.unit_price} ({self.get_status_display()})"
     
     def calculate_price(self):
         """Calculate the price based on quantity and applicable pricing tiers"""
@@ -144,10 +197,27 @@ class CreditPurchase(models.Model):
             self.completed_at = timezone.now()
             self.save()
             
-            # Add credits to user account
+            # Add crown credits to user account based on quality type
             if self.user:
-                self.user.credits += self.quantity
+                if self.quality_type == 'premium':
+                    self.user.premium_credits += self.quantity
+                else:
+                    self.user.economy_credits += self.quantity
+                # Also update legacy field for backward compatibility
+                self.user.credits = self.user.economy_credits + self.user.premium_credits
                 self.user.save()
+                
+                # Create a transaction record for this purchase
+                CreditTransaction.objects.create(
+                    user=self.user,
+                    dentist=self.dentist,
+                    transaction_type='purchase',
+                    credit_type=self.quality_type,
+                    amount=self.quantity,
+                    reason=f"Crown credit purchase - {self.get_quality_type_display()}",
+                    notes=f"Purchase ID: {self.id}",
+                    created_by=self.user
+                )
     
     class Meta:
         ordering = ['-created_at']
@@ -161,28 +231,47 @@ class CreditTransaction(models.Model):
         ('adjustment', 'Adjustment'),
     ]
     
+    CREDIT_TYPE_CHOICES = [
+        ('economy', 'Economy Crowns'),
+        ('premium', 'Premium Crowns'),
+    ]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='credit_transactions')
     dentist = models.ForeignKey(Dentist, on_delete=models.CASCADE, related_name='credit_transactions', null=True, blank=True)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
-    amount = models.IntegerField(help_text="Credit amount (positive for addition, negative for deduction)")
+    credit_type = models.CharField(max_length=10, choices=CREDIT_TYPE_CHOICES, default='economy', help_text="Type of crown credits")
+    product_description = models.CharField(max_length=100, blank=True, help_text="Product description for premium crowns")
+    amount = models.IntegerField(help_text="Crown credit amount (positive for addition, negative for deduction)")
     reason = models.CharField(max_length=255, help_text="Reason for the transaction")
     notes = models.TextField(blank=True, help_text="Additional notes about the transaction")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='transactions_created')
     created_at = models.DateTimeField(auto_now_add=True)
-    balance_after = models.IntegerField(help_text="User's credit balance after this transaction")
+    balance_after = models.IntegerField(help_text="DEPRECATED - Use economy_balance_after and premium_balance_after")
+    economy_balance_after = models.IntegerField(default=0, help_text="Economy crown credit balance after transaction")
+    premium_balance_after = models.IntegerField(default=0, help_text="Premium crown credit balance after transaction")
     reversed_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reversal_of', help_text="Transaction that reversed this one")
     is_reversed = models.BooleanField(default=False, help_text="Whether this transaction has been reversed")
     
     def __str__(self):
         action = "+" if self.amount >= 0 else ""
-        return f"{self.user.username} - {action}{self.amount} credits ({self.get_transaction_type_display()})"
+        return f"{self.user.username} - {action}{self.amount} {self.get_credit_type_display()} crown credits ({self.get_transaction_type_display()})"
     
     def save(self, *args, **kwargs):
-        # Update user's credit balance
+        # Update user's crown credit balance based on credit type
         if self.pk is None:  # New transaction
-            self.user.credits += self.amount
-            self.user.credits = max(0, self.user.credits)  # Don't allow negative credits
-            self.balance_after = self.user.credits
+            if self.credit_type == 'premium':
+                self.user.premium_credits += self.amount
+                self.user.premium_credits = max(0, self.user.premium_credits)
+                self.premium_balance_after = self.user.premium_credits
+                self.economy_balance_after = self.user.economy_credits
+            else:
+                self.user.economy_credits += self.amount
+                self.user.economy_credits = max(0, self.user.economy_credits)
+                self.economy_balance_after = self.user.economy_credits
+                self.premium_balance_after = self.user.premium_credits
+            
+            # Keep legacy field for backward compatibility
+            self.balance_after = self.user.economy_credits + self.user.premium_credits
             self.user.save()
         super().save(*args, **kwargs)
     
@@ -199,11 +288,12 @@ class CreditTransaction(models.Model):
         if not self.can_be_reversed():
             raise ValueError("This transaction cannot be reversed")
         
-        # Create reversal transaction
+        # Create reversal transaction with same credit type
         reversal = CreditTransaction.objects.create(
             user=self.user,
             dentist=self.dentist,
             transaction_type='adjustment',
+            credit_type=self.credit_type,  # Use same credit type as original
             amount=abs(self.amount),  # Positive amount to add credits back
             reason=reason or f"Reversal of deduction: {self.reason}",
             notes=f"Reversal of transaction #{self.id}",

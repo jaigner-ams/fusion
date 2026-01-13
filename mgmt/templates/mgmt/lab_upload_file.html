@@ -1,0 +1,168 @@
+{% extends 'mgmt/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">{{ title }}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'lab_file_list' %}">Lab Files</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Upload File</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-upload"></i> Upload File for Dentist
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    You can upload files on behalf of your dentists. These files will appear in their file list and they will be able to download them.
+                </div>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Dentist Selection -->
+                    <div class="mb-3">
+                        <label for="dentist" class="form-label">Select Dentist <span class="text-danger">*</span></label>
+                        <select name="dentist" id="dentist" class="form-control" required onchange="this.form.submit();">
+                            <option value="">-- Choose a dentist --</option>
+                            {% for dentist in dentists %}
+                                <option value="{{ dentist.id }}" {% if request.POST.dentist == dentist.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ dentist.name }}
+                                    {% if dentist.user %}
+                                        ({{ dentist.user.username }})
+                                    {% else %}
+                                        (No login)
+                                    {% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Select the dentist you want to upload a file for</small>
+                    </div>
+                    
+                    {% if form %}
+                        <!-- File Upload Form Fields -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.file.id_for_label }}" class="form-label">
+                                {{ form.file.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.file }}
+                            {% if form.file.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.file.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.file.help_text %}
+                                <small class="form-text text-muted">{{ form.file.help_text }}</small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.description.help_text %}
+                                <small class="form-text text-muted">{{ form.description.help_text }}</small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="upload" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload File
+                            </button>
+                            <button type="submit" name="upload_another" class="btn btn-outline-primary">
+                                <i class="fas fa-plus"></i> Upload & Add Another
+                            </button>
+                            <a href="{% url 'lab_file_list' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    {% else %}
+                        {% if request.POST.dentist %}
+                            <div class="alert alert-warning">
+                                Please select a valid dentist to continue.
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">File Upload Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <ul class="small mb-0">
+                    <li>Maximum file size: 500 MB</li>
+                    <li>Supported formats: All file types</li>
+                    <li>Files are securely stored</li>
+                    <li>Dentists will be able to download these files</li>
+                    <li>You can view all uploaded files in the Lab Files section</li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if dentists %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Your Dentists ({{ dentists.count }})</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for dentist in dentists|slice:":5" %}
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ dentist.name }}</strong><br>
+                                <small class="text-muted">
+                                    {% if dentist.user %}
+                                        <i class="fas fa-user"></i> {{ dentist.user.username }}
+                                    {% else %}
+                                        <i class="fas fa-user-slash"></i> No login
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if dentists.count > 5 %}
+                    <div class="list-group-item px-0 py-2 text-center">
+                        <small class="text-muted">... and {{ dentists.count|add:"-5" }} more</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -4,7 +4,17 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>{{ title }}</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ title }}</h2>
+        <div>
+            <a href="{% url 'lab_upload_file' %}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Upload File for Dentist
+            </a>
+            <a href="{% url 'price_management' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
     
     {% if files %}
         <div class="table-responsive">
@@ -14,6 +24,7 @@
                         <th>Dentist</th>
                         <th>File Name</th>
                         <th>Description</th>
+                        <th>Uploaded By</th>
                         <th>Uploaded At</th>
                         <th>Status</th>
                         <th>Downloaded By</th>
@@ -26,6 +37,13 @@
                             <td>{{ file.dentist.name }}</td>
                             <td>{{ file.original_filename }}</td>
                             <td>{{ file.description|default:"-" }}</td>
+                            <td>
+                                {% if file.uploaded_by.user_type == 'lab' %}
+                                    <span class="badge bg-info">Lab</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ file.uploaded_by.first_name|default:file.uploaded_by.username }}</span>
+                                {% endif %}
+                            </td>
                             <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
                             <td>
                                 {% if file.status == 'downloaded' %}

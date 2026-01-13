@@ -27,60 +27,58 @@
                     {% for field in formset.management_form %}
                         {{ field }}
                     {% endfor %}
-                    
+
                     <div id="formset-container">
                         {% for form in formset %}
-                        <div class="formset-row">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <label>Applied After (Units)</label>
+                        <div class="formset-row mb-3 pb-3 border-bottom">
+                            <div class="row align-items-end">
+                                <div class="col-md-1">
+                                    <label>COD</label>
+                                    <div class="form-check mt-2">
+                                        {{ form.is_cod }}
+                                    </div>
+                                </div>
+                                <div class="col-md-2 applied-after-container" style="{% if form.is_cod.value %}display:none;{% endif %}">
+                                    <label>Applied After</label>
                                     {{ form.applied_after }}
-                                    {% if form.applied_after.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.applied_after.errors %}
-                                                <div>{{ error }}</div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
-                                <div class="col-md-3">
-                                    <label>Price per Unit ($)</label>
+                                <div class="col-md-2">
+                                    <label>Price ($)</label>
                                     {{ form.price }}
-                                    {% if form.price.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.price.errors %}
-                                                <div>{{ error }}</div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label>Type</label>
                                     {{ form.type }}
-                                    {% if form.type.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.type.errors %}
-                                                <div>{{ error }}</div>
-                                            {% endfor %}
+                                </div>
+                                <div class="col-md-3 product-desc-container" style="{% if form.type.value != 'premium' %}display:none;{% endif %}">
+                                    <label>Description</label>
+                                    {{ form.product_description }}
+                                </div>
+                                <div class="col-md-2">
+                                    {% if form.instance.pk %}
+                                        <label>Delete</label>
+                                        <div class="form-check">
+                                            {{ form.DELETE }}
                                         </div>
                                     {% endif %}
-                                </div>
-                                <div class="col-md-3">
-                                    <label>&nbsp;</label>
-                                    <div>
-                                        {% if form.instance.pk %}
-                                            {{ form.DELETE }} <label for="{{ form.DELETE.id_for_label }}">Delete</label>
-                                        {% endif %}
-                                    </div>
                                 </div>
                             </div>
                             {% for hidden in form.hidden_fields %}
                                 {{ hidden }}
                             {% endfor %}
+                            {% if form.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <div>{{ field }}: {{ error }}</div>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
-                    
+
                     <div class="mt-3">
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                         <button type="button" class="btn btn-success" id="add-form">Add Another Price Tier</button>
@@ -90,9 +88,9 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
-        <div class="card bg-light mb-3">
+        <div class="card mb-3">
             <div class="card-header">Current Default Prices</div>
             <div class="card-body">
                 {% if default_prices %}
@@ -107,9 +105,9 @@
                         <tbody>
                             {% for price in default_prices %}
                             <tr>
-                                <td>{{ price.applied_after }}+</td>
+                                <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
                                 <td>${{ price.price }}</td>
-                                <td>{{ price.get_type_display }}</td>
+                                <td>{{ price.get_type_display }}{% if price.product_description %} - {{ price.product_description }}{% endif %}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -120,14 +118,15 @@
                 {% endif %}
             </div>
         </div>
-        
-        <div class="card bg-info text-white">
+
+        <div class="card">
             <div class="card-body">
                 <h6 class="card-title">Custom Pricing Tips</h6>
                 <ul class="small mb-0">
                     <li>Custom prices override default prices</li>
                     <li>Leave empty to use default pricing</li>
-                    <li>Set competitive rates for volume orders</li>
+                    <li><strong>COD</strong> - Collect on Delivery pricing</li>
+                    <li>For Premium Crowns, add a product description</li>
                 </ul>
             </div>
         </div>
@@ -137,37 +136,78 @@
 
 {% block extra_js %}
 <script>
+// Show/hide Applied After based on COD checkbox
+function toggleAppliedAfter(checkbox) {
+    const row = checkbox.closest('.formset-row') || checkbox.closest('.row').parentElement;
+    const appliedAfterContainer = row.querySelector('.applied-after-container');
+    if (appliedAfterContainer) {
+        appliedAfterContainer.style.display = checkbox.checked ? 'none' : '';
+    }
+}
+
+// Show/hide product description based on type selection
+function toggleProductDescription(selectElement) {
+    const row = selectElement.closest('.formset-row') || selectElement.closest('.row').parentElement;
+    const descContainer = row.querySelector('.product-desc-container');
+    if (descContainer) {
+        descContainer.style.display = selectElement.value === 'premium' ? '' : 'none';
+    }
+}
+
+// Initialize existing forms
+document.querySelectorAll('.cod-checkbox, input[name*="-is_cod"]').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+        toggleAppliedAfter(this);
+    });
+    toggleAppliedAfter(checkbox);
+});
+
+document.querySelectorAll('.type-select, select[name*="-type"]').forEach(function(select) {
+    select.addEventListener('change', function() {
+        toggleProductDescription(this);
+    });
+    toggleProductDescription(select);
+});
+
+// Add new form functionality
 document.getElementById('add-form').addEventListener('click', function() {
     const totalForms = document.getElementById('id_PriceList-TOTAL_FORMS');
     const formsetContainer = document.getElementById('formset-container');
     const currentFormCount = parseInt(totalForms.value);
-    
+
     const newFormHtml = `
-        <div class="formset-row">
-            <div class="row">
-                <div class="col-md-3">
-                    <label>Applied After (Units)</label>
-                    <input type="number" name="PriceList-${currentFormCount}-applied_after" class="form-control" min="0">
+        <div class="formset-row mb-3 pb-3 border-bottom">
+            <div class="row align-items-end">
+                <div class="col-md-1">
+                    <label>COD</label>
+                    <div class="form-check mt-2">
+                        <input type="checkbox" name="PriceList-${currentFormCount}-is_cod" class="form-check-input cod-checkbox" onchange="toggleAppliedAfter(this)">
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label>Price per Unit ($)</label>
+                <div class="col-md-2 applied-after-container">
+                    <label>Applied After</label>
+                    <input type="number" name="PriceList-${currentFormCount}-applied_after" class="form-control applied-after-input" min="0" value="0">
+                </div>
+                <div class="col-md-2">
+                    <label>Price ($)</label>
                     <input type="number" name="PriceList-${currentFormCount}-price" class="form-control" step="0.01" min="0">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label>Type</label>
-                    <select name="PriceList-${currentFormCount}-type" class="form-control">
-                        <option value="economy">Economy</option>
-                        <option value="premium">Premium Quality</option>
+                    <select name="PriceList-${currentFormCount}-type" class="form-control type-select" onchange="toggleProductDescription(this)">
+                        <option value="economy">Economy Crowns</option>
+                        <option value="premium">Premium Crowns</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label>&nbsp;</label>
-                    <div></div>
+                <div class="col-md-3 product-desc-container" style="display:none;">
+                    <label>Description</label>
+                    <input type="text" name="PriceList-${currentFormCount}-product_description" class="form-control product-desc" placeholder="e.g., Layered Zirconia">
                 </div>
+                <div class="col-md-2"></div>
             </div>
         </div>
     `;
-    
+
     formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
     totalForms.value = currentFormCount + 1;
 });

@@ -63,7 +63,7 @@
                                     <small>
                                         <strong>Current User:</strong> {{ dentist.user.username }}<br>
                                         <strong>User Type:</strong> {{ dentist.user.get_user_type_display }}<br>
-                                        <strong>Credits:</strong> {{ dentist.user.credits }}<br>
+                                        <strong>Crown Credits:</strong> {{ dentist.user.credits }}<br>
                                         <strong>Note:</strong> To change the password, use the <a href="{% url 'change_dentist_password' dentist.id %}">Change Password</a> option.
                                     </small>
                                 </div>

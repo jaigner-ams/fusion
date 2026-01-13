@@ -1,0 +1,330 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lab_name }} - AMS Fusion</title>
+    <link rel="icon" href="data:,">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-navy: #1a2332;
+            --secondary-navy: #2a3544;
+            --accent-pink: #e91e8c;
+            --accent-purple: #6366f1;
+            --accent-gold: #f59e0b;
+            --text-light: #ffffff;
+            --card-bg: #2d3748;
+            --border-color: #4a5568;
+        }
+
+        body {
+            background-color: var(--primary-navy);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--secondary-navy) 0%, var(--primary-navy) 100%);
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .lab-logo {
+            max-width: 200px;
+            max-height: 150px;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .lab-name {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+
+        .card-header {
+            background-color: var(--secondary-navy);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .table {
+            color: var(--text-light);
+            --bs-table-bg: var(--card-bg);
+            --bs-table-color: var(--text-light);
+            --bs-table-striped-bg: rgba(255,255,255,0.05);
+            --bs-table-striped-color: var(--text-light);
+            --bs-table-border-color: var(--border-color);
+        }
+
+        .table thead th {
+            background-color: var(--secondary-navy);
+            border-color: var(--border-color);
+            color: var(--text-light);
+        }
+
+        .table td, .table th {
+            border-color: var(--border-color);
+            color: var(--text-light);
+        }
+
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: rgba(255,255,255,0.05);
+            color: var(--text-light);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-purple) 100%);
+            border: none;
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-login:hover {
+            background: linear-gradient(135deg, #d11b7c 0%, #5558e3 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(233, 30, 140, 0.4);
+            color: var(--text-light);
+        }
+
+        .contact-info {
+            background-color: var(--card-bg);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .contact-info i {
+            color: var(--accent-pink);
+            margin-right: 0.5rem;
+        }
+
+        .contact-item {
+            margin-bottom: 0.75rem;
+        }
+
+        .contact-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .contact-item a {
+            color: var(--text-light);
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            color: var(--accent-pink);
+        }
+
+        .pricing-section {
+            margin-bottom: 2rem;
+        }
+
+        .pricing-section-header {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .pricing-section-header.premium {
+            color: var(--accent-pink);
+            border-bottom-color: var(--accent-pink);
+        }
+
+        .pricing-section-header.economy {
+            color: var(--accent-gold);
+            border-bottom-color: var(--accent-gold);
+        }
+
+        .price-type-card {
+            margin-bottom: 1.5rem;
+        }
+
+        .price-type-title {
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .footer {
+            background-color: var(--secondary-navy);
+            border-top: 1px solid var(--border-color);
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .footer a {
+            color: var(--accent-pink);
+        }
+
+        .no-prices {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255,255,255,0.7);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            {% if lab.lab_logo %}
+                <img src="{{ lab.lab_logo.url }}" alt="{{ lab_name }} Logo" class="lab-logo">
+            {% endif %}
+            <h1 class="lab-name">{{ lab_name }}</h1>
+            <p class="text-muted mb-4">Dental Laboratory</p>
+            <a href="{% url 'login' %}" class="btn btn-login">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Dentist Login
+            </a>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <div class="row">
+            <!-- Contact Information -->
+            {% if lab.email or lab.phone or lab.address or lab.website %}
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-building me-2"></i>Contact Information
+                    </div>
+                    <div class="card-body">
+                        {% if lab.email %}
+                        <div class="contact-item">
+                            <i class="bi bi-envelope"></i>
+                            <a href="mailto:{{ lab.email }}">{{ lab.email }}</a>
+                        </div>
+                        {% endif %}
+
+                        {% if lab.phone %}
+                        <div class="contact-item">
+                            <i class="bi bi-telephone"></i>
+                            <a href="tel:{{ lab.phone }}">{{ lab.phone }}</a>
+                        </div>
+                        {% endif %}
+
+                        {% if lab.website %}
+                        <div class="contact-item">
+                            <i class="bi bi-globe"></i>
+                            <a href="{{ lab.website }}" target="_blank" rel="noopener">{{ lab.website }}</a>
+                        </div>
+                        {% endif %}
+
+                        {% if lab.address %}
+                        <div class="contact-item">
+                            <i class="bi bi-geo-alt"></i>
+                            <span>{{ lab.address|linebreaksbr }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Pricing Section -->
+            <div class="{% if lab.email or lab.phone or lab.address or lab.website %}col-lg-8{% else %}col-12{% endif %}">
+                {% if has_prices %}
+                    <!-- Premium Crowns Section -->
+                    {% if premium_prices %}
+                    <div class="pricing-section">
+                        <h2 class="pricing-section-header premium">
+                            <i class="bi bi-gem me-2"></i>Premium Crowns
+                        </h2>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Price per Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for type_name, prices in premium_prices.items %}
+                                    {% for price in prices %}
+                                    <tr>
+                                        <td>{{ type_name }}</td>
+                                        <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+ units{% endif %}</td>
+                                        <td>${{ price.price }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    <!-- Economy Crowns Section -->
+                    {% if economy_prices %}
+                    <div class="pricing-section">
+                        <h2 class="pricing-section-header economy">
+                            <i class="bi bi-tag me-2"></i>Economy Crowns
+                        </h2>
+                        {% for type_name, prices in economy_prices.items %}
+                        <div class="price-type-card">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Quantity</th>
+                                        <th>Price per Unit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for price in prices %}
+                                    <tr>
+                                        <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+ units{% endif %}</td>
+                                        <td>${{ price.price }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <p class="text-muted small mt-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Dentists with accounts may have custom pricing. Log in to view your personalized rates.
+                    </p>
+                {% else %}
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="no-prices">
+                                <i class="bi bi-tag" style="font-size: 3rem; opacity: 0.5;"></i>
+                                <p class="mt-3">Pricing information is not yet available. Please contact us for a quote.</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="container">
+            <p class="mb-0">Powered by <a href="{% url 'login' %}">AMS Fusion</a></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
