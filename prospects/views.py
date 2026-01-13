@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from datetime import date
 from .models import Prospect, ProspectNote, ProspectServiceType
-from .forms import ProspectForm, ProspectNoteForm
+from .forms import ProspectForm, ProspectNoteForm, NextContactDateForm
 
 
 @login_required
@@ -96,20 +96,29 @@ def prospect_detail(request, pk):
     prospect = get_object_or_404(Prospect, pk=pk)
     notes = prospect.notes.all()
     note_form = ProspectNoteForm()
+    date_form = NextContactDateForm(instance=prospect)
 
     if request.method == 'POST':
-        note_form = ProspectNoteForm(request.POST)
-        if note_form.is_valid():
-            note = note_form.save(commit=False)
-            note.prospect = prospect
-            note.save()
-            messages.success(request, 'Note added successfully!')
-            return redirect('prospects:prospect_detail', pk=pk)
+        if 'add_note' in request.POST:
+            note_form = ProspectNoteForm(request.POST)
+            if note_form.is_valid():
+                note = note_form.save(commit=False)
+                note.prospect = prospect
+                note.save()
+                messages.success(request, 'Note added successfully!')
+                return redirect('prospects:prospect_detail', pk=pk)
+        elif 'update_date' in request.POST:
+            date_form = NextContactDateForm(request.POST, instance=prospect)
+            if date_form.is_valid():
+                date_form.save()
+                messages.success(request, 'Next contact date updated!')
+                return redirect('prospects:prospect_detail', pk=pk)
 
     context = {
         'prospect': prospect,
         'notes': notes,
         'note_form': note_form,
+        'date_form': date_form,
         'title': f'Prospect: {prospect.lab_name}'
     }
     return render(request, 'prospects/prospect_detail.html', context)
@@ -172,16 +181,25 @@ def contact_schedule(request):
 def export_csv(request):
     """Export prospects to CSV file"""
     status_filter = request.GET.get('status', '')
+    contact_date = request.GET.get('contact_date', '')
 
     prospects = Prospect.objects.all()
     if status_filter:
         prospects = prospects.filter(status=status_filter)
+    if contact_date:
+        try:
+            selected_date = date.fromisoformat(contact_date)
+            prospects = prospects.filter(next_contact_date=selected_date)
+        except ValueError:
+            pass
 
     # Create the HttpResponse object with CSV header
     response = HttpResponse(content_type='text/csv')
     filename = f'prospects_{date.today().isoformat()}'
     if status_filter:
         filename += f'_{status_filter}'
+    if contact_date:
+        filename += f'_contacts_{contact_date}'
     response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
 
     writer = csv.writer(response)

@@ -124,3 +124,20 @@ class ProspectNoteForm(forms.ModelForm):
         labels = {
             'note_text': 'Add New Note'
         }
+
+
+class NextContactDateForm(forms.ModelForm):
+    """Form for editing next contact date on detail page"""
+
+    class Meta:
+        model = Prospect
+        fields = ['next_contact_date']
+        widgets = {
+            'next_contact_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            })
+        }
+        labels = {
+            'next_contact_date': 'Next Contact Date'
+        }

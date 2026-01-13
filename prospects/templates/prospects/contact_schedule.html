@@ -27,7 +27,12 @@
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">Contacts for {{ selected_date|date:"l, F d, Y" }}</h4>
-        <span class="badge bg-info fs-6">{{ prospects.count }} contact{{ prospects.count|pluralize }}</span>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge bg-info fs-6">{{ prospects.count }} contact{{ prospects.count|pluralize }}</span>
+            {% if prospects %}
+                <a href="{% url 'prospects:export_csv' %}?contact_date={{ selected_date|date:'Y-m-d' }}" class="btn btn-success btn-sm">Export CSV</a>
+            {% endif %}
+        </div>
     </div>
 
     {% if prospects %}
