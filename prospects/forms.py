@@ -17,7 +17,7 @@ class ProspectForm(forms.ModelForm):
         model = Prospect
         fields = [
             'status', 'monthly_fee', 'lab_name', 'person_name',
-            'address', 'city', 'state', 'zip_code',
+            'address', 'city', 'state', 'zip_code', 'phone', 'email',
             'has_mill', 'dentists_requested', 'next_contact_date',
             'zip_protect_1', 'zip_protect_2', 'zip_protect_3',
             'zip_protect_4', 'zip_protect_5', 'zip_protect_6',
@@ -53,6 +53,14 @@ class ProspectForm(forms.ModelForm):
             'zip_code': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Zip Code'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Phone Number'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Email Address'
             }),
             'has_mill': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'dentists_requested': forms.NumberInput(attrs={

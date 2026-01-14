@@ -42,6 +42,8 @@
                     <tr>
                         <th>Lab Name</th>
                         <th>Contact Person</th>
+                        <th>Phone</th>
+                        <th>Email</th>
                         <th>Location</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -56,6 +58,8 @@
                                 </a>
                             </td>
                             <td>{{ prospect.person_name }}</td>
+                            <td>{{ prospect.phone }}</td>
+                            <td>{{ prospect.email }}</td>
                             <td>{{ prospect.city }}{% if prospect.city and prospect.state %}, {% endif %}{{ prospect.state }}</td>
                             <td>
                                 {% if prospect.status == 'prospect' %}

@@ -108,6 +108,14 @@
             <div class="data-value">{{ prospect.person_name }}</div>
         </div>
         <div class="data-row">
+            <div class="data-label">Phone:</div>
+            <div class="data-value">{{ prospect.phone|default:"—" }}</div>
+        </div>
+        <div class="data-row">
+            <div class="data-label">Email:</div>
+            <div class="data-value">{{ prospect.email|default:"—" }}</div>
+        </div>
+        <div class="data-row">
             <div class="data-label">Address:</div>
             <div class="data-value">{{ prospect.address|default:"—" }}</div>
         </div>
