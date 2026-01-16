@@ -1,12 +1,35 @@
 import csv
+import random
+import string
+from datetime import date, datetime
+
+# Word lists for generating memorable passwords
+PASSWORD_ADJECTIVES = [
+    'Happy', 'Sunny', 'Blue', 'Green', 'Golden', 'Silver', 'Bright', 'Swift',
+    'Lucky', 'Calm', 'Cool', 'Warm', 'Fresh', 'Bold', 'Kind', 'Quick'
+]
+PASSWORD_NOUNS = [
+    'Tiger', 'Eagle', 'River', 'Mountain', 'Forest', 'Ocean', 'Star', 'Moon',
+    'Cloud', 'Stone', 'Crown', 'Bridge', 'Garden', 'Meadow', 'Valley', 'Lake'
+]
+
+def generate_simple_password():
+    """Generate a memorable password like 'HappyTiger42'"""
+    adjective = random.choice(PASSWORD_ADJECTIVES)
+    noun = random.choice(PASSWORD_NOUNS)
+    number = random.randint(10, 99)
+    return f"{adjective}{noun}{number}"
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse
-from datetime import date
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
 from .models import Prospect, ProspectNote, ProspectServiceType
-from .forms import ProspectForm, ProspectNoteForm, NextContactDateForm
+from .forms import ProspectForm, ProspectNoteForm, NextContactDateForm, CreateLabAccountForm
+from mgmt.models import CustomUser
 
 
 @login_required
@@ -248,3 +271,127 @@ def export_csv(request):
         ])
 
     return response
+
+
+@login_required
+def create_lab_account(request, pk):
+    """Create a lab user account for a prospect who has become a member"""
+    prospect = get_object_or_404(Prospect, pk=pk)
+
+    # Check if prospect is already a member with an account
+    if prospect.lab_user:
+        messages.warning(request, f'A lab account already exists for "{prospect.lab_name}".')
+        return redirect('prospects:prospect_detail', pk=pk)
+
+    # Check if prospect status is 'member'
+    if prospect.status != 'member':
+        messages.error(request, 'Can only create accounts for Fusion Members. Please change the status first.')
+        return redirect('prospects:prospect_detail', pk=pk)
+
+    if request.method == 'POST':
+        form = CreateLabAccountForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            send_email = form.cleaned_data['send_email']
+
+            # Check if username already exists
+            if CustomUser.objects.filter(username=username).exists():
+                messages.error(request, f'Username "{username}" already exists. Please choose a different username.')
+                return render(request, 'prospects/create_lab_account.html', {
+                    'form': form,
+                    'prospect': prospect,
+                    'title': f'Create Account for {prospect.lab_name}'
+                })
+
+            # Generate a memorable password
+            password = generate_simple_password()
+
+            # Create the lab user account
+            lab_user = CustomUser.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                user_type='lab',
+                first_name=prospect.lab_name,
+                phone=prospect.phone,
+                address=f"{prospect.address}\n{prospect.city}, {prospect.state} {prospect.zip_code}".strip()
+            )
+
+            # Link the user to the prospect
+            prospect.lab_user = lab_user
+            prospect.save()
+
+            # Send email with credentials if requested
+            email_sent = False
+            if send_email and email:
+                try:
+                    # Build the login URL
+                    if hasattr(settings, 'SITE_URL'):
+                        login_url = f"{settings.SITE_URL}/accounts/login/"
+                    else:
+                        login_url = "http://your-domain.com/accounts/login/"
+
+                    # Prepare context for email template
+                    context = {
+                        'lab_name': prospect.lab_name,
+                        'username': username,
+                        'password': password,
+                        'login_url': login_url,
+                        'current_year': datetime.now().year,
+                    }
+
+                    # Render email templates
+                    html_message = render_to_string('mgmt/email/new_lab_credentials.html', context)
+                    plain_message = render_to_string('mgmt/email/new_lab_credentials.txt', context)
+
+                    # Send email
+                    send_mail(
+                        subject='Welcome to AMS Fusion - Your Lab Account is Ready!',
+                        message=plain_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                    email_sent = True
+                except Exception as e:
+                    messages.warning(request, f'Account created but failed to send email: {str(e)}')
+
+            # Show success message with credentials
+            if email_sent:
+                messages.success(
+                    request,
+                    f'Lab account created successfully for "{prospect.lab_name}"! '
+                    f'Credentials have been emailed to {email}.'
+                )
+            else:
+                messages.success(
+                    request,
+                    f'Lab account created successfully for "{prospect.lab_name}"! '
+                    f'Username: {username} | Password: {password}'
+                )
+
+            return redirect('prospects:prospect_detail', pk=pk)
+    else:
+        # Pre-populate form with prospect data
+        # Generate default username from lab name
+        base_username = ''.join(prospect.lab_name.lower().split())[:20]
+        username = base_username
+        counter = 1
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        form = CreateLabAccountForm(initial={
+            'username': username,
+            'email': prospect.email,
+            'send_email': bool(prospect.email),
+        })
+
+    context = {
+        'form': form,
+        'prospect': prospect,
+        'title': f'Create Account for {prospect.lab_name}'
+    }
+    return render(request, 'prospects/create_lab_account.html', context)

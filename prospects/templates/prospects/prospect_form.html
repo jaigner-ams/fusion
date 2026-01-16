@@ -71,6 +71,17 @@
             </div>
         </div>
 
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="id_phone" class="form-label">Phone</label>
+                {{ form.phone }}
+            </div>
+            <div class="col-md-6">
+                <label for="id_email" class="form-label">Email</label>
+                {{ form.email }}
+            </div>
+        </div>
+
         <hr class="border-secondary">
 
         <!-- Service Types -->
@@ -108,19 +119,27 @@
         <!-- Zip Codes to Protect -->
         <div class="mb-4">
             <label class="form-label fw-bold">Zip Codes to Protect</label>
-            <div class="row g-2">
-                <div class="col-auto">{{ form.zip_protect_1 }}</div>
-                <div class="col-auto">{{ form.zip_protect_2 }}</div>
-                <div class="col-auto">{{ form.zip_protect_3 }}</div>
-                <div class="col-auto">{{ form.zip_protect_4 }}</div>
-                <div class="col-auto">{{ form.zip_protect_5 }}</div>
+            <div class="row mb-2">
+                <div class="col-auto">
+                    <small class="text-muted">Zip Code</small>
+                </div>
+                <div class="col-auto">
+                    <small class="text-muted">Qty</small>
+                </div>
             </div>
-            <div class="row g-2 mt-2">
-                <div class="col-auto">{{ form.zip_protect_6 }}</div>
-                <div class="col-auto">{{ form.zip_protect_7 }}</div>
-                <div class="col-auto">{{ form.zip_protect_8 }}</div>
-                <div class="col-auto">{{ form.zip_protect_9 }}</div>
-                <div class="col-auto">{{ form.zip_protect_10 }}</div>
+            <div class="row g-2 mb-2">
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_1 }}{{ form.zip_qty_1 }}</div>
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_2 }}{{ form.zip_qty_2 }}</div>
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_3 }}{{ form.zip_qty_3 }}</div>
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_4 }}{{ form.zip_qty_4 }}</div>
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_5 }}{{ form.zip_qty_5 }}</div>
+            </div>
+            <div class="row g-2">
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_6 }}{{ form.zip_qty_6 }}</div>
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_7 }}{{ form.zip_qty_7 }}</div>
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_8 }}{{ form.zip_qty_8 }}</div>
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_9 }}{{ form.zip_qty_9 }}</div>
+                <div class="col-auto d-flex gap-1">{{ form.zip_protect_10 }}{{ form.zip_qty_10 }}</div>
             </div>
         </div>
 

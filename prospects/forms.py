@@ -21,7 +21,9 @@ class ProspectForm(forms.ModelForm):
             'has_mill', 'dentists_requested', 'next_contact_date',
             'zip_protect_1', 'zip_protect_2', 'zip_protect_3',
             'zip_protect_4', 'zip_protect_5', 'zip_protect_6',
-            'zip_protect_7', 'zip_protect_8', 'zip_protect_9', 'zip_protect_10'
+            'zip_protect_7', 'zip_protect_8', 'zip_protect_9', 'zip_protect_10',
+            'zip_qty_1', 'zip_qty_2', 'zip_qty_3', 'zip_qty_4', 'zip_qty_5',
+            'zip_qty_6', 'zip_qty_7', 'zip_qty_8', 'zip_qty_9', 'zip_qty_10'
         ]
         widgets = {
             'status': forms.RadioSelect(attrs={'class': 'form-check-input'}),
@@ -112,6 +114,66 @@ class ProspectForm(forms.ModelForm):
                 'class': 'form-control form-control-sm',
                 'placeholder': 'Zip 10'
             }),
+            'zip_qty_1': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_2': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_3': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_4': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_5': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_6': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_7': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_8': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_9': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'zip_qty_10': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Qty',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
         }
 
 
@@ -149,3 +211,34 @@ class NextContactDateForm(forms.ModelForm):
         labels = {
             'next_contact_date': 'Next Contact Date'
         }
+
+
+class CreateLabAccountForm(forms.Form):
+    """Form for creating a lab user account for a prospect"""
+
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Username'
+        }),
+        help_text='Username for logging into the price program'
+    )
+
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Email Address'
+        }),
+        help_text='Email to send login credentials'
+    )
+
+    send_email = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        }),
+        label='Send credentials via email'
+    )

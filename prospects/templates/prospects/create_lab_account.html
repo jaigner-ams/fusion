@@ -1,0 +1,90 @@
+{% extends 'prospects/base_prospects.html' %}
+
+{% block title %}{{ title }} - AMS Fusion Prospects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Create Lab Account</h1>
+    <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="btn btn-secondary">Cancel</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <h4 class="mb-3">Account Details for {{ prospect.lab_name }}</h4>
+            <hr class="border-secondary">
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="id_username" class="form-label">Username</label>
+                    {{ form.username }}
+                    {% if form.username.help_text %}
+                        <div class="form-text text-muted">{{ form.username.help_text }}</div>
+                    {% endif %}
+                    {% if form.username.errors %}
+                        <div class="text-danger small">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_email" class="form-label">Email Address</label>
+                    {{ form.email }}
+                    {% if form.email.help_text %}
+                        <div class="form-text text-muted">{{ form.email.help_text }}</div>
+                    {% endif %}
+                    {% if form.email.errors %}
+                        <div class="text-danger small">{{ form.email.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check">
+                        {{ form.send_email }}
+                        <label class="form-check-label" for="id_send_email">
+                            {{ form.send_email.label }}
+                        </label>
+                    </div>
+                    <div class="form-text text-muted">
+                        If unchecked, credentials will be displayed on screen after creation.
+                    </div>
+                </div>
+
+                <hr class="border-secondary">
+
+                <div class="alert alert-info">
+                    <strong>Note:</strong> A random password will be generated automatically.
+                    The new lab user will be able to:
+                    <ul class="mb-0 mt-2">
+                        <li>Set up their default pricing tiers</li>
+                        <li>Create and manage dentist accounts</li>
+                        <li>Set custom pricing for individual dentists</li>
+                        <li>Track credit purchases and transactions</li>
+                    </ul>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                    <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <h5 class="mb-3">Prospect Info</h5>
+            <hr class="border-secondary">
+            <p><strong>Lab Name:</strong> {{ prospect.lab_name }}</p>
+            <p><strong>Contact:</strong> {{ prospect.person_name }}</p>
+            <p><strong>Phone:</strong> {{ prospect.phone|default:"Not set" }}</p>
+            <p><strong>Email:</strong> {{ prospect.email|default:"Not set" }}</p>
+            <p>
+                <strong>Status:</strong>
+                <span class="badge badge-member">Fusion Member</span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

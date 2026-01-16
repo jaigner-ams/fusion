@@ -49,6 +49,7 @@
         .badge-prospect { background-color: #3b82f6; color: white; }
         .badge-member { background-color: #22c55e; color: white; }
         .badge-declined { background-color: #ef4444; color: white; }
+        .badge-corporate { background-color: #8b5cf6; color: white; }
         .zip-badges span {
             display: inline-block;
             background-color: #e0e0e0;
@@ -93,6 +94,8 @@
                         <span class="badge-print badge-member">Fusion Member</span>
                     {% elif prospect.status == 'declined' %}
                         <span class="badge-print badge-declined">Fusion Declined</span>
+                    {% elif prospect.status == 'corporate' %}
+                        <span class="badge-print badge-corporate">Corporate Lab</span>
                     {% endif %}
                 </div>
             </div>
@@ -162,10 +165,10 @@
         <div class="data-row">
             <div class="data-label">Zip Codes:</div>
             <div class="data-value zip-badges">
-                {% with zips=prospect.get_protected_zip_codes %}
+                {% with zips=prospect.get_protected_zips_with_qty %}
                     {% if zips %}
-                        {% for zip in zips %}
-                            <span>{{ zip }}</span>
+                        {% for zip, qty in zips %}
+                            <span>{{ zip }}{% if qty %} ({{ qty }}){% endif %}</span>
                         {% endfor %}
                     {% else %}
                         —

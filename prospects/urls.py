@@ -12,4 +12,5 @@ urlpatterns = [
     path('<int:pk>/edit/', views.prospect_edit, name='prospect_edit'),
     path('<int:pk>/delete/', views.prospect_delete, name='prospect_delete'),
     path('<int:pk>/print/', views.prospect_print, name='prospect_print'),
+    path('<int:pk>/create-account/', views.create_lab_account, name='create_lab_account'),
 ]

@@ -170,7 +170,7 @@ EMAIL_PORT = 587  # Using TLS port
 EMAIL_USE_TLS = True  # Enable TLS
 EMAIL_USE_SSL = False  # Don't use SSL when using TLS
 EMAIL_HOST_USER = 'info@amsfusion.com'  # Your email address
-EMAIL_HOST_PASSWORD = 'asdf FDSA23t2AGFA'  # Your email password
+EMAIL_HOST_PASSWORD = 'AFj32lQF03ntASFNl3'  # Your email password
 DEFAULT_FROM_EMAIL = 'AMS Fusion <info@amsfusion.com>'
 SERVER_EMAIL = 'AMS Fusion <info@amsfusion.com>'
 
@@ -178,4 +178,4 @@ SERVER_EMAIL = 'AMS Fusion <info@amsfusion.com>'
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Site URL for email links (update with your actual domain)
-SITE_URL = 'http://your-domain.com'  # Change to https://yourdomain.com in production
+SITE_URL = 'https://amsfusion.com'

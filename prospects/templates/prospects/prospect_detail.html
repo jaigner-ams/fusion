@@ -26,8 +26,35 @@
                     <span class="badge badge-member fs-6">Fusion Member</span>
                 {% elif prospect.status == 'declined' %}
                     <span class="badge badge-declined fs-6">Fusion Declined</span>
+                {% elif prospect.status == 'corporate' %}
+                    <span class="badge badge-corporate fs-6">Corporate Lab</span>
                 {% endif %}
             </div>
+
+            {% if prospect.status == 'member' %}
+            <!-- Lab Account Section -->
+            <div class="mb-3">
+                <h5 class="mb-3">Lab Account</h5>
+                {% if prospect.lab_user %}
+                    <div class="alert alert-success">
+                        <strong>Account Active</strong>
+                        <p class="mb-1 mt-2"><strong>Username:</strong> {{ prospect.lab_user.username }}</p>
+                        <p class="mb-0"><strong>Email:</strong> {{ prospect.lab_user.email|default:"Not set" }}</p>
+                    </div>
+                    <p class="text-muted small">
+                        Account created: {{ prospect.lab_user.date_joined|date:"M d, Y" }}
+                    </p>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <strong>No Account Created Yet</strong>
+                        <p class="mb-0 mt-2">This member doesn't have a lab account to access the price program.</p>
+                    </div>
+                    <a href="{% url 'prospects:create_lab_account' prospect.pk %}" class="btn btn-primary">
+                        Create Lab Account
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
 
             <hr class="border-secondary">
 
@@ -118,17 +145,17 @@
             <!-- Protected Zip Codes -->
             <div class="mb-3">
                 <p class="text-muted mb-1">Protected Zip Codes</p>
-                <p class="fw-bold">
-                    {% with zips=prospect.get_protected_zip_codes %}
+                <div class="fw-bold">
+                    {% with zips=prospect.get_protected_zips_with_qty %}
                         {% if zips %}
-                            {% for zip in zips %}
-                                <span class="badge bg-info me-1">{{ zip }}</span>
+                            {% for zip, qty in zips %}
+                                <span class="badge bg-info me-1">{{ zip }}{% if qty %} ({{ qty }}){% endif %}</span>
                             {% endfor %}
                         {% else %}
                             <span class="text-muted">None specified</span>
                         {% endif %}
                     {% endwith %}
-                </p>
+                </div>
             </div>
 
             <hr class="border-secondary">

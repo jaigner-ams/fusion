@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 
 
@@ -9,6 +10,7 @@ class Prospect(models.Model):
         ('prospect', 'Fusion Prospect'),
         ('member', 'Fusion Member'),
         ('declined', 'Fusion Declined'),
+        ('corporate', 'Corporate Lab'),
     ]
 
     SERVICE_TYPE_CHOICES = [
@@ -19,6 +21,16 @@ class Prospect(models.Model):
 
     # Status - Radio button in form
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='prospect')
+
+    # Link to created Lab user account (when prospect becomes a member)
+    lab_user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='prospect_profile',
+        help_text="Lab user account created for this prospect"
+    )
 
     # Lead fields
     monthly_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -52,6 +64,18 @@ class Prospect(models.Model):
     zip_protect_9 = models.CharField(max_length=20, blank=True)
     zip_protect_10 = models.CharField(max_length=20, blank=True)
 
+    # Quantity of dentists for each protected zip code
+    zip_qty_1 = models.IntegerField(null=True, blank=True)
+    zip_qty_2 = models.IntegerField(null=True, blank=True)
+    zip_qty_3 = models.IntegerField(null=True, blank=True)
+    zip_qty_4 = models.IntegerField(null=True, blank=True)
+    zip_qty_5 = models.IntegerField(null=True, blank=True)
+    zip_qty_6 = models.IntegerField(null=True, blank=True)
+    zip_qty_7 = models.IntegerField(null=True, blank=True)
+    zip_qty_8 = models.IntegerField(null=True, blank=True)
+    zip_qty_9 = models.IntegerField(null=True, blank=True)
+    zip_qty_10 = models.IntegerField(null=True, blank=True)
+
     # Next Contact Date - Calendar picker
     next_contact_date = models.DateField(null=True, blank=True)
 
@@ -74,6 +98,16 @@ class Prospect(models.Model):
             zip_code = getattr(self, f'zip_protect_{i}')
             if zip_code:
                 zips.append(zip_code)
+        return zips
+
+    def get_protected_zips_with_qty(self):
+        """Return list of tuples (zip_code, qty) for non-empty protected zip codes"""
+        zips = []
+        for i in range(1, 11):
+            zip_code = getattr(self, f'zip_protect_{i}')
+            qty = getattr(self, f'zip_qty_{i}')
+            if zip_code:
+                zips.append((zip_code, qty))
         return zips
 
     def get_service_types_display(self):

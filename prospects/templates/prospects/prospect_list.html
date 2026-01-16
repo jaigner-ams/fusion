@@ -66,7 +66,7 @@
 <div class="card">
     {% if prospects %}
         <div class="table-responsive">
-            <table class="table table-striped table-hover mb-0">
+            <table id="prospectsTable" class="table table-striped table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Lab Name</th>
@@ -74,14 +74,14 @@
                         <th>Location</th>
                         <th>Status</th>
                         <th>Next Contact</th>
-                        <th>Actions</th>
+                        <th class="no-sort">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for prospect in prospects %}
                         <tr>
                             <td>
-                                <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="text-white text-decoration-none">
+                                <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="text-theme text-decoration-none">
                                     <strong>{{ prospect.lab_name }}</strong>
                                 </a>
                             </td>
@@ -94,6 +94,8 @@
                                     <span class="badge badge-member">Fusion Member</span>
                                 {% elif prospect.status == 'declined' %}
                                     <span class="badge badge-declined">Fusion Declined</span>
+                                {% elif prospect.status == 'corporate' %}
+                                    <span class="badge badge-corporate">Corporate Lab</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -125,4 +127,32 @@
         </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#prospectsTable').DataTable({
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        order: [[0, 'asc']],  // Sort by Lab Name by default
+        columnDefs: [
+            { orderable: false, targets: 5 }  // Disable sorting on Actions column
+        ],
+        language: {
+            search: "Search:",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ prospects",
+            infoEmpty: "No prospects found",
+            infoFiltered: "(filtered from _MAX_ total)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
