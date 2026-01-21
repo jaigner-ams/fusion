@@ -106,7 +106,7 @@
                             {% for price in default_prices %}
                             <tr>
                                 <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
-                                <td>${{ price.price }}</td>
+                                <td>${{ price.price|floatformat:2 }}</td>
                                 <td>{{ price.get_type_display }}{% if price.product_description %} - {{ price.product_description }}{% endif %}</td>
                             </tr>
                             {% endfor %}

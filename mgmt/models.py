@@ -100,6 +100,7 @@ class DefaultPriceList(models.Model):
     type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='economy', help_text="Price type")
     product_description = models.CharField(max_length=100, blank=True, help_text="Product description (e.g., Layered Zirconia, Emax Layered)")
     is_cod = models.BooleanField(default=False, help_text="Collect on Delivery - flat rate pricing")
+    notes = models.CharField(max_length=200, blank=True, help_text="Additional notes or specifics for this price")
 
     def __str__(self):
         desc = f" - {self.product_description}" if self.product_description else ""
@@ -196,18 +197,10 @@ class CreditPurchase(models.Model):
             self.status = 'completed'
             self.completed_at = timezone.now()
             self.save()
-            
-            # Add crown credits to user account based on quality type
+
+            # Create a transaction record for this purchase
+            # Note: CreditTransaction.save() automatically adds credits to user
             if self.user:
-                if self.quality_type == 'premium':
-                    self.user.premium_credits += self.quantity
-                else:
-                    self.user.economy_credits += self.quantity
-                # Also update legacy field for backward compatibility
-                self.user.credits = self.user.economy_credits + self.user.premium_credits
-                self.user.save()
-                
-                # Create a transaction record for this purchase
                 CreditTransaction.objects.create(
                     user=self.user,
                     dentist=self.dentist,

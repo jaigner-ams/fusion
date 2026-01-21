@@ -98,9 +98,9 @@ def default_prices_view(request):
             super().__init__(*args, user=request.user, **kwargs)
     
     if request.user.is_admin_user():
-        fields = ['lab', 'is_cod', 'applied_after', 'price', 'type', 'product_description']
+        fields = ['lab', 'is_cod', 'applied_after', 'price', 'type', 'product_description', 'notes']
     else:
-        fields = ['is_cod', 'applied_after', 'price', 'type', 'product_description']
+        fields = ['is_cod', 'applied_after', 'price', 'type', 'product_description', 'notes']
     
     DefaultPriceFormSet = modelformset_factory(
         model=DefaultPriceList,
@@ -859,6 +859,10 @@ def lab_public_page(request, username):
             if key not in economy_prices:
                 economy_prices[key] = []
             economy_prices[key].append(price)
+
+    # Sort economy prices by price descending (highest first)
+    for key in economy_prices:
+        economy_prices[key] = sorted(economy_prices[key], key=lambda x: x.price, reverse=True)
 
     context = {
         'lab': lab,

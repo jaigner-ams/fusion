@@ -7,9 +7,13 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Purchase Crown Credits</h2>
-                <div>
-                    <span class="text-muted">Current Balance: </span>
-                    <span class="badge bg-success fs-6">{{ current_credits }} crown credits</span>
+                <div class="text-end">
+                    <span class="text-muted">Current Balance:</span>
+                    <div class="mt-1">
+                        <span class="badge bg-info me-2">Economy: {{ user.economy_credits }}</span>
+                        <span class="badge bg-warning">Premium: {{ user.premium_credits }}</span>
+                        <span class="badge bg-success ms-2">Total: {{ user.get_total_credits }}</span>
+                    </div>
                 </div>
             </div>
             
@@ -97,7 +101,7 @@
                                 <tr>
                                     <td>{{ price.get_type_display }}</td>
                                     <td>{{ price.applied_after }}+</td>
-                                    <td>${{ price.price }}</td>
+                                    <td>${{ price.price|floatformat:2 }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -121,7 +125,7 @@
                                 <tr>
                                     <td>{{ price.get_type_display }}</td>
                                     <td>{{ price.applied_after }}+</td>
-                                    <td>${{ price.price }}</td>
+                                    <td>${{ price.price|floatformat:2 }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

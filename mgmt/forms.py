@@ -44,14 +44,15 @@ class LabProfileForm(forms.ModelForm):
 class DefaultPriceForm(forms.ModelForm):
     class Meta:
         model = DefaultPriceList
-        fields = ['lab', 'is_cod', 'applied_after', 'price', 'type', 'product_description']
+        fields = ['lab', 'is_cod', 'applied_after', 'price', 'type', 'product_description', 'notes']
         widgets = {
             'lab': forms.Select(attrs={'class': 'form-control'}),
             'is_cod': forms.CheckboxInput(attrs={'class': 'form-check-input cod-checkbox'}),
             'applied_after': forms.NumberInput(attrs={'class': 'form-control applied-after-input', 'min': '0'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'type': forms.Select(attrs={'class': 'form-control type-select'}),
-            'product_description': forms.TextInput(attrs={'class': 'form-control product-desc', 'placeholder': 'e.g., Layered Zirconia, Emax Layered'})
+            'product_description': forms.TextInput(attrs={'class': 'form-control product-desc', 'placeholder': 'e.g., Layered Zirconia, Emax Layered'}),
+            'notes': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Additional notes (economy only)'})
         }
 
     def __init__(self, *args, **kwargs):

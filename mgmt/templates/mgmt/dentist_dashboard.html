@@ -47,7 +47,7 @@
                                         <tr>
                                             <td>{{ price.get_type_display }}</td>
                                             <td>{{ price.applied_after }}+</td>
-                                            <td>${{ price.price }}</td>
+                                            <td>${{ price.price|floatformat:2 }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -81,7 +81,7 @@
                                         <tr>
                                             <td>{{ price.get_type_display }}</td>
                                             <td>{{ price.applied_after }}+</td>
-                                            <td>${{ price.price }}</td>
+                                            <td>${{ price.price|floatformat:2 }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>

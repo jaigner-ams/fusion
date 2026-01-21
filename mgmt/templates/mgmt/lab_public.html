@@ -9,28 +9,47 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
     <style>
-        :root {
-            --primary-navy: #1a2332;
-            --secondary-navy: #2a3544;
+        /* Dark theme (default) */
+        :root, [data-theme="dark"] {
+            --primary-bg: #1a2332;
+            --secondary-bg: #2a3544;
             --accent-pink: #e91e8c;
             --accent-purple: #6366f1;
             --accent-gold: #f59e0b;
-            --text-light: #ffffff;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
             --card-bg: #2d3748;
             --border-color: #4a5568;
+            --table-stripe-bg: rgba(255,255,255,0.05);
+        }
+
+        /* Light theme */
+        [data-theme="light"] {
+            --primary-bg: #f8fafc;
+            --secondary-bg: #e2e8f0;
+            --accent-pink: #db2777;
+            --accent-purple: #4f46e5;
+            --accent-gold: #d97706;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --table-stripe-bg: rgba(0,0,0,0.02);
         }
 
         body {
-            background-color: var(--primary-navy);
-            color: var(--text-light);
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .hero-section {
-            background: linear-gradient(135deg, var(--secondary-navy) 0%, var(--primary-navy) 100%);
+            background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
             padding: 3rem 0;
             border-bottom: 1px solid var(--border-color);
             text-align: center;
+            transition: background 0.3s;
         }
 
         .lab-logo {
@@ -50,44 +69,45 @@
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 0.5rem;
+            transition: background-color 0.3s;
         }
 
         .card-header {
-            background-color: var(--secondary-navy);
+            background-color: var(--secondary-bg);
             border-bottom: 1px solid var(--border-color);
-            color: var(--text-light);
+            color: var(--text-primary);
             font-weight: 600;
         }
 
         .table {
-            color: var(--text-light);
+            color: var(--text-primary);
             --bs-table-bg: var(--card-bg);
-            --bs-table-color: var(--text-light);
-            --bs-table-striped-bg: rgba(255,255,255,0.05);
-            --bs-table-striped-color: var(--text-light);
+            --bs-table-color: var(--text-primary);
+            --bs-table-striped-bg: var(--table-stripe-bg);
+            --bs-table-striped-color: var(--text-primary);
             --bs-table-border-color: var(--border-color);
         }
 
         .table thead th {
-            background-color: var(--secondary-navy);
+            background-color: var(--secondary-bg);
             border-color: var(--border-color);
-            color: var(--text-light);
+            color: var(--text-primary);
         }
 
         .table td, .table th {
             border-color: var(--border-color);
-            color: var(--text-light);
+            color: var(--text-primary);
         }
 
         .table-striped > tbody > tr:nth-of-type(odd) > * {
-            background-color: rgba(255,255,255,0.05);
-            color: var(--text-light);
+            background-color: var(--table-stripe-bg);
+            color: var(--text-primary);
         }
 
         .btn-login {
             background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-purple) 100%);
             border: none;
-            color: var(--text-light);
+            color: #ffffff;
             font-weight: 600;
             padding: 0.75rem 2rem;
             font-size: 1.1rem;
@@ -98,7 +118,7 @@
             background: linear-gradient(135deg, #d11b7c 0%, #5558e3 100%);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(233, 30, 140, 0.4);
-            color: var(--text-light);
+            color: #ffffff;
         }
 
         .contact-info {
@@ -122,7 +142,7 @@
         }
 
         .contact-item a {
-            color: var(--text-light);
+            color: var(--text-primary);
             text-decoration: none;
         }
 
@@ -157,18 +177,19 @@
         }
 
         .price-type-title {
-            color: var(--text-light);
+            color: var(--text-primary);
             font-weight: 600;
             font-size: 1.1rem;
             opacity: 0.9;
         }
 
         .footer {
-            background-color: var(--secondary-navy);
+            background-color: var(--secondary-bg);
             border-top: 1px solid var(--border-color);
             padding: 1.5rem 0;
             margin-top: 3rem;
             text-align: center;
+            transition: background-color 0.3s;
         }
 
         .footer a {
@@ -178,8 +199,52 @@
         .no-prices {
             text-align: center;
             padding: 2rem;
-            color: rgba(255,255,255,0.7);
+            color: var(--text-secondary);
         }
+
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.6rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--secondary-bg);
+            border-color: var(--accent-pink);
+            transform: scale(1.1);
+        }
+
+        .theme-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        [data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+        [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+        [data-theme="light"] .theme-toggle .icon-sun { display: none; }
+        [data-theme="light"] .theme-toggle .icon-moon { display: inline; }
+
+        .theme-toggle .icon-sun { display: inline; }
+        .theme-toggle .icon-moon { display: none; }
     </style>
 </head>
 <body>
@@ -188,8 +253,9 @@
         <div class="container">
             {% if lab.lab_logo %}
                 <img src="{{ lab.lab_logo.url }}" alt="{{ lab_name }} Logo" class="lab-logo">
+            {% else %}
+                <h1 class="lab-name">{{ lab_name }}</h1>
             {% endif %}
-            <h1 class="lab-name">{{ lab_name }}</h1>
             <p class="text-muted mb-4">Dental Laboratory</p>
             <a href="{% url 'login' %}" class="btn btn-login">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Dentist Login
@@ -262,7 +328,7 @@
                                     <tr>
                                         <td>{{ type_name }}</td>
                                         <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+ units{% endif %}</td>
-                                        <td>${{ price.price }}</td>
+                                        <td>${{ price.price|floatformat:2 }}</td>
                                     </tr>
                                     {% endfor %}
                                 {% endfor %}
@@ -284,13 +350,15 @@
                                     <tr>
                                         <th>Quantity</th>
                                         <th>Price per Unit</th>
+                                        <th>Notes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for price in prices %}
                                     <tr>
                                         <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+ units{% endif %}</td>
-                                        <td>${{ price.price }}</td>
+                                        <td>${{ price.price|floatformat:2 }}</td>
+                                        <td>{{ price.notes }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -325,6 +393,35 @@
         </div>
     </div>
 
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme toggle functionality
+        (function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const html = document.documentElement;
+
+            // Get saved theme or default to dark
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            html.setAttribute('data-theme', savedTheme);
+
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+        })();
+    </script>
 </body>
 </html>

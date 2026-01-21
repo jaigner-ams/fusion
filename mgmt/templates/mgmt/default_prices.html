@@ -57,6 +57,10 @@
                                     <label>Description</label>
                                     {{ form.product_description }}
                                 </div>
+                                <div class="col-md-2 notes-container" style="{% if form.type.value == 'premium' %}display:none;{% endif %}">
+                                    <label>Notes</label>
+                                    {{ form.notes }}
+                                </div>
                                 <div class="col-md-1">
                                     {% if form.instance.pk %}
                                         <label>Del</label>
@@ -119,12 +123,16 @@ function toggleAppliedAfter(checkbox) {
     }
 }
 
-// Show/hide product description based on type selection
+// Show/hide product description and notes based on type selection
 function toggleProductDescription(selectElement) {
     const row = selectElement.closest('.formset-row') || selectElement.closest('.row').parentElement;
     const descContainer = row.querySelector('.product-desc-container');
+    const notesContainer = row.querySelector('.notes-container');
     if (descContainer) {
         descContainer.style.display = selectElement.value === 'premium' ? '' : 'none';
+    }
+    if (notesContainer) {
+        notesContainer.style.display = selectElement.value === 'economy' ? '' : 'none';
     }
 }
 
@@ -190,6 +198,10 @@ document.getElementById('add-form').addEventListener('click', function() {
         <div class="col-md-2 product-desc-container" style="display:none;">
             <label>Description</label>
             <input type="text" name="form-${currentFormCount}-product_description" class="form-control product-desc" placeholder="e.g., Layered Zirconia">
+        </div>
+        <div class="col-md-2 notes-container">
+            <label>Notes</label>
+            <input type="text" name="form-${currentFormCount}-notes" class="form-control" placeholder="Additional notes">
         </div>
         <div class="col-md-1"></div>
     </div></div>`;

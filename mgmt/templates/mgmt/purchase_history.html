@@ -7,9 +7,13 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Purchase History</h2>
-                <div>
-                    <span class="text-muted">Current Balance: </span>
-                    <span class="badge bg-success fs-6">{{ current_credits }} credits</span>
+                <div class="text-end">
+                    <span class="text-muted">Current Balance:</span>
+                    <div class="mt-1">
+                        <span class="badge bg-info me-2">Economy: {{ user.economy_credits }}</span>
+                        <span class="badge bg-warning">Premium: {{ user.premium_credits }}</span>
+                        <span class="badge bg-success ms-2">Total: {{ user.get_total_credits }}</span>
+                    </div>
                 </div>
             </div>
             
@@ -43,7 +47,11 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Current Balance</h5>
-                    <h2 class="text-info">{{ current_credits }}</h2>
+                    <div class="mb-2">
+                        <span class="badge bg-info">Economy: {{ user.economy_credits }}</span>
+                        <span class="badge bg-warning">Premium: {{ user.premium_credits }}</span>
+                    </div>
+                    <h2 class="text-success">{{ user.get_total_credits }}</h2>
                     <a href="{% url 'purchase_credits' %}" class="btn btn-primary btn-sm mt-2">Buy More</a>
                 </div>
             </div>

@@ -98,7 +98,7 @@
                                     <span class="badge badge-corporate">Corporate Lab</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td data-order="{% if prospect.next_contact_date %}{{ prospect.next_contact_date|date:'Y-m-d' }}{% else %}9999-99-99{% endif %}">
                                 {% if prospect.next_contact_date %}
                                     {{ prospect.next_contact_date|date:"M d, Y" }}
                                 {% else %}
