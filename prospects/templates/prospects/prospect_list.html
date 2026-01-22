@@ -13,29 +13,45 @@
 
 <!-- Stats Cards -->
 <div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <h2>{{ status_counts.total }}</h2>
-            <p>Total Prospects</p>
-        </div>
+    <div class="col">
+        <a href="{% url 'prospects:prospect_list' %}" class="text-decoration-none">
+            <div class="card stat-card{% if not status_filter %} border-secondary border-2{% endif %}" style="cursor: pointer;">
+                <h2>{{ status_counts.total }}</h2>
+                <p>Total</p>
+            </div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <h2 class="text-primary">{{ status_counts.prospect }}</h2>
-            <p>Prospects</p>
-        </div>
+    <div class="col">
+        <a href="{% url 'prospects:prospect_list' %}?status=prospect" class="text-decoration-none">
+            <div class="card stat-card{% if status_filter == 'prospect' %} border-primary border-2{% endif %}" style="cursor: pointer;">
+                <h2 class="text-primary">{{ status_counts.prospect }}</h2>
+                <p>Prospects</p>
+            </div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <h2 class="text-success">{{ status_counts.member }}</h2>
-            <p>Members</p>
-        </div>
+    <div class="col">
+        <a href="{% url 'prospects:prospect_list' %}?status=member" class="text-decoration-none">
+            <div class="card stat-card{% if status_filter == 'member' %} border-success border-2{% endif %}" style="cursor: pointer;">
+                <h2 class="text-success">{{ status_counts.member }}</h2>
+                <p>Members</p>
+            </div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <h2 class="text-danger">{{ status_counts.declined }}</h2>
-            <p>Declined</p>
-        </div>
+    <div class="col">
+        <a href="{% url 'prospects:prospect_list' %}?status=declined" class="text-decoration-none">
+            <div class="card stat-card{% if status_filter == 'declined' %} border-danger border-2{% endif %}" style="cursor: pointer;">
+                <h2 class="text-danger">{{ status_counts.declined }}</h2>
+                <p>Declined</p>
+            </div>
+        </a>
+    </div>
+    <div class="col">
+        <a href="{% url 'prospects:prospect_list' %}?status=corporate" class="text-decoration-none">
+            <div class="card stat-card{% if status_filter == 'corporate' %} border-info border-2{% endif %}" style="cursor: pointer;">
+                <h2 class="text-info">{{ status_counts.corporate }}</h2>
+                <p>Corporate</p>
+            </div>
+        </a>
     </div>
 </div>
 

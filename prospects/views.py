@@ -46,6 +46,7 @@ def prospect_list(request):
         'prospect': Prospect.objects.filter(status='prospect').count(),
         'member': Prospect.objects.filter(status='member').count(),
         'declined': Prospect.objects.filter(status='declined').count(),
+        'corporate': Prospect.objects.filter(status='corporate').count(),
         'total': Prospect.objects.count(),
     }
 
