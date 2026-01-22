@@ -364,16 +364,41 @@ def purchase_credits_view(request):
     
     # Get pricing tiers for display
     custom_prices = PriceList.objects.filter(dentist=dentist).order_by('type', 'applied_after')
-    default_prices = DefaultPriceList.objects.filter(lab=dentist.lab).order_by('type', 'applied_after')
-    
+    default_prices_qs = DefaultPriceList.objects.filter(lab=dentist.lab).order_by('product_description', 'applied_after')
+
+    # Separate premium and economy prices, grouped by product description
+    premium_prices = {}
+    economy_prices = {}
+
+    for price in default_prices_qs:
+        if price.type == 'premium':
+            key = price.product_description or 'Premium Crowns'
+            if key not in premium_prices:
+                premium_prices[key] = []
+            premium_prices[key].append(price)
+        else:
+            key = 'Economy Crowns'
+            if key not in economy_prices:
+                economy_prices[key] = []
+            economy_prices[key].append(price)
+
+    # Sort economy prices by price descending (highest first)
+    for key in economy_prices:
+        economy_prices[key] = sorted(economy_prices[key], key=lambda x: x.price, reverse=True)
+
+    has_default_prices = default_prices_qs.exists()
+
     # Get lab name for display
     lab_name = dentist.lab.first_name or dentist.lab.username
-    
+
     context = {
         'form': form,
         'dentist': dentist,
         'custom_prices': custom_prices,
-        'default_prices': default_prices,
+        'default_prices': default_prices_qs,  # Keep for JS price calculation
+        'premium_prices': premium_prices,
+        'economy_prices': economy_prices,
+        'has_default_prices': has_default_prices,
         'current_credits': request.user.credits,
         'title': 'Purchase Crown Credits',
         'lab_name': lab_name
