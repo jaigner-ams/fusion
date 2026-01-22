@@ -66,27 +66,68 @@
                             <h4>{{ lab.first_name|default:lab.username|title }} Default Prices</h4>
                         </div>
                         <div class="card-body">
-                            {% if default_prices %}
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Type</th>
-                                            <th>Units After</th>
-                                            <th>Price</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for price in default_prices %}
-                                        <tr>
-                                            <td>{{ price.get_type_display }}</td>
-                                            <td>{{ price.applied_after }}+</td>
-                                            <td>${{ price.price|floatformat:2 }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
+                            {% if has_default_prices %}
+                                <!-- Premium Crowns Section -->
+                                {% if premium_prices %}
+                                <div class="mb-4">
+                                    <h5 class="text-danger border-bottom border-danger pb-2 mb-3">
+                                        <i class="bi bi-gem me-2"></i>Premium Crowns
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Description</th>
+                                                    <th>Quantity</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for type_name, prices in premium_prices.items %}
+                                                    {% for price in prices %}
+                                                    <tr>
+                                                        <td>{{ type_name }}</td>
+                                                        <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+ units{% endif %}</td>
+                                                        <td>${{ price.price|floatformat:2 }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Economy Crowns Section -->
+                                {% if economy_prices %}
+                                <div class="mb-3">
+                                    <h5 class="text-warning border-bottom border-warning pb-2 mb-3">
+                                        <i class="bi bi-tag me-2"></i>Economy Crowns
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Quantity</th>
+                                                    <th>Price</th>
+                                                    <th>Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for type_name, prices in economy_prices.items %}
+                                                    {% for price in prices %}
+                                                    <tr>
+                                                        <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+ units{% endif %}</td>
+                                                        <td>${{ price.price|floatformat:2 }}</td>
+                                                        <td>{{ price.notes }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
                             {% else %}
                             <p class="text-muted">No default prices have been set by your lab.</p>
                             {% endif %}

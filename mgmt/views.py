@@ -283,18 +283,42 @@ def dentist_dashboard_view(request):
     # Get custom prices for this dentist
     custom_prices = PriceList.objects.filter(dentist=dentist).order_by('type', 'applied_after')
     
-    # Get default prices from the lab
-    default_prices = DefaultPriceList.objects.filter(lab=dentist.lab).order_by('type', 'applied_after')
-    
+    # Get default prices from the lab, organized like the public page
+    default_prices_qs = DefaultPriceList.objects.filter(lab=dentist.lab).order_by('product_description', 'applied_after')
+
+    # Separate premium and economy prices, grouped by product description
+    premium_prices = {}
+    economy_prices = {}
+
+    for price in default_prices_qs:
+        if price.type == 'premium':
+            key = price.product_description or 'Premium Crowns'
+            if key not in premium_prices:
+                premium_prices[key] = []
+            premium_prices[key].append(price)
+        else:
+            key = 'Economy Crowns'
+            if key not in economy_prices:
+                economy_prices[key] = []
+            economy_prices[key].append(price)
+
+    # Sort economy prices by price descending (highest first)
+    for key in economy_prices:
+        economy_prices[key] = sorted(economy_prices[key], key=lambda x: x.price, reverse=True)
+
+    has_default_prices = default_prices_qs.exists()
+
     # Get recent purchases
     recent_purchases = CreditPurchase.objects.filter(
         user=request.user
     ).order_by('-created_at')[:5]
-    
+
     context = {
         'dentist': dentist,
         'custom_prices': custom_prices,
-        'default_prices': default_prices,
+        'premium_prices': premium_prices,
+        'economy_prices': economy_prices,
+        'has_default_prices': has_default_prices,
         'lab': dentist.lab,
         'credits': request.user.credits,
         'recent_purchases': recent_purchases,
