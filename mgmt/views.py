@@ -302,7 +302,9 @@ def dentist_dashboard_view(request):
                 economy_prices[key] = []
             economy_prices[key].append(price)
 
-    # Sort economy prices by price descending (highest first)
+    # Sort prices by price descending (highest first)
+    for key in premium_prices:
+        premium_prices[key] = sorted(premium_prices[key], key=lambda x: x.price, reverse=True)
     for key in economy_prices:
         economy_prices[key] = sorted(economy_prices[key], key=lambda x: x.price, reverse=True)
 
@@ -382,7 +384,9 @@ def purchase_credits_view(request):
                 economy_prices[key] = []
             economy_prices[key].append(price)
 
-    # Sort economy prices by price descending (highest first)
+    # Sort prices by price descending (highest first)
+    for key in premium_prices:
+        premium_prices[key] = sorted(premium_prices[key], key=lambda x: x.price, reverse=True)
     for key in economy_prices:
         economy_prices[key] = sorted(economy_prices[key], key=lambda x: x.price, reverse=True)
 
@@ -909,7 +913,9 @@ def lab_public_page(request, username):
                 economy_prices[key] = []
             economy_prices[key].append(price)
 
-    # Sort economy prices by price descending (highest first)
+    # Sort prices by price descending (highest first)
+    for key in premium_prices:
+        premium_prices[key] = sorted(premium_prices[key], key=lambda x: x.price, reverse=True)
     for key in economy_prices:
         economy_prices[key] = sorted(economy_prices[key], key=lambda x: x.price, reverse=True)
 
