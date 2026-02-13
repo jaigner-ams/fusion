@@ -27,4 +27,5 @@ urlpatterns = [
     path('stl-viewer/', views.stl_viewer, name='stl_viewer'),
     path('lab-profile/', views.lab_profile, name='lab_profile'),
     path('lab/<str:username>/', views.lab_public_page, name='lab_public_page'),
+    path('lab/<str:username>/pdf/', views.lab_public_pdf, name='lab_public_pdf'),
 ]

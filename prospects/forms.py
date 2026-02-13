@@ -16,7 +16,7 @@ class ProspectForm(forms.ModelForm):
     class Meta:
         model = Prospect
         fields = [
-            'status', 'monthly_fee', 'lab_name', 'person_name',
+            'ams_history', 'status', 'monthly_fee', 'lab_name', 'person_name',
             'address', 'city', 'state', 'zip_code', 'phone', 'email',
             'has_mill', 'dentists_requested', 'next_contact_date',
             'zip_protect_1', 'zip_protect_2', 'zip_protect_3',
@@ -26,6 +26,7 @@ class ProspectForm(forms.ModelForm):
             'zip_qty_6', 'zip_qty_7', 'zip_qty_8', 'zip_qty_9', 'zip_qty_10'
         ]
         widgets = {
+            'ams_history': forms.RadioSelect(attrs={'class': 'form-check-input'}),
             'status': forms.RadioSelect(attrs={'class': 'form-check-input'}),
             'monthly_fee': forms.NumberInput(attrs={
                 'class': 'form-control',

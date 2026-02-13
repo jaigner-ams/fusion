@@ -121,6 +121,23 @@
             color: #ffffff;
         }
 
+        .btn-pdf {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-pdf:hover {
+            background: linear-gradient(135deg, #5558e3 0%, #7c3aed 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+            color: #ffffff;
+        }
+
         .contact-info {
             background-color: var(--card-bg);
             border-radius: 0.5rem;
@@ -260,13 +277,18 @@
             <a href="{% url 'login' %}" class="btn btn-login">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Dentist Login
             </a>
+            {% if has_prices %}
+            <a href="{% url 'lab_public_pdf' username=lab.username %}" class="btn btn-pdf ms-2">
+                <i class="bi bi-file-earmark-pdf me-2"></i>Download Price List
+            </a>
+            {% endif %}
         </div>
     </div>
 
     <div class="container py-5">
         <div class="row">
             <!-- Contact Information -->
-            {% if lab.email or lab.phone or lab.address or lab.website %}
+            {% if lab.email or lab.phone or lab.street_address or lab.city or lab.state or lab.zip_code or lab.website %}
             <div class="col-lg-4 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -294,10 +316,13 @@
                         </div>
                         {% endif %}
 
-                        {% if lab.address %}
+                        {% if lab.street_address or lab.city or lab.state or lab.zip_code %}
                         <div class="contact-item">
                             <i class="bi bi-geo-alt"></i>
-                            <span>{{ lab.address|linebreaksbr }}</span>
+                            <span>
+                                {% if lab.street_address %}{{ lab.street_address }}<br>{% endif %}
+                                {% if lab.city %}{{ lab.city }}{% if lab.state %}, {% endif %}{% endif %}{% if lab.state %}{{ lab.state }}{% endif %}{% if lab.zip_code %} {{ lab.zip_code }}{% endif %}
+                            </span>
                         </div>
                         {% endif %}
                     </div>
@@ -306,7 +331,7 @@
             {% endif %}
 
             <!-- Pricing Section -->
-            <div class="{% if lab.email or lab.phone or lab.address or lab.website %}col-lg-8{% else %}col-12{% endif %}">
+            <div class="{% if lab.email or lab.phone or lab.street_address or lab.city or lab.website %}col-lg-8{% else %}col-12{% endif %}">
                 {% if has_prices %}
                     <!-- Premium Crowns Section -->
                     {% if premium_prices %}

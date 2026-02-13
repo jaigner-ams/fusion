@@ -11,11 +11,26 @@ admin.site.index_title = "Welcome to AMS Fusion Administration"
 class CustomUserAdmin(UserAdmin):
     list_display = ['username', 'email', 'user_type', 'credits', 'is_staff', 'is_active']
     list_filter = ['user_type', 'is_staff', 'is_active']
-    
+
     fieldsets = UserAdmin.fieldsets + (
         ('User Information', {'fields': ('user_type', 'credits', 'lab_profile_id')}),
+        ('Protected Zip Codes', {
+            'classes': ('collapse',),
+            'fields': (
+                ('zip_protect_1', 'zip_qty_1'),
+                ('zip_protect_2', 'zip_qty_2'),
+                ('zip_protect_3', 'zip_qty_3'),
+                ('zip_protect_4', 'zip_qty_4'),
+                ('zip_protect_5', 'zip_qty_5'),
+                ('zip_protect_6', 'zip_qty_6'),
+                ('zip_protect_7', 'zip_qty_7'),
+                ('zip_protect_8', 'zip_qty_8'),
+                ('zip_protect_9', 'zip_qty_9'),
+                ('zip_protect_10', 'zip_qty_10'),
+            )
+        }),
     )
-    
+
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('User Information', {'fields': ('user_type', 'credits', 'lab_profile_id')}),
     )

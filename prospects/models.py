@@ -13,11 +13,21 @@ class Prospect(models.Model):
         ('corporate', 'Corporate Lab'),
     ]
 
+    AMS_HISTORY_CHOICES = [
+        ('current_ams_ed', 'Current AMS Ed'),
+        ('current_onevoice', 'Current OneVoice'),
+        ('current_member', 'Current Member'),
+        ('past_member', 'Past Member'),
+    ]
+
     SERVICE_TYPE_CHOICES = [
         ('crown_bridge', 'Crown and Bridge'),
         ('denture', 'Denture'),
         ('full_service', 'Full Service'),
     ]
+
+    # AMS History - Radio button in form (optional)
+    ams_history = models.CharField(max_length=20, choices=AMS_HISTORY_CHOICES, blank=True, default='')
 
     # Status - Radio button in form
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='prospect')

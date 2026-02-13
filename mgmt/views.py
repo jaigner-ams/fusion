@@ -9,8 +9,16 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 import os
+import re
+from io import BytesIO
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
 from .models import Dentist, DefaultPriceList, PriceList, CreditPurchase, CreditTransaction, FileUpload, CustomUser
-from .forms import DentistForm, DefaultPriceForm, CustomPriceForm, DentistWithUserForm, CreditPurchaseForm, CreditDeductionForm, DentistPasswordChangeForm, FileUploadForm, LabProfileForm
+from .forms import DentistForm, DefaultPriceForm, CustomPriceForm, DentistWithUserForm, CreditPurchaseForm, CreditDeductionForm, DentistPasswordChangeForm, FileUploadForm, LabProfileForm, ZipCodeSearchForm
 from .decorators import lab_required, lab_or_admin_required, dentist_required
 
 def send_credit_purchase_notifications(purchase):
@@ -928,3 +936,232 @@ def lab_public_page(request, username):
     }
 
     return render(request, 'mgmt/lab_public.html', context)
+
+
+def lab_public_pdf(request, username):
+    """Generate a PDF of the lab's public pricing page"""
+    lab = get_object_or_404(CustomUser, username=username, user_type='lab')
+
+    # Get default prices for this lab (same logic as lab_public_page)
+    default_prices = DefaultPriceList.objects.filter(lab=lab).order_by('product_description', 'applied_after')
+
+    premium_prices = {}
+    economy_prices = {}
+
+    for price in default_prices:
+        if price.type == 'premium':
+            key = price.product_description or 'Premium Crowns'
+            if key not in premium_prices:
+                premium_prices[key] = []
+            premium_prices[key].append(price)
+        else:
+            key = 'Economy Crowns'
+            if key not in economy_prices:
+                economy_prices[key] = []
+            economy_prices[key].append(price)
+
+    for key in premium_prices:
+        premium_prices[key] = sorted(premium_prices[key], key=lambda x: x.price, reverse=True)
+    for key in economy_prices:
+        economy_prices[key] = sorted(economy_prices[key], key=lambda x: x.price, reverse=True)
+
+    lab_name = lab.first_name or lab.username
+
+    # Build PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            topMargin=0.6*inch, bottomMargin=0.6*inch,
+                            leftMargin=0.75*inch, rightMargin=0.75*inch)
+    elements = []
+
+    styles = getSampleStyleSheet()
+    style_center = ParagraphStyle('Center', parent=styles['Normal'], alignment=TA_CENTER)
+    style_title = ParagraphStyle('Title2', parent=styles['Title'], fontSize=22, alignment=TA_CENTER, spaceAfter=4)
+    style_subtitle = ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#64748b'), alignment=TA_CENTER, spaceAfter=6)
+    style_contact = ParagraphStyle('Contact', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#64748b'), alignment=TA_CENTER, spaceAfter=4)
+    style_section = ParagraphStyle('Section', parent=styles['Heading2'], fontSize=15, spaceAfter=8, spaceBefore=16)
+    style_section_sub = ParagraphStyle('SectionSub', parent=styles['Normal'], fontSize=8, textColor=colors.HexColor('#64748b'), spaceAfter=8)
+
+    # Lab name and subtitle
+    elements.append(Paragraph(lab_name, style_title))
+    elements.append(Paragraph('Dental Laboratory &mdash; Price List', style_subtitle))
+
+    # Contact info (compact single line)
+    contact_parts = []
+    if lab.phone:
+        contact_parts.append(lab.phone)
+    if lab.email:
+        contact_parts.append(lab.email)
+    if lab.website:
+        contact_parts.append(lab.website)
+    if contact_parts:
+        elements.append(Paragraph(' &bull; '.join(contact_parts), style_contact))
+    address_parts = []
+    if lab.street_address:
+        address_parts.append(lab.street_address)
+    city_state = ''
+    if lab.city:
+        city_state = lab.city
+    if lab.state:
+        city_state = f'{city_state}, {lab.state}' if city_state else lab.state
+    if city_state:
+        address_parts.append(city_state)
+    if lab.zip_code:
+        address_parts.append(lab.zip_code)
+    if address_parts:
+        elements.append(Paragraph(', '.join(address_parts), style_contact))
+
+    # Divider line
+    elements.append(Spacer(1, 6))
+    divider_data = [['']];
+    divider_table = Table(divider_data, colWidths=[doc.width])
+    divider_table.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (-1, 0), 1.5, colors.HexColor('#e91e8c')),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    elements.append(divider_table)
+    elements.append(Spacer(1, 12))
+
+    pink = colors.HexColor('#e91e8c')
+    gold = colors.HexColor('#d97706')
+    header_bg = colors.HexColor('#f1f5f9')
+    stripe_bg = colors.HexColor('#f8fafc')
+    border_color = colors.HexColor('#cbd5e1')
+    cell_style = ParagraphStyle('Cell', parent=styles['Normal'], fontSize=10)
+    cell_bold = ParagraphStyle('CellBold', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold')
+    header_style = ParagraphStyle('Header', parent=styles['Normal'], fontSize=9, fontName='Helvetica-Bold', textColor=colors.HexColor('#1e293b'))
+
+    # Premium Crowns
+    if premium_prices:
+        elements.append(Paragraph('<font color="#e91e8c">&#9670;</font> Premium Crowns', style_section))
+        elements.append(Paragraph('100% made at this location', style_section_sub))
+
+        table_data = [[
+            Paragraph('Description', header_style),
+            Paragraph('Quantity', header_style),
+            Paragraph('Price per Unit', header_style),
+        ]]
+        for type_name, prices in premium_prices.items():
+            for price in prices:
+                qty = 'COD' if price.is_cod else f'{price.applied_after}+ units'
+                table_data.append([
+                    Paragraph(type_name, cell_style),
+                    Paragraph(qty, cell_style),
+                    Paragraph(f'${price.price:.2f}', cell_bold),
+                ])
+
+        col_widths = [doc.width * 0.45, doc.width * 0.25, doc.width * 0.30]
+        t = Table(table_data, colWidths=col_widths, repeatRows=1)
+        style_cmds = [
+            ('BACKGROUND', (0, 0), (-1, 0), header_bg),
+            ('LINEBELOW', (0, 0), (-1, 0), 1.5, border_color),
+            ('LINEBELOW', (0, 1), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]
+        # Stripe even rows
+        for i in range(1, len(table_data)):
+            if i % 2 == 0:
+                style_cmds.append(('BACKGROUND', (0, i), (-1, i), stripe_bg))
+        t.setStyle(TableStyle(style_cmds))
+        elements.append(t)
+        elements.append(Spacer(1, 12))
+
+    # Economy Crowns
+    if economy_prices:
+        elements.append(Paragraph('<font color="#d97706">&#9670;</font> Economy Crowns', style_section))
+        elements.append(Paragraph('Produced in concert with our centralized milling center', style_section_sub))
+
+        for type_name, prices in economy_prices.items():
+            table_data = [[
+                Paragraph('Quantity', header_style),
+                Paragraph('Price per Unit', header_style),
+                Paragraph('Notes', header_style),
+            ]]
+            for price in prices:
+                qty = 'COD' if price.is_cod else f'{price.applied_after}+ units'
+                table_data.append([
+                    Paragraph(qty, cell_style),
+                    Paragraph(f'${price.price:.2f}', cell_bold),
+                    Paragraph(price.notes or '', cell_style),
+                ])
+
+            col_widths = [doc.width * 0.25, doc.width * 0.30, doc.width * 0.45]
+            t = Table(table_data, colWidths=col_widths, repeatRows=1)
+            style_cmds = [
+                ('BACKGROUND', (0, 0), (-1, 0), header_bg),
+                ('LINEBELOW', (0, 0), (-1, 0), 1.5, border_color),
+                ('LINEBELOW', (0, 1), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]
+            for i in range(1, len(table_data)):
+                if i % 2 == 0:
+                    style_cmds.append(('BACKGROUND', (0, i), (-1, i), stripe_bg))
+            t.setStyle(TableStyle(style_cmds))
+            elements.append(t)
+            elements.append(Spacer(1, 12))
+
+    if not default_prices.exists():
+        elements.append(Spacer(1, 30))
+        elements.append(Paragraph('Pricing information is not yet available. Please contact us for a quote.', style_center))
+
+    # Footer
+    elements.append(Spacer(1, 20))
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER)
+    elements.append(Paragraph('Generated from AMS Fusion', footer_style))
+
+    doc.build(elements)
+    pdf_data = buffer.getvalue()
+    buffer.close()
+
+    safe_name = re.sub(r'[^\w\s-]', '', lab_name).strip()
+    response = HttpResponse(pdf_data, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{safe_name} Price List.pdf"'
+    return response
+
+
+def lab_search_view(request):
+    """Public search page to find labs by zip code.
+
+    If a lab has protected/claimed the searched zip code, only that lab is shown.
+    Otherwise, shows the 3 nearest labs by their business address zip code.
+    """
+    form = ZipCodeSearchForm(request.GET or None)
+    protected_lab = None
+    nearest_labs = []
+    searched = False
+    zip_code = None
+
+    if request.GET.get('zip_code'):
+        searched = True
+        if form.is_valid():
+            zip_code = form.cleaned_data['zip_code']
+
+            # First check if any lab has protected this zip code
+            protected_lab = CustomUser.find_lab_with_protected_zip(zip_code)
+
+            # If a lab has protected this zip, redirect straight to their pricing page
+            if protected_lab:
+                return redirect('lab_public_page', username=protected_lab.username)
+
+            # Otherwise, find nearest labs by address (with distances)
+            nearest_labs = CustomUser.find_nearest_labs_by_zip(zip_code, limit=3, include_distance=True)
+
+    context = {
+        'form': form,
+        'protected_lab': protected_lab,
+        'nearest_labs': nearest_labs,
+        'searched': searched,
+        'zip_code': zip_code,
+        'title': 'Find a Lab'
+    }
+
+    return render(request, 'mgmt/lab_search.html', context)

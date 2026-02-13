@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>{{ title }}</h1>
     <div class="d-flex gap-2">
-        <a href="{% url 'prospects:export_csv' %}{% if status_filter %}?status={{ status_filter }}{% endif %}" class="btn btn-secondary">Export CSV</a>
+        <a href="{% url 'prospects:export_csv' %}{% if status_filter or ams_history_filter %}?{% if status_filter %}status={{ status_filter }}{% endif %}{% if status_filter and ams_history_filter %}&{% endif %}{% if ams_history_filter %}ams_history={{ ams_history_filter }}{% endif %}{% endif %}" class="btn btn-secondary">Export CSV</a>
         <a href="{% url 'prospects:prospect_add' %}" class="btn btn-primary">Add New Prospect</a>
     </div>
 </div>
@@ -58,8 +58,14 @@
 <!-- Filter -->
 <div class="card mb-4">
     <div class="row align-items-center">
-        <div class="col-md-6">
-            <form method="get" class="d-flex gap-2">
+        <div class="col-md-8">
+            <form method="get" class="d-flex gap-2 flex-wrap">
+                <select name="ams_history" class="form-select" style="width: auto;">
+                    <option value="">All AMS History</option>
+                    {% for value, label in ams_history_choices %}
+                        <option value="{{ value }}" {% if ams_history_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
                 <select name="status" class="form-select" style="width: auto;">
                     <option value="">All Statuses</option>
                     {% for value, label in status_choices %}
@@ -67,12 +73,12 @@
                     {% endfor %}
                 </select>
                 <button type="submit" class="btn btn-secondary">Filter</button>
-                {% if status_filter %}
+                {% if status_filter or ams_history_filter %}
                     <a href="{% url 'prospects:prospect_list' %}" class="btn btn-outline-secondary">Clear</a>
                 {% endif %}
             </form>
         </div>
-        <div class="col-md-6 text-end">
+        <div class="col-md-4 text-end">
             <span class="text-muted">Showing {{ prospects.count }} prospect{{ prospects.count|pluralize }}</span>
         </div>
     </div>
@@ -89,6 +95,7 @@
                         <th>Contact Person</th>
                         <th>Location</th>
                         <th>Status</th>
+                        <th>AMS History</th>
                         <th>Next Contact</th>
                         <th class="no-sort">Actions</th>
                     </tr>
@@ -112,6 +119,13 @@
                                     <span class="badge badge-declined">Fusion Declined</span>
                                 {% elif prospect.status == 'corporate' %}
                                     <span class="badge badge-corporate">Corporate Lab</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if prospect.ams_history %}
+                                    {{ prospect.get_ams_history_display }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
                             <td data-order="{% if prospect.next_contact_date %}{{ prospect.next_contact_date|date:'Y-m-d' }}{% else %}9999-99-99{% endif %}">
@@ -153,7 +167,7 @@ $(document).ready(function() {
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         order: [[0, 'asc']],  // Sort by Lab Name by default
         columnDefs: [
-            { orderable: false, targets: 5 }  // Disable sorting on Actions column
+            { orderable: false, targets: 6 }  // Disable sorting on Actions column
         ],
         language: {
             search: "Search:",

@@ -34,12 +34,15 @@ from mgmt.models import CustomUser
 
 @login_required
 def prospect_list(request):
-    """List all prospects with status filter"""
+    """List all prospects with status and AMS history filters"""
     status_filter = request.GET.get('status', '')
+    ams_history_filter = request.GET.get('ams_history', '')
 
     prospects = Prospect.objects.all()
     if status_filter:
         prospects = prospects.filter(status=status_filter)
+    if ams_history_filter:
+        prospects = prospects.filter(ams_history=ams_history_filter)
 
     # Count by status for dashboard
     status_counts = {
@@ -53,7 +56,9 @@ def prospect_list(request):
     context = {
         'prospects': prospects,
         'status_filter': status_filter,
+        'ams_history_filter': ams_history_filter,
         'status_choices': Prospect.STATUS_CHOICES,
+        'ams_history_choices': Prospect.AMS_HISTORY_CHOICES,
         'status_counts': status_counts,
         'title': 'Prospects List'
     }
@@ -205,11 +210,14 @@ def contact_schedule(request):
 def export_csv(request):
     """Export prospects to CSV file"""
     status_filter = request.GET.get('status', '')
+    ams_history_filter = request.GET.get('ams_history', '')
     contact_date = request.GET.get('contact_date', '')
 
     prospects = Prospect.objects.all()
     if status_filter:
         prospects = prospects.filter(status=status_filter)
+    if ams_history_filter:
+        prospects = prospects.filter(ams_history=ams_history_filter)
     if contact_date:
         try:
             selected_date = date.fromisoformat(contact_date)
@@ -222,6 +230,8 @@ def export_csv(request):
     filename = f'prospects_{date.today().isoformat()}'
     if status_filter:
         filename += f'_{status_filter}'
+    if ams_history_filter:
+        filename += f'_{ams_history_filter}'
     if contact_date:
         filename += f'_contacts_{contact_date}'
     response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
@@ -230,6 +240,7 @@ def export_csv(request):
 
     # Write header row
     writer.writerow([
+        'AMS History',
         'Status',
         'Lab Name',
         'Person Name',
@@ -252,6 +263,7 @@ def export_csv(request):
     # Write data rows
     for prospect in prospects:
         writer.writerow([
+            prospect.get_ams_history_display() if prospect.ams_history else '',
             prospect.get_status_display(),
             prospect.lab_name,
             prospect.person_name,
@@ -316,7 +328,10 @@ def create_lab_account(request, pk):
                 user_type='lab',
                 first_name=prospect.lab_name,
                 phone=prospect.phone,
-                address=f"{prospect.address}\n{prospect.city}, {prospect.state} {prospect.zip_code}".strip()
+                street_address=prospect.address or '',
+                city=prospect.city or '',
+                state=prospect.state or '',
+                zip_code=prospect.zip_code or '',
             )
 
             # Link the user to the prospect

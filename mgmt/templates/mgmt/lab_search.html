@@ -1,0 +1,171 @@
+{% extends 'mgmt/base.html' %}
+
+{% block title %}Find a Lab - AMS Fusion{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Find a Lab by Zip Code</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">Enter your zip code to find a dental lab serving your area.</p>
+
+                <form method="get" action="{% url 'lab_search_root' %}">
+                    <div class="input-group mb-3">
+                        {{ form.zip_code }}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                    {% if form.zip_code.errors %}
+                        <div class="text-danger small">{{ form.zip_code.errors }}</div>
+                    {% endif %}
+                </form>
+
+                {% if searched %}
+                    {% if protected_lab %}
+                        <!-- Protected Lab Found - Exclusive Result -->
+                        <div class="alert alert-success mt-4">
+                            <h5 class="alert-heading"><i class="bi bi-shield-check me-2"></i>Authorized Lab for {{ zip_code }}</h5>
+                            <p class="mb-0">This lab is the authorized provider for zip code <strong>{{ zip_code }}</strong>.</p>
+                        </div>
+
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                {% if protected_lab.lab_logo %}
+                                    <div class="text-center mb-3">
+                                        <img src="{{ protected_lab.lab_logo.url }}" alt="{{ protected_lab.first_name|default:protected_lab.username }} Logo" style="max-height: 100px; max-width: 250px;" class="img-fluid">
+                                    </div>
+                                {% endif %}
+
+                                <h5 class="card-title">{{ protected_lab.first_name|default:protected_lab.username }}</h5>
+
+                                {% if protected_lab.phone %}
+                                    <p class="card-text mb-1">
+                                        <i class="bi bi-telephone"></i>
+                                        <a href="tel:{{ protected_lab.phone }}">{{ protected_lab.phone }}</a>
+                                    </p>
+                                {% endif %}
+
+                                {% if protected_lab.email %}
+                                    <p class="card-text mb-1">
+                                        <i class="bi bi-envelope"></i>
+                                        <a href="mailto:{{ protected_lab.email }}">{{ protected_lab.email }}</a>
+                                    </p>
+                                {% endif %}
+
+                                {% if protected_lab.website %}
+                                    <p class="card-text mb-1">
+                                        <i class="bi bi-globe"></i>
+                                        <a href="{{ protected_lab.website }}" target="_blank" rel="noopener">{{ protected_lab.website }}</a>
+                                    </p>
+                                {% endif %}
+
+                                {% if protected_lab.street_address or protected_lab.city or protected_lab.state or protected_lab.zip_code %}
+                                    <p class="card-text mb-1">
+                                        <i class="bi bi-geo-alt"></i>
+                                        {% if protected_lab.street_address %}{{ protected_lab.street_address }}<br>{% endif %}
+                                        {% if protected_lab.city %}{{ protected_lab.city }}{% if protected_lab.state %}, {% endif %}{% endif %}{% if protected_lab.state %}{{ protected_lab.state }}{% endif %}{% if protected_lab.zip_code %} {{ protected_lab.zip_code }}{% endif %}
+                                    </p>
+                                {% endif %}
+
+                                <div class="mt-3">
+                                    <a href="{% url 'lab_public_page' protected_lab.username %}" class="btn btn-primary">
+                                        View Lab Pricing
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                    {% elif nearest_labs %}
+                        <!-- Nearest Labs Found -->
+                        <div class="alert alert-info mt-4">
+                            <h5 class="alert-heading"><i class="bi bi-geo-alt me-2"></i>Labs Near {{ zip_code }}</h5>
+                            <p class="mb-0">We found {{ nearest_labs|length }} lab{{ nearest_labs|length|pluralize }} near zip code <strong>{{ zip_code }}</strong>.</p>
+                        </div>
+
+                        <div class="row mt-3">
+                            {% for lab, distance in nearest_labs %}
+                            <div class="col-md-{% if nearest_labs|length == 1 %}12{% elif nearest_labs|length == 2 %}6{% else %}4{% endif %} mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        {% if lab.lab_logo %}
+                                            <div class="text-center mb-3">
+                                                <img src="{{ lab.lab_logo.url }}" alt="{{ lab.first_name|default:lab.username }} Logo" style="max-height: 80px; max-width: 150px;" class="img-fluid">
+                                            </div>
+                                        {% endif %}
+
+                                        <h6 class="card-title">{{ lab.first_name|default:lab.username }}</h6>
+
+                                        <p class="card-text mb-2">
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-signpost-2"></i>
+                                                {% if distance < 1 %}
+                                                    Less than 1 mile away
+                                                {% else %}
+                                                    {{ distance|floatformat:0 }} miles away
+                                                {% endif %}
+                                            </span>
+                                        </p>
+
+                                        {% if lab.phone %}
+                                            <p class="card-text mb-1 small">
+                                                <i class="bi bi-telephone"></i>
+                                                <a href="tel:{{ lab.phone }}">{{ lab.phone }}</a>
+                                            </p>
+                                        {% endif %}
+
+                                        {% if lab.email %}
+                                            <p class="card-text mb-1 small">
+                                                <i class="bi bi-envelope"></i>
+                                                <a href="mailto:{{ lab.email }}">{{ lab.email }}</a>
+                                            </p>
+                                        {% endif %}
+
+                                        {% if lab.city or lab.state or lab.zip_code %}
+                                            <p class="card-text mb-1 small text-muted">
+                                                <i class="bi bi-geo-alt"></i>
+                                                {% if lab.city %}{{ lab.city }}{% if lab.state %}, {% endif %}{% endif %}{% if lab.state %}{{ lab.state }}{% endif %}{% if lab.zip_code %} {{ lab.zip_code }}{% endif %}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0">
+                                        <a href="{% url 'lab_public_page' lab.username %}" class="btn btn-outline-primary btn-sm w-100">
+                                            View Pricing
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                    {% else %}
+                        <!-- No Labs Found -->
+                        <div class="alert alert-warning mt-4">
+                            <h5 class="alert-heading">No Labs Found</h5>
+                            <p class="mb-0">We couldn't find any labs near zip code <strong>{{ zip_code }}</strong>.</p>
+                        </div>
+
+                        <div class="card mt-3 bg-light">
+                            <div class="card-body text-center">
+                                <h6>Looking for dental lab services?</h6>
+                                <p class="text-muted mb-2">Contact us to find a lab in your area:</p>
+                                <p class="mb-1">
+                                    <i class="bi bi-envelope"></i>
+                                    <a href="mailto:info@americasmiles.com">info@americasmiles.com</a>
+                                </p>
+                                <p class="mb-0">
+                                    <i class="bi bi-telephone"></i>
+                                    <a href="tel:1-800-555-1234">1-800-555-1234</a>
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

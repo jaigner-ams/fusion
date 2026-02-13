@@ -23,12 +23,20 @@ class DentistForm(forms.ModelForm):
 class LabProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'email', 'phone', 'address', 'website', 'lab_logo']
+        fields = ['first_name', 'email', 'phone', 'street_address', 'city', 'state', 'zip_code', 'website', 'lab_logo',
+                  'zip_protect_1', 'zip_qty_1', 'zip_protect_2', 'zip_qty_2',
+                  'zip_protect_3', 'zip_qty_3', 'zip_protect_4', 'zip_qty_4',
+                  'zip_protect_5', 'zip_qty_5', 'zip_protect_6', 'zip_qty_6',
+                  'zip_protect_7', 'zip_qty_7', 'zip_protect_8', 'zip_qty_8',
+                  'zip_protect_9', 'zip_qty_9', 'zip_protect_10', 'zip_qty_10']
         labels = {
             'first_name': 'Lab Name',
             'email': 'Contact Email',
             'phone': 'Phone Number',
-            'address': 'Business Address',
+            'street_address': 'Street Address',
+            'city': 'City',
+            'state': 'State',
+            'zip_code': 'Zip Code',
             'website': 'Website URL',
             'lab_logo': 'Lab Logo'
         }
@@ -36,9 +44,32 @@ class LabProfileForm(forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter lab name'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter contact email'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter business address', 'rows': 3}),
+            'street_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter street address'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter city'}),
+            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter state'}),
+            'zip_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter zip code'}),
             'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com'}),
-            'lab_logo': forms.FileInput(attrs={'class': 'form-control'})
+            'lab_logo': forms.FileInput(attrs={'class': 'form-control'}),
+            'zip_protect_1': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_1': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_2': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_3': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_4': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_5': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_6': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_6': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_7': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_7': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_8': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_8': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_9': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_9': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
+            'zip_protect_10': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Zip code'}),
+            'zip_qty_10': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Qty', 'min': '0'}),
         }
 
 class DefaultPriceForm(forms.ModelForm):
@@ -424,6 +455,19 @@ class DentistPasswordChangeForm(forms.Form):
         self.user.save()
         
         return self.user
+
+class ZipCodeSearchForm(forms.Form):
+    zip_code = forms.CharField(
+        max_length=10,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter zip code',
+            'autofocus': True
+        }),
+        label='Zip Code'
+    )
+
 
 class FileUploadForm(forms.ModelForm):
     class Meta:

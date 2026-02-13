@@ -1,4 +1,5 @@
 {% extends 'mgmt/base.html' %}
+{% load dict_extras %}
 
 {% block title %}Lab Profile - AMS Fusion{% endblock %}
 
@@ -55,12 +56,38 @@
                         {% endif %}
                     </div>
 
+                    <!-- Address Fields -->
+                    <h6 class="mt-4 mb-3">Business Address</h6>
                     <div class="mb-3">
-                        <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
-                        {{ form.address }}
-                        {% if form.address.errors %}
-                            <div class="text-danger">{{ form.address.errors }}</div>
+                        <label for="{{ form.street_address.id_for_label }}" class="form-label">{{ form.street_address.label }}</label>
+                        {{ form.street_address }}
+                        {% if form.street_address.errors %}
+                            <div class="text-danger">{{ form.street_address.errors }}</div>
                         {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }}</label>
+                            {{ form.city }}
+                            {% if form.city.errors %}
+                                <div class="text-danger">{{ form.city.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.state.id_for_label }}" class="form-label">{{ form.state.label }}</label>
+                            {{ form.state }}
+                            {% if form.state.errors %}
+                                <div class="text-danger">{{ form.state.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.zip_code.id_for_label }}" class="form-label">{{ form.zip_code.label }}</label>
+                            {{ form.zip_code }}
+                            {% if form.zip_code.errors %}
+                                <div class="text-danger">{{ form.zip_code.errors }}</div>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -77,6 +104,136 @@
                         {% endif %}
                         <small class="text-muted">Upload a new logo to replace the current one (PNG, JPG, or GIF format recommended)</small>
                     </div>
+
+                    <!-- Protected Zip Codes Section -->
+                    <hr class="my-4">
+                    <h5 class="mb-3">Protected Zip Codes</h5>
+                    <p class="text-muted small mb-3">Enter zip codes that are protected/assigned to your lab. Users searching for labs by zip code will find your lab if they search for one of these codes.</p>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 1</label>
+                                    {{ form.zip_protect_1 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_1 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 2</label>
+                                    {{ form.zip_protect_2 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_2 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 3</label>
+                                    {{ form.zip_protect_3 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_3 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 4</label>
+                                    {{ form.zip_protect_4 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_4 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 5</label>
+                                    {{ form.zip_protect_5 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_5 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 6</label>
+                                    {{ form.zip_protect_6 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_6 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 7</label>
+                                    {{ form.zip_protect_7 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_7 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 8</label>
+                                    {{ form.zip_protect_8 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_8 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 9</label>
+                                    {{ form.zip_protect_9 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_9 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small">Zip Code 10</label>
+                                    {{ form.zip_protect_10 }}
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small">Qty</label>
+                                    {{ form.zip_qty_10 }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">Save Changes</button>

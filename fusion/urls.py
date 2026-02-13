@@ -21,10 +21,12 @@ from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 from mgmt.auth_views import LabLoginView, CustomLogoutView
+from mgmt import views as mgmt_views
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/prices/', permanent=False)),
     path('admin/', admin.site.urls),
+    path('find-lab/', mgmt_views.lab_search_view, name='lab_search_root'),
     path('prices/', include('mgmt.urls')),
     path('prospects/', include('prospects.urls', namespace='prospects')),
     path('accounts/login/', LabLoginView.as_view(), name='login'),

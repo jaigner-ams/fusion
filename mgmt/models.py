@@ -25,9 +25,35 @@ class CustomUser(AbstractUser):
     premium_credits = models.IntegerField(default=0, help_text="Premium crown credit balance")
     lab_logo = models.ImageField(upload_to='lab_logos/', null=True, blank=True, help_text="Lab logo image")
 
+    # Zip code protection fields (for lab users)
+    zip_protect_1 = models.CharField(max_length=20, blank=True)
+    zip_protect_2 = models.CharField(max_length=20, blank=True)
+    zip_protect_3 = models.CharField(max_length=20, blank=True)
+    zip_protect_4 = models.CharField(max_length=20, blank=True)
+    zip_protect_5 = models.CharField(max_length=20, blank=True)
+    zip_protect_6 = models.CharField(max_length=20, blank=True)
+    zip_protect_7 = models.CharField(max_length=20, blank=True)
+    zip_protect_8 = models.CharField(max_length=20, blank=True)
+    zip_protect_9 = models.CharField(max_length=20, blank=True)
+    zip_protect_10 = models.CharField(max_length=20, blank=True)
+
+    zip_qty_1 = models.IntegerField(null=True, blank=True)
+    zip_qty_2 = models.IntegerField(null=True, blank=True)
+    zip_qty_3 = models.IntegerField(null=True, blank=True)
+    zip_qty_4 = models.IntegerField(null=True, blank=True)
+    zip_qty_5 = models.IntegerField(null=True, blank=True)
+    zip_qty_6 = models.IntegerField(null=True, blank=True)
+    zip_qty_7 = models.IntegerField(null=True, blank=True)
+    zip_qty_8 = models.IntegerField(null=True, blank=True)
+    zip_qty_9 = models.IntegerField(null=True, blank=True)
+    zip_qty_10 = models.IntegerField(null=True, blank=True)
+
     # Contact info fields (primarily for labs)
-    phone = models.CharField(max_length=20, blank=True, help_text="Phone number")
-    address = models.TextField(blank=True, help_text="Business address")
+    phone = models.CharField(max_length=50, blank=True, help_text="Phone number")
+    street_address = models.CharField(max_length=255, blank=True, help_text="Street address")
+    city = models.CharField(max_length=100, blank=True, help_text="City")
+    state = models.CharField(max_length=50, blank=True, help_text="State")
+    zip_code = models.CharField(max_length=20, blank=True, help_text="Zip code")
     website = models.URLField(blank=True, help_text="Website URL")
 
     def is_admin_user(self):
@@ -72,10 +98,170 @@ class CustomUser(AbstractUser):
             return self.premium_credits >= amount
         else:
             return self.economy_credits >= amount
-    
+
+    def get_protected_zip_codes(self):
+        """Return list of non-empty protected zip codes"""
+        zips = []
+        for i in range(1, 11):
+            zip_code = getattr(self, f'zip_protect_{i}', '')
+            if zip_code:
+                zips.append(zip_code)
+        return zips
+
+    def get_protected_zips_with_qty(self):
+        """Return list of (zip_code, quantity) tuples for non-empty zip codes"""
+        zips_with_qty = []
+        for i in range(1, 11):
+            zip_code = getattr(self, f'zip_protect_{i}', '')
+            qty = getattr(self, f'zip_qty_{i}', None)
+            if zip_code:
+                zips_with_qty.append((zip_code, qty))
+        return zips_with_qty
+
+    def get_full_address(self):
+        """Return formatted full address"""
+        parts = []
+        if self.street_address:
+            parts.append(self.street_address)
+        city_state_zip = []
+        if self.city:
+            city_state_zip.append(self.city)
+        if self.state:
+            city_state_zip.append(self.state)
+        if city_state_zip:
+            parts.append(', '.join(city_state_zip))
+        if self.zip_code:
+            if parts:
+                parts[-1] = parts[-1] + ' ' + self.zip_code
+            else:
+                parts.append(self.zip_code)
+        return '\n'.join(parts)
+
+    @classmethod
+    def find_lab_with_protected_zip(cls, zip_code):
+        """Find a lab that has protected/claimed a specific zip code (exclusive match)"""
+        if not zip_code:
+            return None
+
+        # Normalize the zip code (strip whitespace)
+        zip_code = zip_code.strip()
+
+        from django.db.models import Q
+
+        # Build query for all zip_protect fields only (not the lab's own address zip)
+        query = Q()
+        for i in range(1, 11):
+            query |= Q(**{f'zip_protect_{i}': zip_code})
+
+        return cls.objects.filter(user_type='lab').filter(query).first()
+
+    @classmethod
+    def find_nearest_labs_by_zip(cls, zip_code, limit=3, include_distance=False):
+        """Find the nearest labs by actual geographic distance.
+
+        Uses the ZipCode database to look up coordinates and calculates
+        distance using the Haversine formula.
+
+        Args:
+            zip_code: The zip code to search from
+            limit: Maximum number of labs to return
+            include_distance: If True, returns list of (lab, distance) tuples
+
+        Returns:
+            List of labs, or list of (lab, distance) tuples if include_distance=True
+        """
+        if not zip_code:
+            return []
+
+        # Normalize zip code
+        zip_code = zip_code.strip()[:5]
+
+        # Get coordinates for the search zip code
+        target_coords = ZipCode.get_coordinates(zip_code)
+
+        # Get all labs with valid zip codes
+        labs = cls.objects.filter(user_type='lab').exclude(zip_code='')
+
+        # Calculate distance for each lab
+        labs_with_distance = []
+        for lab in labs:
+            lab_coords = ZipCode.get_coordinates(lab.zip_code)
+            if target_coords and lab_coords:
+                # Calculate actual geographic distance
+                distance = ZipCode.haversine_distance(
+                    target_coords[0], target_coords[1],
+                    lab_coords[0], lab_coords[1]
+                )
+                labs_with_distance.append((lab, distance))
+            elif lab_coords:
+                # No target coords but lab has coords - use large distance
+                labs_with_distance.append((lab, 99999))
+            else:
+                # Fall back to numeric comparison if no coordinates available
+                try:
+                    target_num = int(zip_code)
+                    lab_num = int(lab.zip_code[:5])
+                    distance = abs(target_num - lab_num)
+                    labs_with_distance.append((lab, distance))
+                except (ValueError, TypeError):
+                    continue
+
+        # Sort by distance and return top results
+        labs_with_distance.sort(key=lambda x: x[1])
+        results = labs_with_distance[:limit]
+
+        if include_distance:
+            return results
+        return [lab for lab, distance in results]
+
     class Meta:
         verbose_name = 'User'
         verbose_name_plural = 'Users'
+
+
+class ZipCode(models.Model):
+    """US Zip code database for geographic distance calculations."""
+    zip_code = models.CharField(max_length=10, unique=True, db_index=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=50)
+    state_abbr = models.CharField(max_length=2)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+
+    def __str__(self):
+        return f"{self.zip_code} - {self.city}, {self.state_abbr}"
+
+    @staticmethod
+    def haversine_distance(lat1, lon1, lat2, lon2):
+        """Calculate distance between two points in miles using Haversine formula."""
+        import math
+
+        R = 3959  # Earth's radius in miles
+
+        lat1_rad = math.radians(lat1)
+        lat2_rad = math.radians(lat2)
+        delta_lat = math.radians(lat2 - lat1)
+        delta_lon = math.radians(lon2 - lon1)
+
+        a = math.sin(delta_lat / 2) ** 2 + \
+            math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+        return R * c
+
+    @classmethod
+    def get_coordinates(cls, zip_code):
+        """Get lat/long for a zip code."""
+        try:
+            zc = cls.objects.get(zip_code=zip_code.strip()[:5])
+            return (zc.latitude, zc.longitude)
+        except cls.DoesNotExist:
+            return None
+
+    class Meta:
+        verbose_name = 'Zip Code'
+        verbose_name_plural = 'Zip Codes'
+
 
 class Dentist(models.Model):
     name = models.CharField(max_length=128)
