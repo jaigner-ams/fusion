@@ -1,5 +1,5 @@
 from django import forms
-from .models import Prospect, ProspectNote, ProspectServiceType
+from .models import Prospect, ProspectNote, ProspectServiceType, LeadReferral
 
 
 class ProspectForm(forms.ModelForm):
@@ -242,4 +242,96 @@ class CreateLabAccountForm(forms.Form):
             'class': 'form-check-input'
         }),
         label='Send credentials via email'
+    )
+
+
+def _time_slot_choices(include_blank=True):
+    """Generate 15-minute interval time slots from 7:00 AM to 7:00 PM"""
+    choices = [('', '-- Select Time --')] if include_blank else []
+    from datetime import time
+    for hour in range(7, 20):  # 7 AM to 7 PM
+        for minute in (0, 15, 30, 45):
+            t = time(hour, minute)
+            label = t.strftime('%I:%M %p')
+            value = t.strftime('%H:%M')
+            choices.append((value, label))
+    return choices
+
+
+class CallerCallbackForm(forms.Form):
+    """Form for caller to set a callback date and time"""
+    callback_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        label='Callback Date'
+    )
+    callback_time = forms.TimeField(
+        required=False,
+        widget=forms.Select(
+            attrs={'class': 'form-select'},
+            choices=_time_slot_choices(include_blank=True),
+        ),
+        label='Callback Time'
+    )
+    note = forms.CharField(
+        required=False,
+        max_length=500,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Optional note...'
+        }),
+        label='Note'
+    )
+
+
+class CallerSentToKeithForm(forms.Form):
+    """Form for caller to send a prospect to Keith"""
+    appointment_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        label='Appointment Date'
+    )
+    appointment_time = forms.TimeField(
+        widget=forms.Select(
+            attrs={'class': 'form-select'},
+            choices=_time_slot_choices(include_blank=True),
+        ),
+        label='Appointment Time'
+    )
+    contact_person = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Person Keith should ask for'
+        }),
+        label='Contact Person'
+    )
+    note = forms.CharField(
+        required=False,
+        max_length=500,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Optional note...'
+        }),
+        label='Note'
+    )
+
+
+class CallerNotInterestedForm(forms.Form):
+    """Form for caller to mark a prospect as not interested"""
+    note = forms.CharField(
+        required=False,
+        max_length=500,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Optional note...'
+        }),
+        label='Note'
     )

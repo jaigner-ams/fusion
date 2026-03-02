@@ -26,6 +26,8 @@ class UniversalLoginView(View):
         """Redirect based on user type"""
         if user.is_admin_user() or user.is_lab_user():
             return reverse_lazy('price_management')
+        elif user.is_caller_user():
+            return reverse_lazy('prospects:caller_dashboard')
         elif user.is_dentist_user():
             return reverse_lazy('dentist_dashboard')
         else:
@@ -53,6 +55,8 @@ class UniversalLoginView(View):
                 if user.is_admin_user():
                     messages.success(request, f'Welcome Admin {user.first_name or username}!')
                 elif user.is_lab_user():
+                    messages.success(request, f'Welcome {user.first_name or username}!')
+                elif user.is_caller_user():
                     messages.success(request, f'Welcome {user.first_name or username}!')
                 elif user.is_dentist_user():
                     messages.success(request, f'Welcome Dr. {user.first_name or username}!')

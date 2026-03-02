@@ -3,6 +3,22 @@ from django.conf import settings
 from django.utils import timezone
 
 
+class Mailer(models.Model):
+    """Tracks mailer batches sent out to prospects"""
+    date = models.DateField()
+    description = models.CharField(max_length=200, blank=True)
+    prospect_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = "Mailer"
+        verbose_name_plural = "Mailers"
+
+    def __str__(self):
+        return f"Mailer {self.date.strftime('%m/%d/%Y')} ({self.prospect_count} prospects)"
+
+
 class Prospect(models.Model):
     """Main prospect/lead model for tracking potential dental lab customers"""
 
@@ -11,6 +27,11 @@ class Prospect(models.Model):
         ('member', 'Fusion Member'),
         ('declined', 'Fusion Declined'),
         ('corporate', 'Corporate Lab'),
+        ('mailed', 'Mailed'),
+        ('callback', 'Call Back'),
+        ('sent_to_keith', 'Sent to Keith'),
+        ('keith_closed', 'Keith Closed'),
+        ('not_interested', 'Not Interested'),
     ]
 
     AMS_HISTORY_CHOICES = [
@@ -40,6 +61,16 @@ class Prospect(models.Model):
         blank=True,
         related_name='prospect_profile',
         help_text="Lab user account created for this prospect"
+    )
+
+    # Mailer batch link
+    mailer = models.ForeignKey(
+        Mailer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='prospects',
+        help_text="Mailer batch this prospect was imported from"
     )
 
     # Lead fields
@@ -169,3 +200,31 @@ class ProspectNote(models.Model):
 
     def __str__(self):
         return f"{self.prospect.lab_name} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class LeadReferral(models.Model):
+    """Created when a caller sends a prospect to Keith"""
+    prospect = models.ForeignKey(
+        Prospect,
+        on_delete=models.CASCADE,
+        related_name='lead_referrals'
+    )
+    referred_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='referrals_made'
+    )
+    contact_person = models.CharField(max_length=200, help_text="Person at the lab Keith should ask for")
+    appointment_date = models.DateField()
+    appointment_time = models.TimeField()
+    notes = models.TextField(blank=True)
+    sms_reminder_sent = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-appointment_date', '-appointment_time']
+        verbose_name = "Lead Referral"
+        verbose_name_plural = "Lead Referrals"
+
+    def __str__(self):
+        return f"{self.prospect.lab_name} → Keith ({self.appointment_date})"

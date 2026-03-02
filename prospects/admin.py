@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Prospect, ProspectNote, ProspectServiceType
+from .models import Prospect, ProspectNote, ProspectServiceType, Mailer, LeadReferral
 
 
 class ProspectNoteInline(admin.TabularInline):
@@ -23,7 +23,7 @@ class ProspectAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Status', {
-            'fields': ('status',)
+            'fields': ('status', 'mailer')
         }),
         ('Contact Information', {
             'fields': ('lab_name', 'person_name', 'address', 'city', 'state', 'zip_code')
@@ -53,4 +53,20 @@ class ProspectNoteAdmin(admin.ModelAdmin):
     list_display = ['prospect', 'note_text', 'created_at']
     list_filter = ['created_at']
     search_fields = ['prospect__lab_name', 'note_text']
+    readonly_fields = ['created_at']
+
+
+@admin.register(Mailer)
+class MailerAdmin(admin.ModelAdmin):
+    list_display = ['date', 'description', 'prospect_count', 'created_at']
+    list_filter = ['date']
+    search_fields = ['description']
+    readonly_fields = ['created_at']
+
+
+@admin.register(LeadReferral)
+class LeadReferralAdmin(admin.ModelAdmin):
+    list_display = ['prospect', 'contact_person', 'appointment_date', 'appointment_time', 'referred_by', 'sms_reminder_sent']
+    list_filter = ['appointment_date', 'sms_reminder_sent']
+    search_fields = ['prospect__lab_name', 'contact_person']
     readonly_fields = ['created_at']

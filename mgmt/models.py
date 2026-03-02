@@ -16,8 +16,9 @@ class CustomUser(AbstractUser):
         ('admin', 'Admin'),
         ('lab', 'Lab'),
         ('dentist', 'Dentist'),
+        ('caller', 'Caller'),
     ]
-    
+
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='dentist')
     lab_profile_id = models.IntegerField(null=True, blank=True, help_text="Link to labprofile.labID in external database")
     credits = models.IntegerField(default=0, help_text="DEPRECATED - Use economy_credits and premium_credits instead")
@@ -64,6 +65,9 @@ class CustomUser(AbstractUser):
     
     def is_dentist_user(self):
         return self.user_type == 'dentist'
+
+    def is_caller_user(self):
+        return self.user_type == 'caller'
     
     def get_total_credits(self):
         """Get total crown credits (economy + premium)"""

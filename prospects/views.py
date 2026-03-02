@@ -27,39 +27,56 @@ from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from .models import Prospect, ProspectNote, ProspectServiceType
-from .forms import ProspectForm, ProspectNoteForm, NextContactDateForm, CreateLabAccountForm
+from .models import Prospect, ProspectNote, ProspectServiceType, Mailer, LeadReferral
+from .forms import (ProspectForm, ProspectNoteForm, NextContactDateForm, CreateLabAccountForm,
+                     CallerCallbackForm, CallerSentToKeithForm, CallerNotInterestedForm)
 from mgmt.models import CustomUser
+from mgmt.decorators import caller_required
 
 
 @login_required
 def prospect_list(request):
     """List all prospects with status and AMS history filters"""
+    if request.user.is_caller_user():
+        return redirect('prospects:caller_dashboard')
+
     status_filter = request.GET.get('status', '')
     ams_history_filter = request.GET.get('ams_history', '')
+    source_filter = request.GET.get('source', '')
 
-    prospects = Prospect.objects.all()
+    # Exclude caller-only statuses from Keith's list (until sent to him)
+    caller_only_statuses = ['mailed', 'callback', 'not_interested']
+    prospects = Prospect.objects.exclude(status__in=caller_only_statuses)
+
+    if source_filter == 'caller':
+        prospects = prospects.filter(status__in=['sent_to_keith', 'keith_closed'])
     if status_filter:
         prospects = prospects.filter(status=status_filter)
     if ams_history_filter:
         prospects = prospects.filter(ams_history=ams_history_filter)
 
-    # Count by status for dashboard
+    # Count by status for dashboard (only statuses visible to Keith)
+    keith_prospects = Prospect.objects.exclude(status__in=caller_only_statuses)
+    caller_leads_count = keith_prospects.filter(status__in=['sent_to_keith', 'keith_closed']).count()
     status_counts = {
-        'prospect': Prospect.objects.filter(status='prospect').count(),
-        'member': Prospect.objects.filter(status='member').count(),
-        'declined': Prospect.objects.filter(status='declined').count(),
-        'corporate': Prospect.objects.filter(status='corporate').count(),
-        'total': Prospect.objects.count(),
+        'prospect': keith_prospects.filter(status='prospect').count(),
+        'member': keith_prospects.filter(status='member').count(),
+        'declined': keith_prospects.filter(status='declined').count(),
+        'corporate': keith_prospects.filter(status='corporate').count(),
+        'sent_to_keith': keith_prospects.filter(status='sent_to_keith').count(),
+        'keith_closed': keith_prospects.filter(status='keith_closed').count(),
+        'total': keith_prospects.count(),
     }
 
     context = {
         'prospects': prospects,
         'status_filter': status_filter,
         'ams_history_filter': ams_history_filter,
+        'source_filter': source_filter,
         'status_choices': Prospect.STATUS_CHOICES,
         'ams_history_choices': Prospect.AMS_HISTORY_CHOICES,
         'status_counts': status_counts,
+        'caller_leads_count': caller_leads_count,
         'title': 'Prospects List'
     }
     return render(request, 'prospects/prospect_list.html', context)
@@ -68,6 +85,8 @@ def prospect_list(request):
 @login_required
 def prospect_add(request):
     """Add a new prospect"""
+    if request.user.is_caller_user():
+        return redirect('prospects:caller_dashboard')
     if request.method == 'POST':
         form = ProspectForm(request.POST)
         if form.is_valid():
@@ -91,6 +110,8 @@ def prospect_add(request):
 @login_required
 def prospect_edit(request, pk):
     """Edit an existing prospect"""
+    if request.user.is_caller_user():
+        return redirect('prospects:caller_edit', pk=pk)
     prospect = get_object_or_404(Prospect, pk=pk)
 
     if request.method == 'POST':
@@ -122,6 +143,8 @@ def prospect_edit(request, pk):
 @login_required
 def prospect_detail(request, pk):
     """View prospect details with notes"""
+    if request.user.is_caller_user():
+        return redirect('prospects:caller_detail', pk=pk)
     prospect = get_object_or_404(Prospect, pk=pk)
     notes = prospect.notes.all()
     note_form = ProspectNoteForm()
@@ -156,6 +179,8 @@ def prospect_detail(request, pk):
 @login_required
 def prospect_delete(request, pk):
     """Delete a prospect"""
+    if request.user.is_caller_user():
+        return redirect('prospects:caller_dashboard')
     prospect = get_object_or_404(Prospect, pk=pk)
 
     if request.method == 'POST':
@@ -411,3 +436,143 @@ def create_lab_account(request, pk):
         'title': f'Create Account for {prospect.lab_name}'
     }
     return render(request, 'prospects/create_lab_account.html', context)
+
+
+@login_required
+@caller_required
+def caller_dashboard(request):
+    """Caller's main dashboard showing prospects from mailer campaigns"""
+    status_filter = request.GET.get('status', '')
+    mailer_filter = request.GET.get('mailer', '')
+
+    # Caller only sees mailed/callback/sent_to_keith/keith_closed statuses
+    caller_statuses = ['mailed', 'callback', 'sent_to_keith', 'keith_closed', 'not_interested']
+    prospects = Prospect.objects.filter(status__in=caller_statuses)
+
+    if status_filter and status_filter in caller_statuses:
+        prospects = prospects.filter(status=status_filter)
+    if mailer_filter:
+        prospects = prospects.filter(mailer_id=mailer_filter)
+
+    status_counts = {
+        'mailed': Prospect.objects.filter(status='mailed').count(),
+        'callback': Prospect.objects.filter(status='callback').count(),
+        'sent_to_keith': Prospect.objects.filter(status='sent_to_keith').count(),
+        'keith_closed': Prospect.objects.filter(status='keith_closed').count(),
+        'not_interested': Prospect.objects.filter(status='not_interested').count(),
+    }
+    status_counts['total'] = sum(status_counts.values())
+
+    mailers = Mailer.objects.all()
+
+    context = {
+        'prospects': prospects,
+        'status_filter': status_filter,
+        'mailer_filter': mailer_filter,
+        'status_counts': status_counts,
+        'mailers': mailers,
+        'title': 'Caller Dashboard',
+    }
+    return render(request, 'prospects/caller_dashboard.html', context)
+
+
+@login_required
+@caller_required
+def caller_detail(request, pk):
+    """Read-only prospect detail for callers"""
+    prospect = get_object_or_404(Prospect, pk=pk)
+    notes = prospect.notes.all()
+
+    context = {
+        'prospect': prospect,
+        'notes': notes,
+        'title': f'Prospect: {prospect.lab_name}',
+    }
+    return render(request, 'prospects/caller_detail.html', context)
+
+
+@login_required
+@caller_required
+def caller_edit(request, pk):
+    """Caller edit view with 3 action buttons: Call Back, Sent to Keith, Not Interested"""
+    prospect = get_object_or_404(Prospect, pk=pk)
+    notes = prospect.notes.all()
+
+    callback_form = CallerCallbackForm()
+    sent_to_keith_form = CallerSentToKeithForm()
+    not_interested_form = CallerNotInterestedForm()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'callback':
+            callback_form = CallerCallbackForm(request.POST)
+            if callback_form.is_valid():
+                prospect.status = 'callback'
+                prospect.next_contact_date = callback_form.cleaned_data['callback_date']
+                prospect.save()
+                note_text = callback_form.cleaned_data.get('note')
+                if note_text:
+                    ProspectNote.objects.create(prospect=prospect, note_text=note_text)
+                callback_time = callback_form.cleaned_data.get('callback_time')
+                time_str = f" at {callback_time.strftime('%I:%M %p')}" if callback_time else ""
+                messages.success(request, f'"{prospect.lab_name}" set to Call Back on {prospect.next_contact_date.strftime("%m/%d/%Y")}{time_str}.')
+                return redirect('prospects:caller_dashboard')
+
+        elif action == 'sent_to_keith':
+            sent_to_keith_form = CallerSentToKeithForm(request.POST)
+            if sent_to_keith_form.is_valid():
+                prospect.status = 'sent_to_keith'
+                prospect.save()
+                LeadReferral.objects.create(
+                    prospect=prospect,
+                    referred_by=request.user,
+                    contact_person=sent_to_keith_form.cleaned_data['contact_person'],
+                    appointment_date=sent_to_keith_form.cleaned_data['appointment_date'],
+                    appointment_time=sent_to_keith_form.cleaned_data['appointment_time'],
+                    notes=sent_to_keith_form.cleaned_data.get('note', ''),
+                )
+                note_text = sent_to_keith_form.cleaned_data.get('note')
+                if note_text:
+                    ProspectNote.objects.create(prospect=prospect, note_text=note_text)
+                ProspectNote.objects.create(
+                    prospect=prospect,
+                    note_text=f"Sent to Keith - Contact: {sent_to_keith_form.cleaned_data['contact_person']}, "
+                              f"Appt: {sent_to_keith_form.cleaned_data['appointment_date'].strftime('%m/%d/%Y')} "
+                              f"at {sent_to_keith_form.cleaned_data['appointment_time'].strftime('%I:%M %p')}"
+                )
+                messages.success(request, f'"{prospect.lab_name}" sent to Keith.')
+                return redirect('prospects:caller_dashboard')
+
+        elif action == 'not_interested':
+            not_interested_form = CallerNotInterestedForm(request.POST)
+            if not_interested_form.is_valid():
+                prospect.status = 'not_interested'
+                prospect.save()
+                note_text = not_interested_form.cleaned_data.get('note')
+                if note_text:
+                    ProspectNote.objects.create(prospect=prospect, note_text=note_text)
+                messages.success(request, f'"{prospect.lab_name}" marked as Not Interested.')
+                return redirect('prospects:caller_dashboard')
+
+    context = {
+        'prospect': prospect,
+        'notes': notes,
+        'callback_form': callback_form,
+        'sent_to_keith_form': sent_to_keith_form,
+        'not_interested_form': not_interested_form,
+        'title': f'Edit: {prospect.lab_name}',
+    }
+    return render(request, 'prospects/caller_edit.html', context)
+
+
+@login_required
+def lead_referrals(request):
+    """Keith's view of leads sent by callers"""
+    referrals = LeadReferral.objects.select_related('prospect', 'referred_by').all()
+
+    context = {
+        'referrals': referrals,
+        'title': 'Leads from AMS Caller',
+    }
+    return render(request, 'prospects/lead_referrals.html', context)

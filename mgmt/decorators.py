@@ -44,11 +44,28 @@ def dentist_required(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('login')
-        
+
         if not request.user.is_dentist_user():
             messages.error(request, 'You must be a dentist user to access this page.')
             return redirect('login')
-        
+
         return view_func(request, *args, **kwargs)
-    
+
+    return wrapper
+
+def caller_required(view_func):
+    """
+    Decorator to ensure only caller users can access the view
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        if not request.user.is_caller_user():
+            messages.error(request, 'You must be a caller user to access this page.')
+            return redirect('login')
+
+        return view_func(request, *args, **kwargs)
+
     return wrapper

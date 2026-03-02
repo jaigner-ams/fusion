@@ -287,6 +287,31 @@
             color: white;
         }
 
+        .badge-mailed {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .badge-callback {
+            background-color: #06b6d4;
+            color: white;
+        }
+
+        .badge-sent-to-keith {
+            background-color: #8b5cf6;
+            color: white;
+        }
+
+        .badge-keith-closed {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        .badge-not-interested {
+            background-color: #6b7280;
+            color: white;
+        }
+
         .navbar-text {
             color: var(--text-secondary) !important;
         }
@@ -525,9 +550,28 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav me-auto">
-                    <a class="nav-link" href="{% url 'prospects:prospect_list' %}">All Prospects</a>
-                    <a class="nav-link" href="{% url 'prospects:prospect_add' %}">Add Prospect</a>
-                    <a class="nav-link" href="{% url 'prospects:contact_schedule' %}">Contact Schedule</a>
+                    {% if user.is_authenticated and user.is_caller_user %}
+                        <a class="nav-link" href="{% url 'prospects:caller_dashboard' %}">Dashboard</a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="mailerDropdown" role="button" data-bs-toggle="dropdown">
+                                Mailers
+                            </a>
+                            <ul class="dropdown-menu" style="background-color: var(--card-bg); border-color: var(--border-color);">
+                                <li><a class="dropdown-item" href="{% url 'prospects:caller_dashboard' %}" style="color: var(--text-primary);">All Mailers</a></li>
+                                {% if nav_mailers %}
+                                    <li><hr class="dropdown-divider" style="border-color: var(--border-color);"></li>
+                                    {% for mailer in nav_mailers %}
+                                        <li><a class="dropdown-item" href="{% url 'prospects:caller_dashboard' %}?mailer={{ mailer.pk }}" style="color: var(--text-primary);">{{ mailer.date|date:"m/d/Y" }}{% if mailer.description %} - {{ mailer.description }}{% endif %}</a></li>
+                                    {% endfor %}
+                                {% endif %}
+                            </ul>
+                        </li>
+                    {% else %}
+                        <a class="nav-link" href="{% url 'prospects:prospect_list' %}">All Prospects</a>
+                        <a class="nav-link" href="{% url 'prospects:prospect_add' %}">Add Prospect</a>
+                        <a class="nav-link" href="{% url 'prospects:contact_schedule' %}">Contact Schedule</a>
+                        <a class="nav-link" href="{% url 'prospects:lead_referrals' %}">Leads from Caller</a>
+                    {% endif %}
                 </div>
                 <div class="navbar-nav align-items-center">
                     {% if user.is_authenticated %}

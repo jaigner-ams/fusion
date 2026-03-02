@@ -11,6 +11,33 @@
     </div>
 </div>
 
+<!-- Leads from AMS Caller Card -->
+{% if caller_leads_count > 0 %}
+<div class="mb-4">
+    <a href="{% url 'prospects:prospect_list' %}?source=caller" class="text-decoration-none">
+        <div class="card{% if source_filter == 'caller' %} border-2{% endif %}" style="border-left: 4px solid #8b5cf6; cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1" style="color: #8b5cf6;">Leads from AMS Caller</h5>
+                    <p class="text-muted mb-0">Prospects pre-screened and sent to you by the AMS caller</p>
+                </div>
+                <div class="text-end">
+                    <span class="fs-3 fw-bold" style="color: #8b5cf6;">{{ caller_leads_count }}</span>
+                    <p class="text-muted mb-0 small">lead{{ caller_leads_count|pluralize }}</p>
+                </div>
+            </div>
+        </div>
+    </a>
+</div>
+{% endif %}
+
+{% if source_filter == 'caller' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0" style="color: #8b5cf6;">Showing Leads from AMS Caller</h5>
+    <a href="{% url 'prospects:prospect_list' %}" class="btn btn-sm btn-outline-secondary">Show All Prospects</a>
+</div>
+{% endif %}
+
 <!-- Stats Cards -->
 <div class="row mb-4">
     <div class="col">
@@ -119,6 +146,18 @@
                                     <span class="badge badge-declined">Fusion Declined</span>
                                 {% elif prospect.status == 'corporate' %}
                                     <span class="badge badge-corporate">Corporate Lab</span>
+                                {% elif prospect.status == 'mailed' %}
+                                    <span class="badge" style="background-color: #f59e0b; color: white;">Mailed</span>
+                                {% elif prospect.status == 'callback' %}
+                                    <span class="badge" style="background-color: #06b6d4; color: white;">Call Back</span>
+                                {% elif prospect.status == 'sent_to_keith' %}
+                                    <span class="badge" style="background-color: #8b5cf6; color: white;">Sent to Keith</span>
+                                    <span class="badge bg-dark ms-1" style="font-size: 0.65em;">AMS Caller</span>
+                                {% elif prospect.status == 'keith_closed' %}
+                                    <span class="badge" style="background-color: #22c55e; color: white;">Keith Closed</span>
+                                    <span class="badge bg-dark ms-1" style="font-size: 0.65em;">AMS Caller</span>
+                                {% elif prospect.status == 'not_interested' %}
+                                    <span class="badge" style="background-color: #6b7280; color: white;">Not Interested</span>
                                 {% endif %}
                             </td>
                             <td>

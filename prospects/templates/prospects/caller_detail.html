@@ -1,0 +1,135 @@
+{% extends 'prospects/base_prospects.html' %}
+
+{% block title %}{{ title }} - AMS Fusion Prospects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ prospect.lab_name }}</h1>
+    <div class="d-flex gap-2">
+        {% if prospect.status == 'mailed' or prospect.status == 'callback' %}
+            <a href="{% url 'prospects:caller_edit' prospect.pk %}" class="btn btn-warning">Edit</a>
+        {% endif %}
+        <a href="{% url 'prospects:caller_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column - Prospect Details -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Prospect Details</h4>
+                {% if prospect.status == 'mailed' %}
+                    <span class="badge badge-mailed fs-6">Mailed</span>
+                {% elif prospect.status == 'callback' %}
+                    <span class="badge badge-callback fs-6">Call Back</span>
+                {% elif prospect.status == 'sent_to_keith' %}
+                    <span class="badge badge-sent-to-keith fs-6">Sent to Keith</span>
+                {% elif prospect.status == 'keith_closed' %}
+                    <span class="badge badge-keith-closed fs-6">Keith Closed</span>
+                {% elif prospect.status == 'not_interested' %}
+                    <span class="badge badge-not-interested fs-6">Not Interested</span>
+                {% endif %}
+            </div>
+
+            <!-- Contact Info -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Lab Name</p>
+                    <p class="fw-bold">{{ prospect.lab_name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Contact Person</p>
+                    <p class="fw-bold">{{ prospect.person_name }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Phone</p>
+                    <p class="fw-bold">{{ prospect.phone|default:"Not set" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Email</p>
+                    <p class="fw-bold">
+                        {% if prospect.email %}
+                            <a href="mailto:{{ prospect.email }}">{{ prospect.email }}</a>
+                        {% else %}
+                            <span class="text-muted">Not set</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <p class="text-muted mb-1">Address</p>
+                    <p class="fw-bold">
+                        {% if prospect.address %}{{ prospect.address }}<br>{% endif %}
+                        {{ prospect.city }}{% if prospect.city and prospect.state %}, {% endif %}{{ prospect.state }} {{ prospect.zip_code }}
+                    </p>
+                </div>
+            </div>
+
+            <hr class="border-secondary">
+
+            <!-- Business Details -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Monthly Fee</p>
+                    <p class="fw-bold fs-5">
+                        {% if prospect.monthly_fee %}
+                            ${{ prospect.monthly_fee }}
+                        {% else %}
+                            <span class="text-muted">Not set</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Has Mill</p>
+                    <p class="fw-bold">
+                        {% if prospect.has_mill %}
+                            <span class="text-success">Yes</span>
+                        {% else %}
+                            <span class="text-danger">No</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Dentists Requested</p>
+                    <p class="fw-bold">{{ prospect.dentists_requested|default:"Not set" }}</p>
+                </div>
+            </div>
+
+            {% if prospect.next_contact_date %}
+            <hr class="border-secondary">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Next Contact Date</p>
+                    <p class="fw-bold">{{ prospect.next_contact_date|date:"m/d/Y" }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column - Notes -->
+    <div class="col-md-4">
+        <div class="card">
+            <h4 class="mb-3">Notes History</h4>
+            <div class="notes-container">
+                {% if notes %}
+                    {% for note in notes %}
+                        <div class="note-item">
+                            <div class="note-date">{{ note.created_at|date:"m/d/Y g:i A" }}</div>
+                            <div class="mt-2">{{ note.note_text }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center py-3">No notes yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

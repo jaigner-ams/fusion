@@ -1,0 +1,138 @@
+{% extends 'prospects/base_prospects.html' %}
+
+{% block title %}{{ title }} - AMS Fusion Prospects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ prospect.lab_name }}</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'prospects:caller_detail' prospect.pk %}" class="btn btn-secondary">View Details</a>
+        <a href="{% url 'prospects:caller_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Quick Info -->
+        <div class="card mb-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Contact Person</p>
+                    <p class="fw-bold">{{ prospect.person_name }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Phone</p>
+                    <p class="fw-bold">{{ prospect.phone|default:"Not set" }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="text-muted mb-1">Location</p>
+                    <p class="fw-bold">{{ prospect.city }}{% if prospect.city and prospect.state %}, {% endif %}{{ prospect.state }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action: Call Back -->
+        <div class="card mb-3">
+            <h5 class="mb-3">
+                <a data-bs-toggle="collapse" href="#callbackSection" role="button" aria-expanded="true" class="text-decoration-none text-theme">
+                    Call Back
+                </a>
+            </h5>
+            <div class="collapse show" id="callbackSection">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="callback">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Callback Date</label>
+                            {{ callback_form.callback_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Callback Time (optional)</label>
+                            {{ callback_form.callback_time }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Note (optional)</label>
+                        {{ callback_form.note }}
+                    </div>
+                    <button type="submit" class="btn" style="background-color: #06b6d4; color: white; border: none;">Set Call Back</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Action: Sent to Keith -->
+        <div class="card mb-3">
+            <h5 class="mb-3">
+                <a data-bs-toggle="collapse" href="#sentToKeithSection" role="button" aria-expanded="false" class="text-decoration-none text-theme collapsed">
+                    Send to Keith
+                </a>
+            </h5>
+            <div class="collapse" id="sentToKeithSection">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="sent_to_keith">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Appointment Date</label>
+                            {{ sent_to_keith_form.appointment_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Appointment Time</label>
+                            {{ sent_to_keith_form.appointment_time }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Person to Contact (who Keith should ask for)</label>
+                        {{ sent_to_keith_form.contact_person }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Note (optional)</label>
+                        {{ sent_to_keith_form.note }}
+                    </div>
+                    <button type="submit" class="btn" style="background-color: #8b5cf6; color: white; border: none;">Send to Keith</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Action: Not Interested -->
+        <div class="card mb-3">
+            <h5 class="mb-3">
+                <a data-bs-toggle="collapse" href="#notInterestedSection" role="button" aria-expanded="false" class="text-decoration-none text-theme collapsed">
+                    Not Interested
+                </a>
+            </h5>
+            <div class="collapse" id="notInterestedSection">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="not_interested">
+                    <div class="mb-3">
+                        <label class="form-label">Note (optional)</label>
+                        {{ not_interested_form.note }}
+                    </div>
+                    <button type="submit" class="btn" style="background-color: #6b7280; color: white; border: none;">Mark Not Interested</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Notes -->
+    <div class="col-md-4">
+        <div class="card">
+            <h4 class="mb-3">Notes History</h4>
+            <div class="notes-container">
+                {% if notes %}
+                    {% for note in notes %}
+                        <div class="note-item">
+                            <div class="note-date">{{ note.created_at|date:"m/d/Y g:i A" }}</div>
+                            <div class="mt-2">{{ note.note_text }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center py-3">No notes yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

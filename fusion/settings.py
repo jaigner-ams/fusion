@@ -64,6 +64,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'prospects.context_processors.nav_mailers',
             ],
         },
     },
@@ -179,3 +180,9 @@ SERVER_EMAIL = 'AMS Fusion <info@amsfusion.com>'
 
 # Site URL for email links (update with your actual domain)
 SITE_URL = 'https://amsfusion.com'
+
+# Twilio SMS Configuration (for Keith's appointment reminders)
+TWILIO_ACCOUNT_SID = ''
+TWILIO_AUTH_TOKEN = ''
+TWILIO_FROM_NUMBER = ''
+TWILIO_KEITH_NUMBER = ''
