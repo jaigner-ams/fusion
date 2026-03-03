@@ -34,6 +34,11 @@
             Keith Closed {{ status_counts.keith_closed }}
         </span>
     </a>
+    <a href="{% url 'prospects:caller_dashboard' %}?status=left_voicemail{% if mailer_filter %}&mailer={{ mailer_filter }}{% endif %}" class="text-decoration-none">
+        <span class="badge badge-left-voicemail fs-6 {% if status_filter == 'left_voicemail' %}border border-2 border-light{% endif %}">
+            Left Voicemail {{ status_counts.left_voicemail }}
+        </span>
+    </a>
     <a href="{% url 'prospects:caller_dashboard' %}?status=not_interested{% if mailer_filter %}&mailer={{ mailer_filter }}{% endif %}" class="text-decoration-none">
         <span class="badge badge-not-interested fs-6 {% if status_filter == 'not_interested' %}border border-2 border-light{% endif %}">
             Not Interested {{ status_counts.not_interested }}
@@ -77,20 +82,25 @@
                                     <span class="badge badge-sent-to-keith">Sent to Keith</span>
                                 {% elif prospect.status == 'keith_closed' %}
                                     <span class="badge badge-keith-closed">Keith Closed</span>
+                                {% elif prospect.status == 'left_voicemail' %}
+                                    <span class="badge badge-left-voicemail">Left Voicemail</span>
                                 {% elif prospect.status == 'not_interested' %}
                                     <span class="badge badge-not-interested">Not Interested</span>
                                 {% endif %}
                             </td>
-                            <td data-order="{% if prospect.next_contact_date %}{{ prospect.next_contact_date|date:'Y-m-d' }}{% else %}9999-99-99{% endif %}">
+                            <td data-order="{% if prospect.next_contact_date %}{{ prospect.next_contact_date|date:'Y-m-d' }} {% if prospect.next_contact_time %}{{ prospect.next_contact_time|time:'H:i' }}{% else %}99:99{% endif %}{% else %}9999-99-99 99:99{% endif %}">
                                 {% if prospect.next_contact_date %}
                                     {{ prospect.next_contact_date|date:"m/d/Y" }}
+                                    {% if prospect.next_contact_time %}
+                                        <br><small class="text-muted">{{ prospect.next_contact_time|time:"g:i A" }}</small>
+                                    {% endif %}
                                 {% else %}
                                     <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
                             <td>
                                 <a href="{% url 'prospects:caller_detail' prospect.pk %}" class="btn btn-sm btn-outline-info">View</a>
-                                {% if prospect.status == 'mailed' or prospect.status == 'callback' %}
+                                {% if prospect.status == 'mailed' or prospect.status == 'callback' or prospect.status == 'left_voicemail' %}
                                     <a href="{% url 'prospects:caller_edit' prospect.pk %}" class="btn btn-sm btn-outline-warning">Edit</a>
                                 {% endif %}
                             </td>

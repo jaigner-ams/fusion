@@ -32,6 +32,7 @@ class Prospect(models.Model):
         ('sent_to_keith', 'Sent to Keith'),
         ('keith_closed', 'Keith Closed'),
         ('not_interested', 'Not Interested'),
+        ('left_voicemail', 'Left Voicemail'),
     ]
 
     AMS_HISTORY_CHOICES = [
@@ -51,7 +52,7 @@ class Prospect(models.Model):
     ams_history = models.CharField(max_length=20, choices=AMS_HISTORY_CHOICES, blank=True, default='')
 
     # Status - Radio button in form
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='prospect')
+    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='prospect')
 
     # Link to created Lab user account (when prospect becomes a member)
     lab_user = models.OneToOneField(
@@ -119,6 +120,7 @@ class Prospect(models.Model):
 
     # Next Contact Date - Calendar picker
     next_contact_date = models.DateField(null=True, blank=True)
+    next_contact_time = models.TimeField(null=True, blank=True)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -191,6 +193,13 @@ class ProspectNote(models.Model):
         related_name='notes'
     )
     note_text = models.CharField(max_length=500)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='prospect_notes'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

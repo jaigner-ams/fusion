@@ -7,7 +7,14 @@
     <h1>{{ title }}</h1>
     <div class="d-flex gap-2">
         {% if prospect %}
+            <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="btn btn-outline-info">View</a>
             <button type="submit" form="prospect-form" class="btn btn-primary">Update Prospect</button>
+            {% if prospect.email %}
+            <form method="post" action="{% url 'prospects:send_fusion_email' prospect.pk %}" class="d-inline" onsubmit="return confirm('Send What is Fusion email to {{ prospect.email }}?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-info">Send What is Fusion Email</button>
+            </form>
+            {% endif %}
         {% endif %}
         <a href="{% url 'prospects:prospect_list' %}" class="btn btn-secondary">Back to List</a>
     </div>
@@ -171,11 +178,15 @@
 
         <hr class="border-secondary">
 
-        <!-- Next Contact Date -->
+        <!-- Next Contact Date & Time -->
         <div class="row mb-4">
             <div class="col-md-4">
                 <label for="id_next_contact_date" class="form-label">Next Contact Date</label>
                 {{ form.next_contact_date }}
+            </div>
+            <div class="col-md-3">
+                <label for="id_next_contact_time" class="form-label">Time (optional)</label>
+                {{ form.next_contact_time }}
             </div>
         </div>
 

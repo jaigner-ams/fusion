@@ -29,7 +29,8 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from .models import Prospect, ProspectNote, ProspectServiceType, Mailer, LeadReferral
 from .forms import (ProspectForm, ProspectNoteForm, NextContactDateForm, CreateLabAccountForm,
-                     CallerCallbackForm, CallerSentToKeithForm, CallerNotInterestedForm)
+                     CallerCallbackForm, CallerSentToKeithForm, CallerNotInterestedForm,
+                     CallerLeftVoicemailForm)
 from mgmt.models import CustomUser
 from mgmt.decorators import caller_required
 
@@ -45,7 +46,7 @@ def prospect_list(request):
     source_filter = request.GET.get('source', '')
 
     # Exclude caller-only statuses from Keith's list (until sent to him)
-    caller_only_statuses = ['mailed', 'callback', 'not_interested']
+    caller_only_statuses = ['mailed', 'callback', 'not_interested', 'left_voicemail']
     prospects = Prospect.objects.exclude(status__in=caller_only_statuses)
 
     if source_filter == 'caller':
@@ -156,6 +157,7 @@ def prospect_detail(request, pk):
             if note_form.is_valid():
                 note = note_form.save(commit=False)
                 note.prospect = prospect
+                note.created_by = request.user
                 note.save()
                 messages.success(request, 'Note added successfully!')
                 return redirect('prospects:prospect_detail', pk=pk)
@@ -439,6 +441,44 @@ def create_lab_account(request, pk):
 
 
 @login_required
+def send_fusion_email(request, pk):
+    """Send 'What is Fusion' email to a prospect"""
+    if request.user.is_caller_user():
+        return redirect('prospects:caller_dashboard')
+    prospect = get_object_or_404(Prospect, pk=pk)
+
+    if request.method != 'POST':
+        return redirect('prospects:prospect_edit', pk=pk)
+
+    if not prospect.email:
+        messages.error(request, f'No email address on file for "{prospect.lab_name}".')
+        return redirect('prospects:prospect_edit', pk=pk)
+
+    try:
+        send_mail(
+            subject='What is Fusion',
+            message=(
+                f'Thank you {prospect.person_name} for your interest in Fusion.\n\n'
+                'Below is a web link that has a Video and Text description of Fusion.\n'
+                'I look forward to a follow up phone call with you soon.\n\n'
+                'https://fusiondentaldesigncenters.com/fusion-a-rescue-response-for-the-dental-lab-industry/\n\n'
+                'You can always reach me at 708 502-3411\n\n'
+                'Kind Regards,\n'
+                'Keith Crittenden\n'
+                'AmericaSmiles Network'
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[prospect.email],
+            fail_silently=False,
+        )
+        messages.success(request, f'"What is Fusion" email sent to {prospect.email}.')
+    except Exception as e:
+        messages.error(request, f'Failed to send email: {str(e)}')
+
+    return redirect('prospects:prospect_edit', pk=pk)
+
+
+@login_required
 @caller_required
 def caller_dashboard(request):
     """Caller's main dashboard showing prospects from mailer campaigns"""
@@ -446,7 +486,7 @@ def caller_dashboard(request):
     mailer_filter = request.GET.get('mailer', '')
 
     # Caller only sees mailed/callback/sent_to_keith/keith_closed statuses
-    caller_statuses = ['mailed', 'callback', 'sent_to_keith', 'keith_closed', 'not_interested']
+    caller_statuses = ['mailed', 'callback', 'sent_to_keith', 'keith_closed', 'not_interested', 'left_voicemail']
     prospects = Prospect.objects.filter(status__in=caller_statuses)
 
     if status_filter and status_filter in caller_statuses:
@@ -460,6 +500,7 @@ def caller_dashboard(request):
         'sent_to_keith': Prospect.objects.filter(status='sent_to_keith').count(),
         'keith_closed': Prospect.objects.filter(status='keith_closed').count(),
         'not_interested': Prospect.objects.filter(status='not_interested').count(),
+        'left_voicemail': Prospect.objects.filter(status='left_voicemail').count(),
     }
     status_counts['total'] = sum(status_counts.values())
 
@@ -501,6 +542,7 @@ def caller_edit(request, pk):
     callback_form = CallerCallbackForm()
     sent_to_keith_form = CallerSentToKeithForm()
     not_interested_form = CallerNotInterestedForm()
+    left_voicemail_form = CallerLeftVoicemailForm()
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -510,10 +552,11 @@ def caller_edit(request, pk):
             if callback_form.is_valid():
                 prospect.status = 'callback'
                 prospect.next_contact_date = callback_form.cleaned_data['callback_date']
+                prospect.next_contact_time = callback_form.cleaned_data.get('callback_time')
                 prospect.save()
                 note_text = callback_form.cleaned_data.get('note')
                 if note_text:
-                    ProspectNote.objects.create(prospect=prospect, note_text=note_text)
+                    ProspectNote.objects.create(prospect=prospect, note_text=note_text, created_by=request.user)
                 callback_time = callback_form.cleaned_data.get('callback_time')
                 time_str = f" at {callback_time.strftime('%I:%M %p')}" if callback_time else ""
                 messages.success(request, f'"{prospect.lab_name}" set to Call Back on {prospect.next_contact_date.strftime("%m/%d/%Y")}{time_str}.')
@@ -534,14 +577,33 @@ def caller_edit(request, pk):
                 )
                 note_text = sent_to_keith_form.cleaned_data.get('note')
                 if note_text:
-                    ProspectNote.objects.create(prospect=prospect, note_text=note_text)
+                    ProspectNote.objects.create(prospect=prospect, note_text=note_text, created_by=request.user)
                 ProspectNote.objects.create(
                     prospect=prospect,
+                    created_by=request.user,
                     note_text=f"Sent to Keith - Contact: {sent_to_keith_form.cleaned_data['contact_person']}, "
                               f"Appt: {sent_to_keith_form.cleaned_data['appointment_date'].strftime('%m/%d/%Y')} "
                               f"at {sent_to_keith_form.cleaned_data['appointment_time'].strftime('%I:%M %p')}"
                 )
                 messages.success(request, f'"{prospect.lab_name}" sent to Keith.')
+                return redirect('prospects:caller_dashboard')
+
+        elif action == 'left_voicemail':
+            left_voicemail_form = CallerLeftVoicemailForm(request.POST)
+            if left_voicemail_form.is_valid():
+                prospect.status = 'left_voicemail'
+                prospect.save()
+                from django.utils import timezone
+                today = timezone.now().strftime('%m/%d/%Y')
+                ProspectNote.objects.create(
+                    prospect=prospect,
+                    created_by=request.user,
+                    note_text=f"Left voicemail on {today}"
+                )
+                note_text = left_voicemail_form.cleaned_data.get('note')
+                if note_text:
+                    ProspectNote.objects.create(prospect=prospect, note_text=note_text, created_by=request.user)
+                messages.success(request, f'"{prospect.lab_name}" marked as Left Voicemail.')
                 return redirect('prospects:caller_dashboard')
 
         elif action == 'not_interested':
@@ -551,7 +613,7 @@ def caller_edit(request, pk):
                 prospect.save()
                 note_text = not_interested_form.cleaned_data.get('note')
                 if note_text:
-                    ProspectNote.objects.create(prospect=prospect, note_text=note_text)
+                    ProspectNote.objects.create(prospect=prospect, note_text=note_text, created_by=request.user)
                 messages.success(request, f'"{prospect.lab_name}" marked as Not Interested.')
                 return redirect('prospects:caller_dashboard')
 
@@ -561,6 +623,7 @@ def caller_edit(request, pk):
         'callback_form': callback_form,
         'sent_to_keith_form': sent_to_keith_form,
         'not_interested_form': not_interested_form,
+        'left_voicemail_form': left_voicemail_form,
         'title': f'Edit: {prospect.lab_name}',
     }
     return render(request, 'prospects/caller_edit.html', context)
@@ -576,3 +639,54 @@ def lead_referrals(request):
         'title': 'Leads from AMS Caller',
     }
     return render(request, 'prospects/lead_referrals.html', context)
+
+
+@login_required
+def caller_activity(request):
+    """Admin view to monitor caller activity by date"""
+    if request.user.is_caller_user():
+        return redirect('prospects:caller_dashboard')
+
+    selected_date = request.GET.get('date', '')
+    if selected_date:
+        try:
+            selected_date = date.fromisoformat(selected_date)
+        except ValueError:
+            selected_date = date.today()
+    else:
+        selected_date = date.today()
+
+    # Get all caller users
+    callers = CustomUser.objects.filter(user_type='caller')
+
+    # Build timezone-aware date range for filtering
+    from django.utils import timezone as tz
+    import datetime as dt
+    day_start = tz.make_aware(dt.datetime.combine(selected_date, dt.time.min))
+    day_end = tz.make_aware(dt.datetime.combine(selected_date, dt.time.max))
+
+    caller_stats = []
+    for caller in callers:
+        # Notes created by this caller on the selected date
+        notes = ProspectNote.objects.filter(
+            created_by=caller,
+            created_at__gte=day_start,
+            created_at__lte=day_end
+        ).select_related('prospect').order_by('-created_at')
+
+        # Unique prospects touched
+        prospects_touched = notes.values('prospect').distinct().count()
+
+        caller_stats.append({
+            'caller': caller,
+            'note_count': notes.count(),
+            'prospects_touched': prospects_touched,
+            'notes': notes,
+        })
+
+    context = {
+        'selected_date': selected_date,
+        'caller_stats': caller_stats,
+        'title': 'Caller Activity Report',
+    }
+    return render(request, 'prospects/caller_activity.html', context)

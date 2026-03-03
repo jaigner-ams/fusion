@@ -312,6 +312,11 @@
             color: white;
         }
 
+        .badge-left-voicemail {
+            background-color: #f97316;
+            color: white;
+        }
+
         .navbar-text {
             color: var(--text-secondary) !important;
         }
@@ -571,6 +576,7 @@
                         <a class="nav-link" href="{% url 'prospects:prospect_add' %}">Add Prospect</a>
                         <a class="nav-link" href="{% url 'prospects:contact_schedule' %}">Contact Schedule</a>
                         <a class="nav-link" href="{% url 'prospects:lead_referrals' %}">Leads from Caller</a>
+                        <a class="nav-link" href="{% url 'prospects:caller_activity' %}">Caller Activity</a>
                     {% endif %}
                 </div>
                 <div class="navbar-nav align-items-center">

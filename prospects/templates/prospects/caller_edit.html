@@ -61,6 +61,26 @@
             </div>
         </div>
 
+        <!-- Action: Left Voicemail -->
+        <div class="card mb-3">
+            <h5 class="mb-3">
+                <a data-bs-toggle="collapse" href="#leftVoicemailSection" role="button" aria-expanded="false" class="text-decoration-none text-theme collapsed">
+                    Left Voicemail
+                </a>
+            </h5>
+            <div class="collapse" id="leftVoicemailSection">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="left_voicemail">
+                    <div class="mb-3">
+                        <label class="form-label">Note (optional)</label>
+                        {{ left_voicemail_form.note }}
+                    </div>
+                    <button type="submit" class="btn" style="background-color: #f97316; color: white; border: none;">Mark Left Voicemail</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Action: Sent to Keith -->
         <div class="card mb-3">
             <h5 class="mb-3">

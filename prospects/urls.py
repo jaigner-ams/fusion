@@ -12,9 +12,11 @@ urlpatterns = [
     path('caller/<int:pk>/', views.caller_detail, name='caller_detail'),
     path('caller/<int:pk>/edit/', views.caller_edit, name='caller_edit'),
     path('leads/', views.lead_referrals, name='lead_referrals'),
+    path('caller-activity/', views.caller_activity, name='caller_activity'),
     path('<int:pk>/', views.prospect_detail, name='prospect_detail'),
     path('<int:pk>/edit/', views.prospect_edit, name='prospect_edit'),
     path('<int:pk>/delete/', views.prospect_delete, name='prospect_delete'),
     path('<int:pk>/print/', views.prospect_print, name='prospect_print'),
     path('<int:pk>/create-account/', views.create_lab_account, name='create_lab_account'),
+    path('<int:pk>/send-fusion-email/', views.send_fusion_email, name='send_fusion_email'),
 ]

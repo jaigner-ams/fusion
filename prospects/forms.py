@@ -1,9 +1,27 @@
 from django import forms
+from datetime import time as dt_time
 from .models import Prospect, ProspectNote, ProspectServiceType, LeadReferral
+
+
+def _time_slot_choices(include_blank=True):
+    """Generate 15-minute interval time slots from 7:00 AM to 7:00 PM"""
+    choices = [('', '-- Select Time --')] if include_blank else []
+    for hour in range(7, 20):  # 7 AM to 7 PM
+        for minute in (0, 15, 30, 45):
+            t = dt_time(hour, minute)
+            label = t.strftime('%I:%M %p')
+            value = t.strftime('%H:%M')
+            choices.append((value, label))
+    return choices
 
 
 class ProspectForm(forms.ModelForm):
     """Form for creating and editing prospects"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.next_contact_time:
+            self.initial['next_contact_time'] = self.instance.next_contact_time.strftime('%H:%M')
 
     # Service types as checkboxes (multiple select)
     service_types = forms.MultipleChoiceField(
@@ -18,7 +36,7 @@ class ProspectForm(forms.ModelForm):
         fields = [
             'ams_history', 'status', 'monthly_fee', 'lab_name', 'person_name',
             'address', 'city', 'state', 'zip_code', 'phone', 'email',
-            'has_mill', 'dentists_requested', 'next_contact_date',
+            'has_mill', 'dentists_requested', 'next_contact_date', 'next_contact_time',
             'zip_protect_1', 'zip_protect_2', 'zip_protect_3',
             'zip_protect_4', 'zip_protect_5', 'zip_protect_6',
             'zip_protect_7', 'zip_protect_8', 'zip_protect_9', 'zip_protect_10',
@@ -75,6 +93,10 @@ class ProspectForm(forms.ModelForm):
                 'class': 'form-control',
                 'type': 'date'
             }),
+            'next_contact_time': forms.Select(
+                attrs={'class': 'form-select'},
+                choices=_time_slot_choices(include_blank=True),
+            ),
             'zip_protect_1': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': 'Zip 1'
@@ -198,19 +220,29 @@ class ProspectNoteForm(forms.ModelForm):
 
 
 class NextContactDateForm(forms.ModelForm):
-    """Form for editing next contact date on detail page"""
+    """Form for editing next contact date and time on detail page"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.next_contact_time:
+            self.initial['next_contact_time'] = self.instance.next_contact_time.strftime('%H:%M')
 
     class Meta:
         model = Prospect
-        fields = ['next_contact_date']
+        fields = ['next_contact_date', 'next_contact_time']
         widgets = {
             'next_contact_date': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
-            })
+            }),
+            'next_contact_time': forms.Select(
+                attrs={'class': 'form-select'},
+                choices=_time_slot_choices(include_blank=True),
+            ),
         }
         labels = {
-            'next_contact_date': 'Next Contact Date'
+            'next_contact_date': 'Next Contact Date',
+            'next_contact_time': 'Time',
         }
 
 
@@ -243,19 +275,6 @@ class CreateLabAccountForm(forms.Form):
         }),
         label='Send credentials via email'
     )
-
-
-def _time_slot_choices(include_blank=True):
-    """Generate 15-minute interval time slots from 7:00 AM to 7:00 PM"""
-    choices = [('', '-- Select Time --')] if include_blank else []
-    from datetime import time
-    for hour in range(7, 20):  # 7 AM to 7 PM
-        for minute in (0, 15, 30, 45):
-            t = time(hour, minute)
-            label = t.strftime('%I:%M %p')
-            value = t.strftime('%H:%M')
-            choices.append((value, label))
-    return choices
 
 
 class CallerCallbackForm(forms.Form):
@@ -325,6 +344,20 @@ class CallerSentToKeithForm(forms.Form):
 
 class CallerNotInterestedForm(forms.Form):
     """Form for caller to mark a prospect as not interested"""
+    note = forms.CharField(
+        required=False,
+        max_length=500,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Optional note...'
+        }),
+        label='Note'
+    )
+
+
+class CallerLeftVoicemailForm(forms.Form):
+    """Form for caller to mark a prospect as left voicemail"""
     note = forms.CharField(
         required=False,
         max_length=500,

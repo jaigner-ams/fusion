@@ -174,13 +174,18 @@
     <div class="col-md-4">
         <!-- Next Contact Date -->
         <div class="card mb-3">
-            <h4 class="mb-3">Next Contact Date</h4>
+            <h4 class="mb-3">Next Contact</h4>
             <form method="post">
                 {% csrf_token %}
                 <div class="mb-2">
+                    <label class="form-label text-muted small">Date</label>
                     {{ date_form.next_contact_date }}
                 </div>
-                <button type="submit" name="update_date" class="btn btn-primary btn-sm">Update Date</button>
+                <div class="mb-2">
+                    <label class="form-label text-muted small">Time (optional)</label>
+                    {{ date_form.next_contact_time }}
+                </div>
+                <button type="submit" name="update_date" class="btn btn-primary btn-sm">Update</button>
             </form>
         </div>
 

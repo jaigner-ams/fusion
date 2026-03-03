@@ -167,9 +167,12 @@
                                     <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
-                            <td data-order="{% if prospect.next_contact_date %}{{ prospect.next_contact_date|date:'Y-m-d' }}{% else %}9999-99-99{% endif %}">
+                            <td data-order="{% if prospect.next_contact_date %}{{ prospect.next_contact_date|date:'Y-m-d' }} {% if prospect.next_contact_time %}{{ prospect.next_contact_time|time:'H:i' }}{% else %}99:99{% endif %}{% else %}9999-99-99 99:99{% endif %}">
                                 {% if prospect.next_contact_date %}
                                     {{ prospect.next_contact_date|date:"M d, Y" }}
+                                    {% if prospect.next_contact_time %}
+                                        <br><small class="text-muted">{{ prospect.next_contact_time|time:"g:i A" }}</small>
+                                    {% endif %}
                                 {% else %}
                                     <span class="text-muted">Not set</span>
                                 {% endif %}

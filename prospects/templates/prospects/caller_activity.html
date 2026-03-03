@@ -1,0 +1,67 @@
+{% extends 'prospects/base_prospects.html' %}
+
+{% block title %}{{ title }} - AMS Fusion Prospects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ title }}</h1>
+</div>
+
+<!-- Date Picker -->
+<div class="card mb-4">
+    <form method="get" class="d-flex align-items-end gap-3">
+        <div>
+            <label class="form-label fw-bold">Select Date</label>
+            <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}">
+        </div>
+        <button type="submit" class="btn btn-primary">View Activity</button>
+    </form>
+</div>
+
+<h4 class="mb-3">Activity for {{ selected_date|date:"l, F d, Y" }}</h4>
+
+{% for stat in caller_stats %}
+<div class="card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">{{ stat.caller.get_full_name|default:stat.caller.username }}</h5>
+        <div class="d-flex gap-3">
+            <span class="badge bg-primary fs-6">{{ stat.note_count }} note{{ stat.note_count|pluralize }}</span>
+            <span class="badge bg-info fs-6">{{ stat.prospects_touched }} prospect{{ stat.prospects_touched|pluralize }} touched</span>
+        </div>
+    </div>
+
+    {% if stat.notes %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Prospect</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for note in stat.notes %}
+                <tr>
+                    <td style="white-space: nowrap;">{{ note.created_at|time:"g:i A" }}</td>
+                    <td>
+                        <a href="{% url 'prospects:caller_detail' note.prospect.pk %}" class="text-theme text-decoration-none">
+                            {{ note.prospect.lab_name }}
+                        </a>
+                    </td>
+                    <td>{{ note.note_text }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-3 mb-0">No activity on this date</p>
+    {% endif %}
+</div>
+{% empty %}
+<div class="card">
+    <p class="text-muted text-center py-3 mb-0">No caller accounts found</p>
+</div>
+{% endfor %}
+{% endblock %}
