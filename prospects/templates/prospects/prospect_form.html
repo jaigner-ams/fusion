@@ -7,7 +7,7 @@
     <h1>{{ title }}</h1>
     <div class="d-flex gap-2">
         {% if prospect %}
-            <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="btn btn-outline-info">View</a>
+            <a href="{% url 'prospects:prospect_detail' prospect.pk %}{{ filter_querystring }}" class="btn btn-outline-info">View</a>
             <button type="submit" form="prospect-form" class="btn btn-primary">Update Prospect</button>
             {% if prospect.email %}
             <form method="post" action="{% url 'prospects:send_fusion_email' prospect.pk %}" class="d-inline" onsubmit="return confirm('Send What is Fusion email to {{ prospect.email }}?')">
@@ -16,7 +16,7 @@
             </form>
             {% endif %}
         {% endif %}
-        <a href="{% url 'prospects:prospect_list' %}" class="btn btn-secondary">Back to List</a>
+        <a href="{% url 'prospects:prospect_list' %}{{ filter_querystring }}" class="btn btn-secondary">Back to List</a>
     </div>
 </div>
 
@@ -196,7 +196,7 @@
                 <button type="submit" class="btn btn-primary">
                     {% if prospect %}Update Prospect{% else %}Add Prospect{% endif %}
                 </button>
-                <a href="{% url 'prospects:prospect_list' %}" class="btn btn-secondary">Cancel</a>
+                <a href="{% url 'prospects:prospect_list' %}{{ filter_querystring }}" class="btn btn-secondary">Cancel</a>
             </div>
             {% if prospect %}
                 <a href="{% url 'prospects:prospect_delete' prospect.pk %}" class="btn btn-danger">Delete Prospect</a>

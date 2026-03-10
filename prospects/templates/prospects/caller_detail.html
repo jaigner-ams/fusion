@@ -6,10 +6,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>{{ prospect.lab_name }}</h1>
     <div class="d-flex gap-2">
-        {% if prospect.status == 'mailed' or prospect.status == 'callback' %}
-            <a href="{% url 'prospects:caller_edit' prospect.pk %}" class="btn btn-warning">Edit</a>
+        {% if prospect.status == 'mailed' or prospect.status == 'callback' or prospect.status == 'sent_to_keith' or prospect.status == 'left_voicemail' %}
+            <a href="{% url 'prospects:caller_edit' prospect.pk %}{% if status_filter or mailer_filter %}?{% if status_filter %}status={{ status_filter }}{% endif %}{% if status_filter and mailer_filter %}&{% endif %}{% if mailer_filter %}mailer={{ mailer_filter }}{% endif %}{% endif %}" class="btn btn-warning">Edit</a>
         {% endif %}
-        <a href="{% url 'prospects:caller_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="{% url 'prospects:caller_dashboard' %}{% if status_filter or mailer_filter %}?{% if status_filter %}status={{ status_filter }}{% endif %}{% if status_filter and mailer_filter %}&{% endif %}{% if mailer_filter %}mailer={{ mailer_filter }}{% endif %}{% endif %}" class="btn btn-secondary">Back to Dashboard</a>
     </div>
 </div>
 

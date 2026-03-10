@@ -181,6 +181,39 @@ SERVER_EMAIL = 'AMS Fusion <info@amsfusion.com>'
 # Site URL for email links (update with your actual domain)
 SITE_URL = 'https://amsfusion.com'
 
+# Logging Configuration
+# Logs Django errors and 500s to /var/www/fusion/django_errors.log
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': '/var/www/fusion/django_errors.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
+
 # Twilio SMS Configuration (for Keith's appointment reminders)
 TWILIO_ACCOUNT_SID = ''
 TWILIO_AUTH_TOKEN = ''

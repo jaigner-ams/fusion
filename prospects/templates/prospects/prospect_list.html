@@ -131,7 +131,7 @@
                     {% for prospect in prospects %}
                         <tr>
                             <td>
-                                <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="text-theme text-decoration-none">
+                                <a href="{% url 'prospects:prospect_detail' prospect.pk %}{{ filter_querystring }}" class="text-theme text-decoration-none">
                                     <strong>{{ prospect.lab_name }}</strong>
                                 </a>
                             </td>
@@ -178,8 +178,8 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{% url 'prospects:prospect_detail' prospect.pk %}" class="btn btn-sm btn-outline-info">View</a>
-                                <a href="{% url 'prospects:prospect_edit' prospect.pk %}" class="btn btn-sm btn-outline-warning">Edit</a>
+                                <a href="{% url 'prospects:prospect_detail' prospect.pk %}{{ filter_querystring }}" class="btn btn-sm btn-outline-info">View</a>
+                                <a href="{% url 'prospects:prospect_edit' prospect.pk %}{{ filter_querystring }}" class="btn btn-sm btn-outline-warning">Edit</a>
                             </td>
                         </tr>
                     {% endfor %}
@@ -205,6 +205,7 @@
 <script>
 $(document).ready(function() {
     $('#prospectsTable').DataTable({
+        stateSave: true,
         pageLength: 25,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         order: [[0, 'asc']],  // Sort by Lab Name by default

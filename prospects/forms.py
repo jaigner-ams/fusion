@@ -368,3 +368,54 @@ class CallerLeftVoicemailForm(forms.Form):
         }),
         label='Note'
     )
+
+
+class CallerEditReferralForm(forms.ModelForm):
+    """Form for editing an existing LeadReferral"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.appointment_time:
+            self.initial['appointment_time'] = self.instance.appointment_time.strftime('%H:%M')
+
+    class Meta:
+        model = LeadReferral
+        fields = ['appointment_date', 'appointment_time', 'contact_person', 'notes']
+        widgets = {
+            'appointment_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'appointment_time': forms.Select(
+                attrs={'class': 'form-select'},
+                choices=_time_slot_choices(include_blank=True),
+            ),
+            'contact_person': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Person Keith should ask for'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Optional notes...'
+            }),
+        }
+
+
+class CallerEditNoteForm(forms.ModelForm):
+    """Form for editing an existing ProspectNote"""
+
+    class Meta:
+        model = ProspectNote
+        fields = ['note_text']
+        widgets = {
+            'note_text': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'maxlength': '500',
+                'placeholder': 'Enter note (max 500 characters)'
+            })
+        }
+        labels = {
+            'note_text': 'Note'
+        }

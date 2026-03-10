@@ -19,7 +19,9 @@ def generate_simple_password():
     noun = random.choice(PASSWORD_NOUNS)
     number = random.randint(10, 99)
     return f"{adjective}{noun}{number}"
+from urllib.parse import urlencode
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
@@ -30,7 +32,7 @@ from django.conf import settings
 from .models import Prospect, ProspectNote, ProspectServiceType, Mailer, LeadReferral
 from .forms import (ProspectForm, ProspectNoteForm, NextContactDateForm, CreateLabAccountForm,
                      CallerCallbackForm, CallerSentToKeithForm, CallerNotInterestedForm,
-                     CallerLeftVoicemailForm)
+                     CallerLeftVoicemailForm, CallerEditReferralForm, CallerEditNoteForm)
 from mgmt.models import CustomUser
 from mgmt.decorators import caller_required
 
@@ -69,11 +71,22 @@ def prospect_list(request):
         'total': keith_prospects.count(),
     }
 
+    # Build filter query string for preserving filters through navigation
+    filter_params = {}
+    if status_filter:
+        filter_params['status'] = status_filter
+    if ams_history_filter:
+        filter_params['ams_history'] = ams_history_filter
+    if source_filter:
+        filter_params['source'] = source_filter
+    filter_querystring = '?' + urlencode(filter_params) if filter_params else ''
+
     context = {
         'prospects': prospects,
         'status_filter': status_filter,
         'ams_history_filter': ams_history_filter,
         'source_filter': source_filter,
+        'filter_querystring': filter_querystring,
         'status_choices': Prospect.STATUS_CHOICES,
         'ams_history_choices': Prospect.AMS_HISTORY_CHOICES,
         'status_counts': status_counts,
@@ -115,6 +128,14 @@ def prospect_edit(request, pk):
         return redirect('prospects:caller_edit', pk=pk)
     prospect = get_object_or_404(Prospect, pk=pk)
 
+    # Preserve list filters for navigation
+    filter_params = {}
+    for key in ('status', 'ams_history', 'source'):
+        val = request.GET.get(key, '')
+        if val:
+            filter_params[key] = val
+    filter_querystring = '?' + urlencode(filter_params) if filter_params else ''
+
     if request.method == 'POST':
         form = ProspectForm(request.POST, instance=prospect)
         if form.is_valid():
@@ -125,7 +146,8 @@ def prospect_edit(request, pk):
             for st in service_types:
                 ProspectServiceType.objects.create(prospect=prospect, service_type=st)
             messages.success(request, f'Prospect "{prospect.lab_name}" updated successfully!')
-            return redirect('prospects:prospect_detail', pk=prospect.pk)
+            detail_url = reverse('prospects:prospect_detail', args=[prospect.pk])
+            return redirect(detail_url + filter_querystring)
     else:
         form = ProspectForm(instance=prospect)
         # Pre-populate service types
@@ -136,6 +158,7 @@ def prospect_edit(request, pk):
     context = {
         'form': form,
         'prospect': prospect,
+        'filter_querystring': filter_querystring,
         'title': f'Edit Prospect: {prospect.lab_name}'
     }
     return render(request, 'prospects/prospect_form.html', context)
@@ -151,6 +174,14 @@ def prospect_detail(request, pk):
     note_form = ProspectNoteForm()
     date_form = NextContactDateForm(instance=prospect)
 
+    # Preserve list filters for navigation
+    filter_params = {}
+    for key in ('status', 'ams_history', 'source'):
+        val = request.GET.get(key, '')
+        if val:
+            filter_params[key] = val
+    filter_querystring = '?' + urlencode(filter_params) if filter_params else ''
+
     if request.method == 'POST':
         if 'add_note' in request.POST:
             note_form = ProspectNoteForm(request.POST)
@@ -160,19 +191,22 @@ def prospect_detail(request, pk):
                 note.created_by = request.user
                 note.save()
                 messages.success(request, 'Note added successfully!')
-                return redirect('prospects:prospect_detail', pk=pk)
+                detail_url = reverse('prospects:prospect_detail', args=[pk])
+                return redirect(detail_url + filter_querystring)
         elif 'update_date' in request.POST:
             date_form = NextContactDateForm(request.POST, instance=prospect)
             if date_form.is_valid():
                 date_form.save()
                 messages.success(request, 'Next contact date updated!')
-                return redirect('prospects:prospect_detail', pk=pk)
+                detail_url = reverse('prospects:prospect_detail', args=[pk])
+                return redirect(detail_url + filter_querystring)
 
     context = {
         'prospect': prospect,
         'notes': notes,
         'note_form': note_form,
         'date_form': date_form,
+        'filter_querystring': filter_querystring,
         'title': f'Prospect: {prospect.lab_name}'
     }
     return render(request, 'prospects/prospect_detail.html', context)
@@ -462,7 +496,9 @@ def send_fusion_email(request, pk):
                 'Below is a web link that has a Video and Text description of Fusion.\n'
                 'I look forward to a follow up phone call with you soon.\n\n'
                 'https://fusiondentaldesigncenters.com/fusion-a-rescue-response-for-the-dental-lab-industry/\n\n'
-                'You can always reach me at 708 502-3411\n\n'
+                'You can always reach me on my personal cell phone at 708 502-3411\n\n'
+                'To learn more about what AmericaSmiles can do to help you succeed in the dental lab industry, visit:\n'
+                'https://americasmiles.net/\n\n\n'
                 'Kind Regards,\n'
                 'Keith Crittenden\n'
                 'AmericaSmiles Network'
@@ -523,10 +559,14 @@ def caller_detail(request, pk):
     """Read-only prospect detail for callers"""
     prospect = get_object_or_404(Prospect, pk=pk)
     notes = prospect.notes.all()
+    status_filter = request.GET.get('status', '')
+    mailer_filter = request.GET.get('mailer', '')
 
     context = {
         'prospect': prospect,
         'notes': notes,
+        'status_filter': status_filter,
+        'mailer_filter': mailer_filter,
         'title': f'Prospect: {prospect.lab_name}',
     }
     return render(request, 'prospects/caller_detail.html', context)
@@ -538,6 +578,16 @@ def caller_edit(request, pk):
     """Caller edit view with 3 action buttons: Call Back, Sent to Keith, Not Interested"""
     prospect = get_object_or_404(Prospect, pk=pk)
     notes = prospect.notes.all()
+    status_filter = request.GET.get('status', '')
+    mailer_filter = request.GET.get('mailer', '')
+
+    # Build redirect URL with preserved filters
+    redirect_url = 'prospects:caller_dashboard'
+    filter_params = {}
+    if status_filter:
+        filter_params['status'] = status_filter
+    if mailer_filter:
+        filter_params['mailer'] = mailer_filter
 
     callback_form = CallerCallbackForm()
     sent_to_keith_form = CallerSentToKeithForm()
@@ -560,7 +610,10 @@ def caller_edit(request, pk):
                 callback_time = callback_form.cleaned_data.get('callback_time')
                 time_str = f" at {callback_time.strftime('%I:%M %p')}" if callback_time else ""
                 messages.success(request, f'"{prospect.lab_name}" set to Call Back on {prospect.next_contact_date.strftime("%m/%d/%Y")}{time_str}.')
-                return redirect('prospects:caller_dashboard')
+                dashboard_url = reverse('prospects:caller_dashboard')
+                if filter_params:
+                    dashboard_url += '?' + urlencode(filter_params)
+                return redirect(dashboard_url)
 
         elif action == 'sent_to_keith':
             sent_to_keith_form = CallerSentToKeithForm(request.POST)
@@ -586,7 +639,10 @@ def caller_edit(request, pk):
                               f"at {sent_to_keith_form.cleaned_data['appointment_time'].strftime('%I:%M %p')}"
                 )
                 messages.success(request, f'"{prospect.lab_name}" sent to Keith.')
-                return redirect('prospects:caller_dashboard')
+                dashboard_url = reverse('prospects:caller_dashboard')
+                if filter_params:
+                    dashboard_url += '?' + urlencode(filter_params)
+                return redirect(dashboard_url)
 
         elif action == 'left_voicemail':
             left_voicemail_form = CallerLeftVoicemailForm(request.POST)
@@ -604,7 +660,10 @@ def caller_edit(request, pk):
                 if note_text:
                     ProspectNote.objects.create(prospect=prospect, note_text=note_text, created_by=request.user)
                 messages.success(request, f'"{prospect.lab_name}" marked as Left Voicemail.')
-                return redirect('prospects:caller_dashboard')
+                dashboard_url = reverse('prospects:caller_dashboard')
+                if filter_params:
+                    dashboard_url += '?' + urlencode(filter_params)
+                return redirect(dashboard_url)
 
         elif action == 'not_interested':
             not_interested_form = CallerNotInterestedForm(request.POST)
@@ -615,18 +674,164 @@ def caller_edit(request, pk):
                 if note_text:
                     ProspectNote.objects.create(prospect=prospect, note_text=note_text, created_by=request.user)
                 messages.success(request, f'"{prospect.lab_name}" marked as Not Interested.')
-                return redirect('prospects:caller_dashboard')
+                dashboard_url = reverse('prospects:caller_dashboard')
+                if filter_params:
+                    dashboard_url += '?' + urlencode(filter_params)
+                return redirect(dashboard_url)
+
+    referrals = prospect.lead_referrals.all()
 
     context = {
         'prospect': prospect,
         'notes': notes,
+        'referrals': referrals,
         'callback_form': callback_form,
         'sent_to_keith_form': sent_to_keith_form,
         'not_interested_form': not_interested_form,
         'left_voicemail_form': left_voicemail_form,
+        'status_filter': status_filter,
+        'mailer_filter': mailer_filter,
         'title': f'Edit: {prospect.lab_name}',
     }
     return render(request, 'prospects/caller_edit.html', context)
+
+
+@login_required
+@caller_required
+def caller_edit_referral(request, pk):
+    """Edit an existing LeadReferral"""
+    referral = get_object_or_404(LeadReferral, pk=pk)
+    prospect = referral.prospect
+    status_filter = request.GET.get('status', '')
+    mailer_filter = request.GET.get('mailer', '')
+
+    if request.method == 'POST':
+        form = CallerEditReferralForm(request.POST, instance=referral)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Appointment updated.')
+            edit_url = reverse('prospects:caller_edit', args=[prospect.pk])
+            params = {}
+            if status_filter:
+                params['status'] = status_filter
+            if mailer_filter:
+                params['mailer'] = mailer_filter
+            if params:
+                edit_url += '?' + urlencode(params)
+            return redirect(edit_url)
+    else:
+        form = CallerEditReferralForm(instance=referral)
+
+    filter_params_str = ''
+    if status_filter or mailer_filter:
+        params = {}
+        if status_filter:
+            params['status'] = status_filter
+        if mailer_filter:
+            params['mailer'] = mailer_filter
+        filter_params_str = '?' + urlencode(params)
+
+    context = {
+        'form': form,
+        'referral': referral,
+        'prospect': prospect,
+        'status_filter': status_filter,
+        'mailer_filter': mailer_filter,
+        'filter_params_str': filter_params_str,
+        'title': f'Edit Appointment: {prospect.lab_name}',
+    }
+    return render(request, 'prospects/caller_edit_referral.html', context)
+
+
+@login_required
+@caller_required
+def caller_delete_referral(request, pk):
+    """Delete a LeadReferral (POST only)"""
+    referral = get_object_or_404(LeadReferral, pk=pk)
+    prospect = referral.prospect
+    if request.method == 'POST':
+        referral.delete()
+        messages.success(request, 'Appointment deleted.')
+    edit_url = reverse('prospects:caller_edit', args=[prospect.pk])
+    status_filter = request.GET.get('status', '') or request.POST.get('status_filter', '')
+    mailer_filter = request.GET.get('mailer', '') or request.POST.get('mailer_filter', '')
+    params = {}
+    if status_filter:
+        params['status'] = status_filter
+    if mailer_filter:
+        params['mailer'] = mailer_filter
+    if params:
+        edit_url += '?' + urlencode(params)
+    return redirect(edit_url)
+
+
+@login_required
+@caller_required
+def caller_edit_note(request, pk):
+    """Edit an existing ProspectNote"""
+    note = get_object_or_404(ProspectNote, pk=pk)
+    prospect = note.prospect
+    status_filter = request.GET.get('status', '')
+    mailer_filter = request.GET.get('mailer', '')
+
+    if request.method == 'POST':
+        form = CallerEditNoteForm(request.POST, instance=note)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Note updated.')
+            edit_url = reverse('prospects:caller_edit', args=[prospect.pk])
+            params = {}
+            if status_filter:
+                params['status'] = status_filter
+            if mailer_filter:
+                params['mailer'] = mailer_filter
+            if params:
+                edit_url += '?' + urlencode(params)
+            return redirect(edit_url)
+    else:
+        form = CallerEditNoteForm(instance=note)
+
+    filter_params_str = ''
+    if status_filter or mailer_filter:
+        params = {}
+        if status_filter:
+            params['status'] = status_filter
+        if mailer_filter:
+            params['mailer'] = mailer_filter
+        filter_params_str = '?' + urlencode(params)
+
+    context = {
+        'form': form,
+        'note': note,
+        'prospect': prospect,
+        'status_filter': status_filter,
+        'mailer_filter': mailer_filter,
+        'filter_params_str': filter_params_str,
+        'title': f'Edit Note: {prospect.lab_name}',
+    }
+    return render(request, 'prospects/caller_edit_note.html', context)
+
+
+@login_required
+@caller_required
+def caller_delete_note(request, pk):
+    """Delete a ProspectNote (POST only)"""
+    note = get_object_or_404(ProspectNote, pk=pk)
+    prospect = note.prospect
+    if request.method == 'POST':
+        note.delete()
+        messages.success(request, 'Note deleted.')
+    edit_url = reverse('prospects:caller_edit', args=[prospect.pk])
+    status_filter = request.GET.get('status', '') or request.POST.get('status_filter', '')
+    mailer_filter = request.GET.get('mailer', '') or request.POST.get('mailer_filter', '')
+    params = {}
+    if status_filter:
+        params['status'] = status_filter
+    if mailer_filter:
+        params['mailer'] = mailer_filter
+    if params:
+        edit_url += '?' + urlencode(params)
+    return redirect(edit_url)
 
 
 @login_required

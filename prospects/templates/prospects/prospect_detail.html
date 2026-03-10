@@ -6,10 +6,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>{{ prospect.lab_name }}</h1>
     <div class="d-flex gap-2">
-        <a href="{% url 'prospects:prospect_edit' prospect.pk %}" class="btn btn-warning">Edit</a>
+        <a href="{% url 'prospects:prospect_edit' prospect.pk %}{{ filter_querystring }}" class="btn btn-warning">Edit</a>
         <a href="{% url 'prospects:prospect_print' prospect.pk %}" class="btn btn-info" target="_blank">Print</a>
         <a href="{% url 'prospects:prospect_delete' prospect.pk %}" class="btn btn-danger">Delete</a>
-        <a href="{% url 'prospects:prospect_list' %}" class="btn btn-secondary">Back to List</a>
+        <a href="{% url 'prospects:prospect_list' %}{{ filter_querystring }}" class="btn btn-secondary">Back to List</a>
     </div>
 </div>
 
