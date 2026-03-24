@@ -1,0 +1,471 @@
+{% extends 'mgmt/base_portal.html' %}
+
+{% block title %}Dashboard — {{ lab_name }}{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_css %}
+/* Dentist zip & status dot */
+.dentist-zip {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 11px;
+  color: var(--text3); text-align: right;
+}
+.dentist-status {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border2); flex-shrink: 0;
+}
+.dentist-status.member { background: #4ade80; }
+.dentist-status.mailed { background: var(--gold2); }
+
+/* Revenue banner */
+.revenue-banner {
+  background: var(--cream2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold2);
+  padding: 16px 22px;
+  display: flex; align-items: center; gap: 20px;
+  margin-bottom: 24px;
+}
+.rb-icon { font-size: 28px; flex-shrink: 0; }
+.rb-content { flex: 1; }
+.rb-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 16px; color: var(--navy);
+}
+.rb-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.rb-amount {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 32px; color: var(--gold);
+  text-align: right; flex-shrink: 0;
+}
+.rb-amount-label { font-size: 10px; color: var(--text3); text-align: right; }
+
+/* Stat trend */
+.stat-trend {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600;
+  color: var(--green); margin-top: 4px;
+}
+
+/* Geo metrics */
+.geo-metrics {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-bottom: 14px;
+}
+.geo-metric {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  text-align: center;
+}
+.geo-metric-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 28px;
+  color: var(--navy); line-height: 1;
+}
+.geo-metric-label {
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1px; text-transform: uppercase;
+  margin-top: 3px;
+}
+.campaign-status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: var(--green-bg);
+  border: 1px solid rgba(45,122,79,0.2);
+  border-left: 3px solid var(--green);
+}
+.campaign-status-text {
+  font-size: 12px; color: var(--green); font-weight: 600;
+}
+
+/* Rewards panel */
+.rewards-panel-balance {
+  text-align: center;
+  padding: 20px 0 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.rpb-label {
+  font-size: 9px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 6px;
+}
+.rpb-amount {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 52px;
+  color: var(--gold); line-height: 1;
+}
+.rpb-currency {
+  font-size: 20px; color: var(--gold2);
+  vertical-align: super;
+}
+.rpb-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.rewards-source {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rewards-source:last-child { border-bottom: none; }
+.rs-label { font-size: 12px; color: var(--text2); }
+.rs-amount {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 14px; color: var(--gold);
+}
+.redeem-btn {
+  display: block; width: 100%;
+  margin-top: 14px;
+  padding: 11px;
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: 3px; text-transform: uppercase;
+  border: none; cursor: pointer;
+  transition: background 0.2s;
+  text-align: center;
+}
+.redeem-btn:hover { background: var(--navy2); }
+
+/* One Voice campaigns */
+.ov-campaign-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.ov-campaign-row:last-child { border-bottom: none; }
+.ov-type-badge {
+  padding: 3px 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase;
+  flex-shrink: 0;
+}
+.ov-type-badge.postcard {
+  background: rgba(201,168,76,0.12);
+  color: var(--gold); border: 1px solid rgba(201,168,76,0.3);
+}
+.ov-type-badge.calls {
+  background: rgba(13,30,61,0.08);
+  color: var(--navy3); border: 1px solid rgba(13,30,61,0.15);
+}
+.ov-info { flex: 1; }
+.ov-campaign-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px; color: var(--navy);
+}
+.ov-campaign-detail { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.ov-status {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.ov-status.active { color: var(--green); }
+.ov-status.scheduled { color: var(--gold); }
+
+.order-new-btn {
+  display: block; width: 100%; margin-top: 14px;
+  padding: 10px;
+  background: transparent;
+  border: 1.5px solid var(--gold2);
+  color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 3px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s; text-align: center;
+  text-decoration: none;
+}
+.order-new-btn:hover {
+  background: var(--gold2); color: var(--navy);
+}
+
+/* Coming soon overlay */
+.coming-soon {
+  position: relative;
+}
+.coming-soon .panel-body {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.coming-soon-badge {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--navy);
+  color: var(--gold3);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 3px; text-transform: uppercase;
+  padding: 8px 20px;
+  z-index: 5;
+}
+{% endblock %}
+
+{% block content %}
+
+<!-- Welcome banner -->
+<div class="welcome-banner fade-in d1">
+  <div class="welcome-banner-glow"></div>
+  <div class="wb-left">
+    <div class="wb-eyebrow">Your Fusion 2030 Command Center</div>
+    <div class="wb-headline">Welcome back, <span>{{ lab_name }}.</span></div>
+    <div class="wb-sub">
+      {% if prospect_count > 0 %}
+        {{ prospect_count }} dentist prospect{{ prospect_count|pluralize }} {% if prospect_count == 1 %}is{% else %}are{% endif %} waiting in your protected zip codes.
+      {% endif %}
+      {% if zip_count > 0 %}Your territory is protected with {{ zip_count }} zip code{{ zip_count|pluralize }}.{% endif %}
+      Everything you need to grow your lab is right here.
+    </div>
+  </div>
+  <div class="wb-right">
+    <div class="wb-membership">Membership Status</div>
+    <div class="wb-since">Active</div>
+    {% if zip_count > 0 %}
+    <div class="wb-territory">
+      <span class="territory-badge">&#128205; {{ zip_count }} Zip Code{{ zip_count|pluralize }} Protected</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Revenue share banner -->
+<div class="revenue-banner fade-in d2 coming-soon" style="position:relative;">
+  <div class="rb-icon">&#128176;</div>
+  <div class="rb-content">
+    <div class="rb-title">Revenue Share &mdash; {{ dentist_count }} Dentist{{ dentist_count|pluralize }} Currently Enrolled</div>
+    <div class="rb-desc">Earn monthly revenue back from AMS for each enrolled dentist. The more dentists you enroll, the more you earn.</div>
+  </div>
+  <div>
+    <div class="rb-amount">$0</div>
+    <div class="rb-amount-label">earned this month</div>
+  </div>
+  <div class="coming-soon-badge">Coming Soon</div>
+</div>
+
+<!-- Stat cards -->
+<div class="stats-row fade-in d3">
+  <div class="stat-card">
+    <div class="stat-label">Dentist Prospects</div>
+    <div class="stat-number">{{ prospect_count }}</div>
+    <div class="stat-sub">In your protected zip codes</div>
+  </div>
+  <div class="stat-card navy-top">
+    <div class="stat-label">My Dentists</div>
+    <div class="stat-number">{{ dentist_count }}</div>
+    <div class="stat-sub">Active dentist accounts</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Rewards Balance</div>
+    <div class="stat-number gold">$0</div>
+    <div class="stat-sub">Coming soon</div>
+  </div>
+  <div class="stat-card green-top">
+    <div class="stat-label">Revenue Share</div>
+    <div class="stat-number green">$0</div>
+    <div class="stat-sub">Coming soon</div>
+  </div>
+</div>
+
+<!-- Main grid: Dentist Prospects + Geo-Fencing + Rewards -->
+<div class="main-grid-3 fade-in d4">
+
+  <!-- Dentist Prospects -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#129463;</span> Dentist Prospects</div>
+      {% if prospect_count > 0 %}
+        <a class="panel-link" href="{% url 'prospects:prospect_list' %}">View All {{ prospect_count }} &#8594;</a>
+      {% endif %}
+    </div>
+    <div class="panel-body">
+      {% if prospects %}
+        {% for prospect in prospects %}
+        <div class="dentist-row" style="text-decoration:none; color:inherit;">
+          <div class="dentist-avatar">{{ prospect.lab_name|make_list|first }}{{ prospect.person_name|make_list|first }}</div>
+          <div class="dentist-info">
+            <div class="dentist-name">{{ prospect.person_name }}</div>
+            <div class="dentist-detail">{{ prospect.lab_name }}{% if prospect.city %} &middot; {{ prospect.city }}{% endif %}</div>
+          </div>
+          <div>
+            {% if prospect.zip_code %}<div class="dentist-zip">{{ prospect.zip_code }}</div>{% endif %}
+            <div class="dentist-status {% if prospect.status == 'member' %}member{% elif prospect.status == 'mailed' %}mailed{% endif %}" title="{{ prospect.get_status_display }}"></div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center; padding:20px; color:var(--text3); font-size:13px;">
+          {% if zip_count > 0 %}
+            No prospects found in your protected zip codes yet.
+          {% else %}
+            Set up your <a href="{% url 'lab_profile' %}" style="color:var(--gold);">protected zip codes</a> to see prospects in your territory.
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Geo-Fencing Campaign -->
+  <div class="panel coming-soon" style="position:relative;">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128205;</span> Geo-Fencing Campaign</div>
+      <span class="panel-link">Full Report &#8594;</span>
+    </div>
+    <div class="panel-body">
+      <div class="campaign-status" style="margin-bottom:14px;">
+        <div class="status-dot"></div>
+        <div class="campaign-status-text">Campaign Active &mdash; Targeting Dentists</div>
+      </div>
+      <div class="geo-metrics">
+        <div class="geo-metric">
+          <div class="geo-metric-num">0</div>
+          <div class="geo-metric-label">Impressions</div>
+        </div>
+        <div class="geo-metric">
+          <div class="geo-metric-num">0</div>
+          <div class="geo-metric-label">Dentists Reached</div>
+        </div>
+        <div class="geo-metric">
+          <div class="geo-metric-num">0</div>
+          <div class="geo-metric-label">Days Running</div>
+        </div>
+        <div class="geo-metric">
+          <div class="geo-metric-num">{{ zip_count }}</div>
+          <div class="geo-metric-label">Zip Codes Active</div>
+        </div>
+      </div>
+    </div>
+    <div class="coming-soon-badge">Coming Soon</div>
+  </div>
+
+  <!-- Rewards Balance -->
+  <div class="panel coming-soon" style="position:relative;">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#11088;</span> Rewards Balance</div>
+      <span class="panel-link">History &#8594;</span>
+    </div>
+    <div class="panel-body">
+      <div class="rewards-panel-balance">
+        <div class="rpb-label">Available to Redeem</div>
+        <div class="rpb-amount"><span class="rpb-currency">$</span>0</div>
+        <div class="rpb-sub">Toward PPC, postcards, or call sessions</div>
+      </div>
+      <div class="rewards-source">
+        <div class="rs-label">&#9881;&#65039; AMS Milling Center</div>
+        <div class="rs-amount">$0</div>
+      </div>
+      <div class="rewards-source">
+        <div class="rs-label">&#128142; Genesis Zirconia Disks</div>
+        <div class="rs-amount">$0</div>
+      </div>
+      <button class="redeem-btn" disabled>Redeem Rewards &#8594;</button>
+    </div>
+    <div class="coming-soon-badge">Coming Soon</div>
+  </div>
+
+</div>
+
+<!-- One Voice + Pricing side by side -->
+<div class="main-grid-wide fade-in d5">
+
+  <!-- One Voice Campaigns -->
+  <div class="panel coming-soon" style="position:relative;">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128238;</span> One Voice Campaigns</div>
+      <span class="panel-link">Manage All &#8594;</span>
+    </div>
+    <div class="panel-body">
+      <div class="ov-campaigns">
+        <div class="ov-campaign-row">
+          <span class="ov-type-badge postcard">Postcard</span>
+          <div class="ov-info">
+            <div class="ov-campaign-name">No campaigns yet</div>
+            <div class="ov-campaign-detail">Postcard and call campaigns will appear here</div>
+          </div>
+          <div class="ov-status" style="color:var(--text3);">Pending</div>
+        </div>
+      </div>
+      <a class="order-new-btn" href="#">+ Order New Campaign</a>
+    </div>
+    <div class="coming-soon-badge">Coming Soon</div>
+  </div>
+
+  <!-- My Restoration Pricing -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128178;</span> My Restoration Pricing</div>
+      <a class="panel-link" href="{% url 'default_prices' %}">Edit &#8594;</a>
+    </div>
+    <div class="panel-body">
+      {% if default_prices %}
+        <div class="pricing-tiers">
+          {% for price in default_prices %}
+          <div class="pricing-tier-row">
+            <div>
+              <div class="pt-label">
+                {% if price.product_description %}{{ price.product_description }}{% elif price.is_cod %}COD{% else %}{{ price.applied_after }}+ units{% endif %}
+              </div>
+              <span class="pt-badge {% if price.type == 'premium' %}premium{% else %}economy{% endif %}">
+                {{ price.get_type_display }}{% if price.type == 'premium' %} &mdash; In House{% else %} &mdash; AMS Mill{% endif %}
+              </span>
+            </div>
+            <div style="text-align:right;">
+              <div class="pt-price">${{ price.price|floatformat:0 }}</div>
+              <a class="pt-edit" href="{% url 'default_prices' %}">Edit &#8594;</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align:center; padding:20px; color:var(--text3); font-size:13px;">
+          No prices configured. <a href="{% url 'default_prices' %}" style="color:var(--gold);">Set up pricing</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- AMS Services & Resources -->
+<div style="margin-bottom:12px;" class="fade-in d6">
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">
+    AMS SERVICES &amp; RESOURCES
+  </div>
+  <div class="services-grid">
+    <a class="service-tile" href="{% url 'lab_upload_file' %}">
+      <span class="st-icon">&#9881;&#65039;</span>
+      <div class="st-title">AMS Milling Center</div>
+      <div class="st-desc">Submit economy cases, track orders in progress, and view your milling history and invoices.</div>
+      <span class="st-cta">Submit a Case &#8594;</span>
+    </a>
+    <a class="service-tile navy-tile" href="#">
+      <span class="st-icon">&#128142;</span>
+      <div class="st-title">AMS Genesis Zirconia</div>
+      <div class="st-desc">Order zirconia disks at member pricing. Every disk earns $10 in rewards toward your campaigns.</div>
+      <span class="st-cta">Coming Soon</span>
+    </a>
+    <a class="service-tile green-tile" href="#">
+      <span class="st-icon">&#127891;</span>
+      <div class="st-title">AMS Education</div>
+      <div class="st-desc">Free CE credits for your enrolled dentists. Up to 8 credits per year from nationally known speakers.</div>
+      <span class="st-cta">Coming Soon</span>
+    </a>
+    <a class="service-tile" href="#">
+      <span class="st-icon">&#10022;</span>
+      <div class="st-title">White for Life&reg;</div>
+      <div class="st-desc">Manage your dentists' access to the White for Life&reg; trademarked patient retention program.</div>
+      <span class="st-cta">Coming Soon</span>
+    </a>
+    <a class="service-tile navy-tile" href="#">
+      <span class="st-icon">&#11088;</span>
+      <div class="st-title">DDS Review</div>
+      <div class="st-desc">Monitor your dentists' online review programs and Google ranking activity through the DDS Review platform.</div>
+      <span class="st-cta">Coming Soon</span>
+    </a>
+    <a class="service-tile" href="{% url 'lab_file_list' %}">
+      <span class="st-icon">&#128202;</span>
+      <div class="st-title">Files &amp; Reports</div>
+      <div class="st-desc">View and download files from your dentists. {{ pending_files_count }} file{{ pending_files_count|pluralize }} pending download.</div>
+      <span class="st-cta">View Files &#8594;</span>
+    </a>
+  </div>
+</div>
+
+{% endblock %}

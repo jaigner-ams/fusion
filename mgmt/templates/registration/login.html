@@ -1,60 +1,55 @@
-{% extends "mgmt/base.html" %}
+{% extends base_template|default:'mgmt/base.html' %}
 
 {% block title %}Login - AMS Fusion{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Login - AMS Fusion</h4>
-                </div>
-                <div class="card-body">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    {% if form.errors %}
-                        <div class="alert alert-danger">
-                            Invalid username or password. Please try again.
-                        </div>
-                    {% endif %}
+<div style="width:100%; max-width:420px;">
+    <div class="panel fade-in d1">
+        <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-icon">&#128273;</span> Login - AMS Fusion</div>
+        </div>
+        <div class="panel-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="portal-alert {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}info{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
 
-                    {% if next %}
-                        {% if user.is_authenticated %}
-                            <div class="alert alert-info">
-                                Your account doesn't have access to this page. To proceed,
-                                please login with an account that has access.
-                            </div>
-                        {% else %}
-                            <div class="alert alert-info">
-                                Please login to access AMS Fusion.
-                            </div>
-                        {% endif %}
-                    {% endif %}
-
-                    <form method="post" action="{% url 'login' %}">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="{{ form.username.id_for_label }}">Username:</label>
-                            {{ form.username }}
-                            <small class="text-muted">Enter your username (lab, dentist, or admin)</small>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="{{ form.password.id_for_label }}">Password:</label>
-                            {{ form.password }}
-                        </div>
-                        <button type="submit" class="btn btn-primary">Login</button>
-                        <input type="hidden" name="next" value="{{ next }}">
-                    </form>
+            {% if form.errors %}
+                <div class="portal-alert error">
+                    Invalid username or password. Please try again.
                 </div>
-            </div>
+            {% endif %}
+
+            {% if next %}
+                {% if user.is_authenticated %}
+                    <div class="portal-alert info">
+                        Your account doesn't have access to this page. To proceed,
+                        please login with an account that has access.
+                    </div>
+                {% else %}
+                    <div class="portal-alert info">
+                        Please login to access AMS Fusion.
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}" class="portal-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Username</label>
+                    {{ form.username }}
+                    <div style="font-size:11px; color:var(--text3); margin-top:4px;">Enter your username (lab, dentist, or admin)</div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">Password</label>
+                    {{ form.password }}
+                </div>
+                <button type="submit" class="btn-portal" style="width:100%;">Login</button>
+                <input type="hidden" name="next" value="{{ next }}">
+            </form>
         </div>
     </div>
 </div>

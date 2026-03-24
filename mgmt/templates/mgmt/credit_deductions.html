@@ -1,214 +1,169 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 
 {% block title %}{{ title }}{% endblock %}
+{% block nav_credits %}active{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h1 class="mb-4">{{ title }}</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'credit_management' %}">Credit Management</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Credit Deductions</li>
-            </ol>
-        </nav>
+
+<!-- Stats Row -->
+<div class="stats-row fade-in d1" style="grid-template-columns:repeat(3, 1fr);">
+    <div class="stat-card">
+        <div class="stat-label">Total Crown Credit Deductions</div>
+        <div class="stat-number gold">{{ total_deduction_count }}</div>
+        <div class="stat-sub">Number of deductions made</div>
+    </div>
+    <div class="stat-card navy-top">
+        <div class="stat-label">Total Crown Credits Deducted</div>
+        <div class="stat-number">{{ total_deductions }}</div>
+        <div class="stat-sub">Total credits removed</div>
+    </div>
+    <div class="stat-card green-top">
+        <div class="stat-label">Dentists with Deductions</div>
+        <div class="stat-number">{{ dentist_deductions|length }}</div>
+        <div class="stat-sub">Unique dentists affected</div>
     </div>
 </div>
 
-<!-- Summary Cards -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Total Crown Credit Deductions</h5>
-                <h2 class="text-warning">{{ total_deduction_count }}</h2>
-            </div>
+<!-- All Deductions Panel -->
+<div class="panel fade-in d2">
+    <div class="panel-header">
+        <div class="panel-title"><span class="panel-title-icon">&#10134;</span> All Crown Credit Deductions</div>
+        <div style="display:flex; gap:10px;">
+            <a href="{% url 'credit_transactions' %}" class="btn-portal-outline btn-portal-sm">All Transactions</a>
+            <a href="{% url 'credit_management' %}" class="btn-portal-outline btn-portal-sm">Credit Management</a>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Total Crown Credits Deducted</h5>
-                <h2 class="text-danger">{{ total_deductions }}</h2>
-            </div>
+    <div class="panel-body">
+        {% if deductions %}
+        <table class="portal-table">
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Dentist</th>
+                    <th>Type</th>
+                    <th>Credits Deducted</th>
+                    <th>Reason</th>
+                    <th>Balance After</th>
+                    <th>Deducted By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for deduction in deductions %}
+                <tr>
+                    <td style="color:var(--text3);">{{ deduction.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        {% if deduction.dentist %}
+                            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--navy);">{{ deduction.dentist.name }}</span>
+                        {% elif deduction.user.dentist_profile %}
+                            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--navy);">{{ deduction.user.dentist_profile.name }}</span>
+                        {% else %}
+                            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--navy);">{{ deduction.user.first_name|default:deduction.user.username }}</span>
+                        {% endif %}
+                        <br><span style="font-size:11px; color:var(--text3);">{{ deduction.user.username }}</span>
+                    </td>
+                    <td>
+                        <span class="portal-badge {% if deduction.credit_type == 'premium' %}gold{% else %}navy{% endif %}">
+                            {{ deduction.get_credit_type_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="portal-badge red">{{ deduction.amount|floatformat:0 }}</span>
+                    </td>
+                    <td>
+                        {% if deduction.reason and deduction.reason != "" %}
+                            <strong>{{ deduction.reason }}</strong>
+                        {% else %}
+                            <em style="color:var(--text3);">No reason provided</em>
+                        {% endif %}
+                        {% if deduction.notes %}
+                            <br><span style="font-size:11px; color:var(--text3); font-style:italic;">Notes: {{ deduction.notes }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-size:12px;">
+                            E: {{ deduction.economy_balance_after }}<br>
+                            P: {{ deduction.premium_balance_after }}
+                        </span>
+                    </td>
+                    <td style="color:var(--text3);">
+                        {% if deduction.created_by %}
+                            {{ deduction.created_by.username }}
+                        {% else %}
+                            <em style="color:var(--text3);">System</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if deduction.is_reversed %}
+                            <span class="portal-badge navy">Reversed</span>
+                        {% else %}
+                            <span class="portal-badge green">Active</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not deduction.is_reversed %}
+                            <a href="{% url 'undo_deduction' deduction.id %}" class="pt-edit" title="Undo this deduction">Undo</a>
+                        {% else %}
+                            <span style="color:var(--text3);">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center; padding:30px; color:var(--text3); font-size:13px;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--navy); margin-bottom:6px;">No credit deductions yet</div>
+            Credit deductions will appear here when credits are deducted from dentists.
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Dentists with Deductions</h5>
-                <h2 class="text-info">{{ dentist_deductions|length }}</h2>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- All Deductions Table -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>All Crown Credit Deductions</h4>
-                <div>
-                    <a href="{% url 'credit_transactions' %}" class="btn btn-outline-info btn-sm me-2">
-                        <i class="fas fa-history"></i> All Transactions
-                    </a>
-                    <a href="{% url 'credit_management' %}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-coins"></i> Credit Management
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                {% if deductions %}
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Date & Time</th>
-                                <th>Dentist</th>
-                                <th>Type</th>
-                                <th>Crown Credits Deducted</th>
-                                <th>Reason</th>
-                                <th>Balance After</th>
-                                <th>Deducted By</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for deduction in deductions %}
-                            <tr>
-                                <td>{{ deduction.created_at|date:"M d, Y H:i" }}</td>
-                                <td>
-                                    {% if deduction.dentist %}
-                                        <strong>{{ deduction.dentist.name }}</strong>
-                                    {% elif deduction.user.dentist_profile %}
-                                        <strong>{{ deduction.user.dentist_profile.name }}</strong>
-                                    {% else %}
-                                        <strong>{{ deduction.user.first_name|default:deduction.user.username }}</strong>
-                                    {% endif %}
-                                    <br>
-                                    <small class="text-muted">{{ deduction.user.username }}</small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-{% if deduction.credit_type == 'premium' %}warning{% else %}info{% endif %}">
-                                        {{ deduction.get_credit_type_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-danger">{{ deduction.amount|floatformat:0 }}</span>
-                                </td>
-                                <td>
-                                    {% if deduction.reason and deduction.reason != "" %}
-                                        <strong>{{ deduction.reason }}</strong>
-                                    {% else %}
-                                        <em class="text-muted">No reason provided</em>
-                                    {% endif %}
-                                    {% if deduction.notes %}
-                                        <br><small class="text-muted"><i>Notes: {{ deduction.notes }}</i></small>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <small>
-                                        E: {{ deduction.economy_balance_after }}<br>
-                                        P: {{ deduction.premium_balance_after }}
-                                    </small>
-                                </td>
-                                <td>
-                                    {% if deduction.created_by %}
-                                        {{ deduction.created_by.username }}
-                                    {% else %}
-                                        <em class="text-muted">System</em>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if deduction.is_reversed %}
-                                        <span class="badge bg-secondary">Reversed</span>
-                                    {% else %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if not deduction.is_reversed %}
-                                        <a href="{% url 'undo_deduction' deduction.id %}" 
-                                           class="btn btn-sm btn-outline-warning"
-                                           title="Undo this deduction">
-                                            <i class="fas fa-undo"></i> Undo
-                                        </a>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <h5 class="text-muted">No credit deductions yet</h5>
-                    <p class="text-muted">Credit deductions will appear here when credits are deducted from dentists.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Summary by Dentist -->
+<!-- Summary by Dentist Panel -->
 {% if dentist_deductions %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h4>Deductions Summary by Dentist</h4>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Dentist</th>
-                                <th>Number of Deductions</th>
-                                <th>Total Credits Deducted</th>
-                                <th>Last Deduction</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for dentist_name, data in dentist_deductions.items %}
-                            <tr>
-                                <td><strong>{{ dentist_name }}</strong></td>
-                                <td>{{ data.count }}</td>
-                                <td>
-                                    <span class="badge bg-danger">{{ data.total }}</span>
-                                </td>
-                                <td>
-                                    {{ data.deductions.0.created_at|date:"M d, Y" }}
-                                </td>
-                                <td>
-                                    {% with dentist_obj=data.deductions.0.dentist %}
-                                        {% if dentist_obj %}
-                                            <a href="{% url 'deduct_credits' dentist_obj.id %}" 
-                                               class="btn btn-sm btn-outline-warning">
-                                                <i class="fas fa-minus-circle"></i> New Deduction
-                                            </a>
-                                        {% elif data.deductions.0.user.dentist_profile %}
-                                            <a href="{% url 'deduct_credits' data.deductions.0.user.dentist_profile.id %}" 
-                                               class="btn btn-sm btn-outline-warning">
-                                                <i class="fas fa-minus-circle"></i> New Deduction
-                                            </a>
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+<div class="panel fade-in d3">
+    <div class="panel-header">
+        <div class="panel-title"><span class="panel-title-icon">&#129463;</span> Deductions Summary by Dentist</div>
+    </div>
+    <div class="panel-body">
+        <table class="portal-table">
+            <thead>
+                <tr>
+                    <th>Dentist</th>
+                    <th>Number of Deductions</th>
+                    <th>Total Credits Deducted</th>
+                    <th>Last Deduction</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dentist_name, data in dentist_deductions.items %}
+                <tr>
+                    <td>
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--navy);">{{ dentist_name }}</span>
+                    </td>
+                    <td>{{ data.count }}</td>
+                    <td>
+                        <span class="portal-badge red">{{ data.total }}</span>
+                    </td>
+                    <td style="color:var(--text3);">
+                        {{ data.deductions.0.created_at|date:"M d, Y" }}
+                    </td>
+                    <td>
+                        {% with dentist_obj=data.deductions.0.dentist %}
+                            {% if dentist_obj %}
+                                <a href="{% url 'deduct_credits' dentist_obj.id %}" class="pt-edit">New Deduction</a>
+                            {% elif data.deductions.0.user.dentist_profile %}
+                                <a href="{% url 'deduct_credits' data.deductions.0.user.dentist_profile.id %}" class="pt-edit">New Deduction</a>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endif %}

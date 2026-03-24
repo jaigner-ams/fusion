@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fusion 2030 — Lab Member Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:   #f8f4ed;
+  --cream2:  #f2ece0;
+  --navy:    #0d1e3d;
+  --navy2:   #162848;
+  --navy3:   #1e3a5f;
+  --gold:    #b8943a;
+  --gold2:   #c9a84c;
+  --gold3:   #e0c070;
+  --white:   #ffffff;
+  --text:    #1a2540;
+  --text2:   #3d4f6e;
+  --text3:   #6b7a94;
+  --border:  #ddd6c8;
+  --border2: #c8bfaf;
+  --green:   #2d7a4f;
+  --green-bg:#edf7f1;
+  --sidebar-w: 240px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { height:100%; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 300;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-brand {
+  padding: 24px 22px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-brand-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 20px;
+  color: var(--white); letter-spacing: 1px;
+}
+.sidebar-brand-name span { color: var(--gold2); }
+.sidebar-brand-sub {
+  font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-top: 3px;
+}
+
+.sidebar-lab {
+  padding: 16px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+}
+.sidebar-lab-label {
+  font-size: 9px; letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 4px;
+}
+.sidebar-lab-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 15px;
+  color: var(--gold3); line-height: 1.2;
+}
+.sidebar-lab-status {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 6px;
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #4ade80;
+  animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(0.7)}
+}
+.status-text {
+  font-size: 10px; color: #4ade80;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+
+/* Nav sections */
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+
+.nav-section-label {
+  font-size: 9px; letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  padding: 14px 22px 6px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.05);
+  border-left-color: rgba(201,168,76,0.4);
+}
+.nav-item.active {
+  background: rgba(201,168,76,0.1);
+  border-left-color: var(--gold2);
+}
+.nav-icon {
+  font-size: 15px; width: 18px;
+  flex-shrink: 0; text-align: center;
+}
+.nav-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 13px;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.75);
+}
+.nav-item.active .nav-label { color: var(--gold3); }
+.nav-item:hover .nav-label { color: var(--white); }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--gold2);
+  color: var(--navy);
+  font-size: 9px; font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.5px;
+}
+.nav-badge.new { background: #4ade80; }
+
+.sidebar-footer {
+  padding: 16px 22px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-footer-contact {
+  font-size: 9px; color: rgba(255,255,255,0.3);
+  line-height: 1.7; letter-spacing: 0.5px;
+}
+.sidebar-footer-contact strong {
+  color: rgba(255,255,255,0.55);
+  font-weight: 600; display: block;
+  margin-bottom: 2px;
+}
+
+/* ── MAIN CONTENT ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top bar */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 36px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 1px 8px rgba(13,30,61,0.05);
+}
+.topbar-greeting {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 17px; color: var(--navy);
+}
+.topbar-greeting span { color: var(--gold); }
+.topbar-date {
+  font-size: 12px; color: var(--text3);
+  margin-top: 1px;
+}
+.topbar-right {
+  display: flex; align-items: center; gap: 16px;
+}
+.topbar-rewards {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.topbar-rewards:hover { border-color: var(--gold2); }
+.rewards-icon { font-size: 14px; }
+.rewards-info {}
+.rewards-label {
+  font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--text3);
+}
+.rewards-balance {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 18px;
+  color: var(--gold); line-height: 1;
+}
+.topbar-avatar {
+  width: 36px; height: 36px;
+  background: var(--navy);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px;
+  color: var(--gold3); cursor: pointer;
+}
+
+/* ── PAGE CONTENT ── */
+.content { padding: 32px 36px; flex: 1; }
+
+/* Welcome banner */
+.welcome-banner {
+  background: var(--navy);
+  padding: 28px 36px;
+  margin-bottom: 28px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  position: relative; overflow: hidden;
+}
+.welcome-banner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold3), var(--gold));
+}
+.welcome-banner-glow {
+  position: absolute;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+  right: -50px; top: -100px; pointer-events: none;
+}
+.wb-left {}
+.wb-eyebrow {
+  font-size: 10px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--gold2);
+  margin-bottom: 6px;
+}
+.wb-headline {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 28px;
+  color: var(--white); line-height: 1.1;
+}
+.wb-headline span { color: var(--gold2); }
+.wb-sub {
+  font-size: 13px; color: rgba(255,255,255,0.5);
+  margin-top: 6px; max-width: 480px; line-height: 1.6;
+}
+.wb-right {
+  text-align: right; flex-shrink: 0;
+}
+.wb-membership {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 4px;
+}
+.wb-since {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 16px;
+  color: rgba(255,255,255,0.7);
+}
+.wb-territory {
+  margin-top: 10px;
+  display: flex; align-items: center; gap: 6px;
+  justify-content: flex-end;
+}
+.territory-badge {
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.3);
+  padding: 4px 10px;
+  font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--gold3);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+}
+
+/* ── STAT CARDS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold2);
+  padding: 20px 22px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.stat-card:hover {
+  box-shadow: 0 4px 20px rgba(13,30,61,0.1);
+  transform: translateY(-2px);
+}
+.stat-card.navy-top { border-top-color: var(--navy3); }
+.stat-card.green-top { border-top-color: var(--green); }
+.stat-label {
+  font-size: 9px; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 8px;
+}
+.stat-number {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 36px;
+  line-height: 1; color: var(--navy);
+}
+.stat-number.gold { color: var(--gold); }
+.stat-number.green { color: var(--green); }
+.stat-sub {
+  font-size: 11px; color: var(--text3);
+  margin-top: 5px; line-height: 1.4;
+}
+.stat-trend {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600;
+  color: var(--green); margin-top: 4px;
+}
+
+/* ── MAIN GRID ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.main-grid-wide {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+/* Panel card */
+.panel {
+  background: var(--white);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.panel-header {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--cream);
+}
+.panel-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-title-icon { font-size: 14px; }
+.panel-link {
+  font-size: 11px; color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.panel-link:hover { color: var(--navy); }
+.panel-body { padding: 18px 22px; }
+
+/* Dentist prospect rows */
+.dentist-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.dentist-row:last-child { border-bottom: none; }
+.dentist-row:hover { background: var(--cream); margin: 0 -22px; padding: 10px 22px; }
+.dentist-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--cream2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px; color: var(--navy3);
+  flex-shrink: 0;
+}
+.dentist-info { flex: 1; }
+.dentist-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px; color: var(--navy);
+}
+.dentist-detail { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.dentist-zip {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 11px;
+  color: var(--text3); text-align: right;
+}
+.dentist-status {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border2); flex-shrink: 0;
+}
+.dentist-status.reached { background: #4ade80; }
+.dentist-status.mailed { background: var(--gold2); }
+
+/* Geo-fencing metrics */
+.geo-metrics {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-bottom: 14px;
+}
+.geo-metric {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  text-align: center;
+}
+.geo-metric-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 28px;
+  color: var(--navy); line-height: 1;
+}
+.geo-metric-label {
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1px; text-transform: uppercase;
+  margin-top: 3px;
+}
+.campaign-status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: var(--green-bg);
+  border: 1px solid rgba(45,122,79,0.2);
+  border-left: 3px solid var(--green);
+}
+.campaign-status-text {
+  font-size: 12px; color: var(--green); font-weight: 600;
+}
+
+/* Rewards panel */
+.rewards-panel-balance {
+  text-align: center;
+  padding: 20px 0 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.rpb-label {
+  font-size: 9px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 6px;
+}
+.rpb-amount {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 52px;
+  color: var(--gold); line-height: 1;
+}
+.rpb-currency {
+  font-size: 20px; color: var(--gold2);
+  vertical-align: super;
+}
+.rpb-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+.rewards-source {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rewards-source:last-child { border-bottom: none; }
+.rs-label { font-size: 12px; color: var(--text2); }
+.rs-amount {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 14px; color: var(--gold);
+}
+
+.redeem-btn {
+  display: block; width: 100%;
+  margin-top: 14px;
+  padding: 11px;
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: 3px; text-transform: uppercase;
+  border: none; cursor: pointer;
+  transition: background 0.2s;
+  text-align: center;
+}
+.redeem-btn:hover { background: var(--navy2); }
+
+/* Services grid */
+.services-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.service-tile {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold2);
+  padding: 20px 18px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  text-decoration: none;
+  display: block;
+}
+.service-tile:hover {
+  box-shadow: 0 4px 18px rgba(13,30,61,0.1);
+  transform: translateY(-2px);
+}
+.service-tile.navy-tile { border-top-color: var(--navy3); }
+.service-tile.green-tile { border-top-color: var(--green); }
+.st-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+.st-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 15px;
+  text-transform: uppercase; color: var(--navy);
+  margin-bottom: 5px; line-height: 1.2;
+}
+.st-desc { font-size: 11.5px; color: var(--text3); line-height: 1.5; }
+.st-cta {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--gold); border-bottom: 1px solid rgba(184,148,58,0.3);
+  padding-bottom: 1px;
+}
+
+/* One Voice panel */
+.ov-campaigns { }
+.ov-campaign-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.ov-campaign-row:last-child { border-bottom: none; }
+.ov-type-badge {
+  padding: 3px 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase;
+  flex-shrink: 0;
+}
+.ov-type-badge.postcard {
+  background: rgba(201,168,76,0.12);
+  color: var(--gold); border: 1px solid rgba(201,168,76,0.3);
+}
+.ov-type-badge.calls {
+  background: rgba(13,30,61,0.08);
+  color: var(--navy3); border: 1px solid rgba(13,30,61,0.15);
+}
+.ov-info { flex: 1; }
+.ov-campaign-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px; color: var(--navy);
+}
+.ov-campaign-detail { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.ov-status {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.ov-status.active { color: var(--green); }
+.ov-status.scheduled { color: var(--gold); }
+
+.order-new-btn {
+  display: block; width: 100%; margin-top: 14px;
+  padding: 10px;
+  background: transparent;
+  border: 1.5px solid var(--gold2);
+  color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 3px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.order-new-btn:hover {
+  background: var(--gold2); color: var(--navy);
+}
+
+/* Pricing panel */
+.pricing-tiers { }
+.pricing-tier-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px; margin-bottom: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer; transition: border-color 0.2s;
+}
+.pricing-tier-row:hover { border-color: var(--gold2); }
+.pricing-tier-row:last-child { margin-bottom: 0; }
+.pt-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 14px; color: var(--navy);
+}
+.pt-badge {
+  font-size: 9px; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 2px 8px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+}
+.pt-badge.premium {
+  background: rgba(201,168,76,0.12);
+  color: var(--gold); border: 1px solid rgba(201,168,76,0.3);
+}
+.pt-badge.economy {
+  background: rgba(13,30,61,0.07);
+  color: var(--navy3); border: 1px solid rgba(13,30,61,0.15);
+}
+.pt-price {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 20px; color: var(--navy);
+}
+.pt-edit {
+  font-size: 10px; color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+}
+
+/* Revenue share banner */
+.revenue-banner {
+  background: var(--cream2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold2);
+  padding: 16px 22px;
+  display: flex; align-items: center; gap: 20px;
+  margin-bottom: 24px;
+}
+.rb-icon { font-size: 28px; flex-shrink: 0; }
+.rb-content { flex: 1; }
+.rb-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 16px; color: var(--navy);
+}
+.rb-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.rb-amount {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 32px; color: var(--gold);
+  text-align: right; flex-shrink: 0;
+}
+.rb-amount-label { font-size: 10px; color: var(--text3); text-align: right; }
+
+/* Fade in animation */
+.fade-in {
+  opacity: 0; transform: translateY(16px);
+  animation: fadeIn 0.5s forwards;
+}
+@keyframes fadeIn { to { opacity:1; transform:translateY(0); } }
+.d1{animation-delay:0.05s} .d2{animation-delay:0.1s}
+.d3{animation-delay:0.15s} .d4{animation-delay:0.2s}
+.d5{animation-delay:0.25s} .d6{animation-delay:0.3s}
+.d7{animation-delay:0.35s} .d8{animation-delay:0.4s}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-name">FUSION <span>2030</span></div>
+    <div class="sidebar-brand-sub">Member Portal</div>
+  </div>
+
+  <div class="sidebar-lab">
+    <div class="sidebar-lab-label">Logged in as</div>
+    <div class="sidebar-lab-name">Smith Dental Laboratory</div>
+    <div class="sidebar-lab-status">
+      <div class="status-dot"></div>
+      <div class="status-text">Active Member</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item active" href="#">
+      <span class="nav-icon">⊞</span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+
+    <div class="nav-section-label">My Territory</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">Protected Zip Codes</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🦷</span>
+      <span class="nav-label">Dentist Prospects</span>
+      <span class="nav-badge">47</span>
+    </a>
+
+    <div class="nav-section-label">Campaigns</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📍</span>
+      <span class="nav-label">Geo-Fencing</span>
+      <span class="nav-badge new">Live</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📮</span>
+      <span class="nav-label">One Voice Postcards</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📞</span>
+      <span class="nav-label">One Voice Calls</span>
+    </a>
+
+    <div class="nav-section-label">My Pricing</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🏆</span>
+      <span class="nav-label">Premium Pricing</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">💲</span>
+      <span class="nav-label">Economy Pricing</span>
+    </a>
+
+    <div class="nav-section-label">AMS Services</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Milling Center</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">💎</span>
+      <span class="nav-label">Zirconia Disks</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🎓</span>
+      <span class="nav-label">AMS Education</span>
+    </a>
+
+    <div class="nav-section-label">Rewards</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">⭐</span>
+      <span class="nav-label">Rewards Balance</span>
+      <span class="nav-badge">$240</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label">Revenue Share</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-contact">
+      <strong>Need Help?</strong>
+      Keith Crittenden<br>
+      708-502-3411<br>
+      Keith@AmericaSmiles.com
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-greeting">Good morning, <span>Smith Dental Laboratory</span></div>
+      <div class="topbar-date">Monday, March 16, 2026 &nbsp;·&nbsp; Member since January 2026</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-rewards">
+        <div class="rewards-icon">⭐</div>
+        <div class="rewards-info">
+          <div class="rewards-label">Rewards Balance</div>
+          <div class="rewards-balance">$240</div>
+        </div>
+      </div>
+      <div class="topbar-avatar">SD</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Welcome banner -->
+    <div class="welcome-banner fade-in d1">
+      <div class="welcome-banner-glow"></div>
+      <div class="wb-left">
+        <div class="wb-eyebrow">Your Fusion 2030 Command Center</div>
+        <div class="wb-headline">Welcome back, <span>Smith Dental Laboratory.</span></div>
+        <div class="wb-sub">Your geo-fencing campaign is live, your territory is protected, and 47 dentist prospects are waiting in your zip codes. Everything you need to win the message war is right here.</div>
+      </div>
+      <div class="wb-right">
+        <div class="wb-membership">Membership Status</div>
+        <div class="wb-since">Active — Month 3</div>
+        <div class="wb-territory">
+          <span class="territory-badge">📍 3 Zip Codes Protected</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue share banner -->
+    <div class="revenue-banner fade-in d2">
+      <div class="rb-icon">💰</div>
+      <div class="rb-content">
+        <div class="rb-title">Revenue Share — 2 Dentists Currently Enrolled</div>
+        <div class="rb-desc">You're earning $200/month back from AMS. Enroll 2 more dentists and your membership is completely free. Every dentist after that is pure profit.</div>
+      </div>
+      <div>
+        <div class="rb-amount">$200</div>
+        <div class="rb-amount-label">earned this month</div>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-row fade-in d3">
+      <div class="stat-card">
+        <div class="stat-label">Dentist Prospects</div>
+        <div class="stat-number">47</div>
+        <div class="stat-sub">In your protected zip codes</div>
+        <div class="stat-trend">↑ 3 new this month</div>
+      </div>
+      <div class="stat-card navy-top">
+        <div class="stat-label">Geo-Fence Impressions</div>
+        <div class="stat-number navy-text">1,842</div>
+        <div class="stat-sub">Dentist devices reached this month</div>
+        <div class="stat-trend">↑ 12% vs last month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Rewards Balance</div>
+        <div class="stat-number gold">$240</div>
+        <div class="stat-sub">Available to redeem</div>
+        <div class="stat-trend">↑ $60 earned this month</div>
+      </div>
+      <div class="stat-card green-top">
+        <div class="stat-label">Revenue Share</div>
+        <div class="stat-number green">$200</div>
+        <div class="stat-sub">Earned this month — 2 dentists</div>
+        <div class="stat-trend">↑ $100 vs last month</div>
+      </div>
+    </div>
+
+    <!-- Main grid: Dentist Prospects + Geo + Rewards -->
+    <div class="main-grid fade-in d4">
+
+      <!-- Dentist Prospects -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">🦷</span> Dentist Prospects in Your Territory</div>
+          <a class="panel-link" href="#">View All 47 →</a>
+        </div>
+        <div class="panel-body">
+          <div class="dentist-row">
+            <div class="dentist-avatar">JM</div>
+            <div class="dentist-info">
+              <div class="dentist-name">Dr. James Mitchell, DDS</div>
+              <div class="dentist-detail">Mitchell Family Dentistry · 1.2 mi away</div>
+            </div>
+            <div>
+              <div class="dentist-zip">60601</div>
+              <div class="dentist-status reached" title="Geo-fence reached"></div>
+            </div>
+          </div>
+          <div class="dentist-row">
+            <div class="dentist-avatar">SR</div>
+            <div class="dentist-info">
+              <div class="dentist-name">Dr. Sandra Reyes, DMD</div>
+              <div class="dentist-detail">Lakeview Dental Associates · 1.8 mi away</div>
+            </div>
+            <div>
+              <div class="dentist-zip">60601</div>
+              <div class="dentist-status mailed" title="Postcard mailed"></div>
+            </div>
+          </div>
+          <div class="dentist-row">
+            <div class="dentist-avatar">TC</div>
+            <div class="dentist-info">
+              <div class="dentist-name">Dr. Thomas Chen, DDS</div>
+              <div class="dentist-detail">Smile Design Studio · 2.1 mi away</div>
+            </div>
+            <div>
+              <div class="dentist-zip">60602</div>
+              <div class="dentist-status" title="Not yet reached"></div>
+            </div>
+          </div>
+          <div class="dentist-row">
+            <div class="dentist-avatar">AP</div>
+            <div class="dentist-info">
+              <div class="dentist-name">Dr. Angela Patel, DMD</div>
+              <div class="dentist-detail">North Shore Dental · 2.4 mi away</div>
+            </div>
+            <div>
+              <div class="dentist-zip">60603</div>
+              <div class="dentist-status reached" title="Geo-fence reached"></div>
+            </div>
+          </div>
+          <div class="dentist-row">
+            <div class="dentist-avatar">RW</div>
+            <div class="dentist-info">
+              <div class="dentist-name">Dr. Robert Walsh, DDS</div>
+              <div class="dentist-detail">Walsh Dental Group · 2.9 mi away</div>
+            </div>
+            <div>
+              <div class="dentist-zip">60602</div>
+              <div class="dentist-status mailed" title="Postcard mailed"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Geo-Fencing -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">📍</span> Geo-Fencing Campaign</div>
+          <a class="panel-link" href="#">Full Report →</a>
+        </div>
+        <div class="panel-body">
+          <div class="campaign-status" style="margin-bottom:14px;">
+            <div class="status-dot"></div>
+            <div class="campaign-status-text">Campaign Active — Targeting 47 Dentists</div>
+          </div>
+          <div class="geo-metrics">
+            <div class="geo-metric">
+              <div class="geo-metric-num">1,842</div>
+              <div class="geo-metric-label">Impressions</div>
+            </div>
+            <div class="geo-metric">
+              <div class="geo-metric-num">47</div>
+              <div class="geo-metric-label">Dentists Reached</div>
+            </div>
+            <div class="geo-metric">
+              <div class="geo-metric-num">38</div>
+              <div class="geo-metric-label">Days Running</div>
+            </div>
+            <div class="geo-metric">
+              <div class="geo-metric-num">3</div>
+              <div class="geo-metric-label">Zip Codes Active</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rewards -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">⭐</span> Rewards Balance</div>
+          <a class="panel-link" href="#">History →</a>
+        </div>
+        <div class="panel-body">
+          <div class="rewards-panel-balance">
+            <div class="rpb-label">Available to Redeem</div>
+            <div class="rpb-amount"><span class="rpb-currency">$</span>240</div>
+            <div class="rpb-sub">Toward PPC, postcards, or call sessions</div>
+          </div>
+          <div class="rewards-source">
+            <div class="rs-label">⚙️ AMS Milling Center</div>
+            <div class="rs-amount">$140</div>
+          </div>
+          <div class="rewards-source">
+            <div class="rs-label">💎 Genesis Zirconia Disks</div>
+            <div class="rs-amount">$100</div>
+          </div>
+          <button class="redeem-btn">Redeem Rewards →</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- One Voice + Pricing side by side -->
+    <div class="main-grid-wide fade-in d5">
+
+      <!-- One Voice -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">📮</span> One Voice Campaigns</div>
+          <a class="panel-link" href="#">Manage All →</a>
+        </div>
+        <div class="panel-body">
+          <div class="ov-campaigns">
+            <div class="ov-campaign-row">
+              <span class="ov-type-badge postcard">Postcard</span>
+              <div class="ov-info">
+                <div class="ov-campaign-name">Spring 2026 — 100 Dentists</div>
+                <div class="ov-campaign-detail">Mailed March 1 · 100 pieces · Zip codes 60601–60603</div>
+              </div>
+              <div class="ov-status active">Active</div>
+            </div>
+            <div class="ov-campaign-row">
+              <span class="ov-type-badge calls">Calls</span>
+              <div class="ov-info">
+                <div class="ov-campaign-name">Follow-Up Call Session — 100 Dentists</div>
+                <div class="ov-campaign-detail">Scheduled March 22 · Follows Spring postcard campaign</div>
+              </div>
+              <div class="ov-status scheduled">Scheduled</div>
+            </div>
+            <div class="ov-campaign-row">
+              <span class="ov-type-badge postcard">Postcard</span>
+              <div class="ov-info">
+                <div class="ov-campaign-name">February 2026 — 100 Dentists</div>
+                <div class="ov-campaign-detail">Completed Feb 1 · 4 meetings set · 62 emails captured</div>
+              </div>
+              <div class="ov-status" style="color:var(--text3);">Complete</div>
+            </div>
+          </div>
+          <button class="order-new-btn">+ Order New Campaign</button>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">💲</span> My Restoration Pricing</div>
+          <a class="panel-link" href="#">Edit →</a>
+        </div>
+        <div class="panel-body">
+          <div class="pricing-tiers">
+            <div class="pricing-tier-row">
+              <div>
+                <div class="pt-label">Full Arch Zirconia Crown</div>
+                <span class="pt-badge premium">Premium — In House</span>
+              </div>
+              <div style="text-align:right;">
+                <div class="pt-price">$195</div>
+                <div class="pt-edit">Edit →</div>
+              </div>
+            </div>
+            <div class="pricing-tier-row">
+              <div>
+                <div class="pt-label">Full Arch Zirconia Crown</div>
+                <span class="pt-badge economy">Economy — AMS Mill</span>
+              </div>
+              <div style="text-align:right;">
+                <div class="pt-price">$89</div>
+                <div class="pt-edit">Edit →</div>
+              </div>
+            </div>
+            <div class="pricing-tier-row">
+              <div>
+                <div class="pt-label">PFM Crown</div>
+                <span class="pt-badge premium">Premium — In House</span>
+              </div>
+              <div style="text-align:right;">
+                <div class="pt-price">$210</div>
+                <div class="pt-edit">Edit →</div>
+              </div>
+            </div>
+            <div class="pricing-tier-row">
+              <div>
+                <div class="pt-label">Implant Crown</div>
+                <span class="pt-badge premium">Premium — In House</span>
+              </div>
+              <div style="text-align:right;">
+                <div class="pt-price">$245</div>
+                <div class="pt-edit">Edit →</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Services grid -->
+    <div style="margin-bottom:12px;" class="fade-in d6">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">
+        AMS SERVICES &amp; RESOURCES
+      </div>
+      <div class="services-grid">
+        <a class="service-tile" href="#">
+          <span class="st-icon">⚙️</span>
+          <div class="st-title">AMS Milling Center</div>
+          <div class="st-desc">Submit economy cases, track orders in progress, and view your milling history and invoices.</div>
+          <span class="st-cta">Submit a Case →</span>
+        </a>
+        <a class="service-tile navy-tile" href="#">
+          <span class="st-icon">💎</span>
+          <div class="st-title">AMS Genesis Zirconia</div>
+          <div class="st-desc">Order zirconia disks at member pricing. Every disk earns $10 in rewards toward your campaigns.</div>
+          <span class="st-cta">Shop Disks →</span>
+        </a>
+        <a class="service-tile green-tile" href="#">
+          <span class="st-icon">🎓</span>
+          <div class="st-title">AMS Education</div>
+          <div class="st-desc">Free CE credits for your enrolled dentists. Up to 8 credits per year from nationally known speakers.</div>
+          <span class="st-cta">Browse CE →</span>
+        </a>
+        <a class="service-tile" href="#">
+          <span class="st-icon">✦</span>
+          <div class="st-title">White for Life®</div>
+          <div class="st-desc">Manage your dentists' access to the White for Life® trademarked patient retention program.</div>
+          <span class="st-cta">Manage Access →</span>
+        </a>
+        <a class="service-tile navy-tile" href="#">
+          <span class="st-icon">⭐</span>
+          <div class="st-title">DDS Review</div>
+          <div class="st-desc">Monitor your dentists' online review programs and Google ranking activity through the DDS Review platform.</div>
+          <span class="st-cta">View Reviews →</span>
+        </a>
+        <a class="service-tile" href="#">
+          <span class="st-icon">📊</span>
+          <div class="st-title">Practice Reports</div>
+          <div class="st-desc">View detailed activity reports for each enrolled dentist — geo-fencing reach, CE completions, and more.</div>
+          <span class="st-cta">View Reports →</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

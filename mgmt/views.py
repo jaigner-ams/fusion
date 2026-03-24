@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
 from django.db import transaction
 from django.contrib import messages
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, HttpResponseNotAllowed
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -18,8 +18,30 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 from .models import Dentist, DefaultPriceList, PriceList, CreditPurchase, CreditTransaction, FileUpload, CustomUser
-from .forms import DentistForm, DefaultPriceForm, CustomPriceForm, DentistWithUserForm, CreditPurchaseForm, CreditDeductionForm, DentistPasswordChangeForm, FileUploadForm, LabProfileForm, ZipCodeSearchForm
-from .decorators import lab_required, lab_or_admin_required, dentist_required
+from .forms import DentistForm, DefaultPriceForm, CustomPriceForm, DentistWithUserForm, CreditPurchaseForm, CreditDeductionForm, DentistPasswordChangeForm, FileUploadForm, LabProfileForm, ZipCodeSearchForm, DentistSearchForm
+from .decorators import lab_required, lab_or_admin_required, dentist_required, admin_required
+from .dentist_search import search_dentists, deduplicate, FIELDNAMES as DENTIST_FIELDNAMES
+from io import StringIO
+import csv as csv_module
+
+def send_file_upload_notification(upload, uploaded_by_label):
+    """Notify milling center when a file is uploaded."""
+    recipients = getattr(settings, 'FILE_UPLOAD_NOTIFICATION_EMAILS', [])
+    if not recipients:
+        return
+    subject = f'New File Upload: {upload.original_filename}'
+    message = (
+        f'A new file has been uploaded to AMS Fusion.\n\n'
+        f'File: {upload.original_filename}\n'
+        f'Dentist: {upload.dentist.name}\n'
+        f'Uploaded by: {uploaded_by_label}\n'
+        f'Date: {upload.uploaded_at.strftime("%B %d, %Y at %I:%M %p")}\n'
+    )
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipients)
+    except Exception:
+        pass  # Don't block the upload if email fails
+
 
 def send_credit_purchase_notifications(purchase):
     """Send email notifications when a dentist purchases crown credits"""
@@ -84,7 +106,52 @@ def price_management_view(request):
         dentists = Dentist.objects.filter(lab=request.user)
         default_prices = DefaultPriceList.objects.filter(lab=request.user).order_by('applied_after')
         lab_name = request.user.first_name or request.user.username
-    
+
+    # For lab users, render the new portal dashboard
+    if request.user.user_type == 'lab':
+        from prospects.models import Prospect
+        from django.db.models import Q
+
+        files = FileUpload.objects.filter(dentist__lab=request.user).order_by('-uploaded_at')
+        pending_files = files.filter(status='pending')
+        recent_files = files[:10]
+
+        # Protected zip codes
+        protected_zips = [
+            getattr(request.user, f'zip_protect_{i}', '')
+            for i in range(1, 11)
+            if getattr(request.user, f'zip_protect_{i}', '')
+        ]
+        zip_count = len(protected_zips)
+
+        # Dentist prospects in protected zip codes
+        prospects = Prospect.objects.none()
+        prospect_count = 0
+        if protected_zips:
+            zip_q = Q()
+            for z in protected_zips:
+                zip_q |= Q(zip_code=z)
+                for j in range(1, 11):
+                    zip_q |= Q(**{f'zip_protect_{j}': z})
+            prospects = Prospect.objects.filter(zip_q).distinct().order_by('-id')
+            prospect_count = prospects.count()
+
+        context = {
+            'dentists': dentists,
+            'default_prices': default_prices,
+            'lab_name': lab_name,
+            'dentist_count': dentists.count(),
+            'default_prices_count': default_prices.count(),
+            'pending_files_count': pending_files.count(),
+            'total_files_count': files.count(),
+            'recent_files': recent_files,
+            'zip_count': zip_count,
+            'protected_zips': protected_zips,
+            'prospect_count': prospect_count,
+            'prospects': prospects[:5],
+        }
+        return render(request, 'mgmt/lab_dashboard.html', context)
+
     context = {
         'dentists': dentists,
         'default_prices': default_prices,
@@ -120,9 +187,9 @@ def default_prices_view(request):
     
     if request.method == 'POST':
         if request.user.is_admin_user():
-            formset = DefaultPriceFormSet(request.POST, queryset=DefaultPriceList.objects.all())
+            formset = DefaultPriceFormSet(request.POST, queryset=DefaultPriceList.objects.all().order_by('type', 'price'))
         else:
-            formset = DefaultPriceFormSet(request.POST, queryset=DefaultPriceList.objects.filter(lab=request.user))
+            formset = DefaultPriceFormSet(request.POST, queryset=DefaultPriceList.objects.filter(lab=request.user).order_by('type', 'price'))
         
         if formset.is_valid():
             instances = formset.save(commit=False)
@@ -139,9 +206,9 @@ def default_prices_view(request):
             messages.error(request, 'Please correct the errors below.')
     else:
         if request.user.is_admin_user():
-            formset = DefaultPriceFormSet(queryset=DefaultPriceList.objects.all())
+            formset = DefaultPriceFormSet(queryset=DefaultPriceList.objects.all().order_by('type', 'price'))
         else:
-            formset = DefaultPriceFormSet(queryset=DefaultPriceList.objects.filter(lab=request.user))
+            formset = DefaultPriceFormSet(queryset=DefaultPriceList.objects.filter(lab=request.user).order_by('type', 'price'))
     
     context = {
         'formset': formset,
@@ -698,6 +765,7 @@ def upload_file_view(request):
         form = FileUploadForm(request.POST, request.FILES, user=request.user, dentist=dentist)
         if form.is_valid():
             upload = form.save()
+            send_file_upload_notification(upload, f'{dentist.name} (dentist)')
             messages.success(request, f'File "{upload.original_filename}" uploaded successfully!')
             return redirect('dentist_file_list')
         else:
@@ -734,6 +802,7 @@ def lab_upload_file_view(request):
                 form = FileUploadForm(request.POST, request.FILES, user=request.user, dentist=dentist)
                 if form.is_valid():
                     upload = form.save()
+                    send_file_upload_notification(upload, f'{request.user.get_full_name() or request.user.username} (lab)')
                     messages.success(request, f'File "{upload.original_filename}" uploaded successfully for {dentist.name}!')
                     # Check if we should redirect back to lab uploads or file list
                     if 'upload_another' in request.POST:
@@ -804,6 +873,30 @@ def download_file_view(request, file_id):
         return response
     else:
         messages.error(request, 'File not found on server.')
+        return redirect('lab_file_list')
+
+@login_required
+@lab_or_admin_required
+def download_script_view(request, file_id):
+    """Download the script/prescription file attached to a case upload."""
+    file_upload = get_object_or_404(FileUpload, id=file_id)
+
+    # Check permissions
+    if not request.user.is_admin_user() and file_upload.lab != request.user:
+        messages.error(request, 'You do not have permission to download this file.')
+        return redirect('lab_file_list')
+
+    if not file_upload.script_file:
+        messages.error(request, 'No script file attached to this upload.')
+        return redirect('lab_file_list')
+
+    # Serve the script file
+    if os.path.exists(file_upload.script_file.path):
+        response = FileResponse(open(file_upload.script_file.path, 'rb'))
+        response['Content-Disposition'] = f'attachment; filename="{file_upload.script_original_filename}"'
+        return response
+    else:
+        messages.error(request, 'Script file not found on server.')
         return redirect('lab_file_list')
 
 @login_required
@@ -1165,3 +1258,81 @@ def lab_search_view(request):
     }
 
     return render(request, 'mgmt/lab_search.html', context)
+
+
+@login_required
+@admin_required
+def dentist_search_view(request):
+    form = DentistSearchForm()
+    results = None
+    submitted_zip_codes = ''
+
+    if request.method == 'POST':
+        form = DentistSearchForm(request.POST)
+        if form.is_valid():
+            api_key = getattr(settings, 'SERPAPI_KEY', '')
+            if not api_key:
+                messages.error(request, 'Dentist search is not configured: SERPAPI_KEY is missing.')
+                return render(request, 'mgmt/dentist_search.html', {
+                    'form': form,
+                    'results': None,
+                    'submitted_zip_codes': '',
+                    'title': 'Dentist Search',
+                })
+
+            zip_codes = form.cleaned_data['zip_codes']
+            # submitted_zip_codes is passed to the template so the Download CSV
+            # form can pre-populate its hidden input with the same zip list.
+            submitted_zip_codes = '\n'.join(zip_codes)
+            all_results = []
+            for zip_code in zip_codes:
+                try:
+                    found = search_dentists(api_key, zip_code)
+                    all_results.extend(found)
+                except RuntimeError as e:
+                    messages.warning(request, str(e))
+
+            results = deduplicate(all_results)
+
+    return render(request, 'mgmt/dentist_search.html', {
+        'form': form,
+        'results': results,
+        'submitted_zip_codes': submitted_zip_codes,
+        'title': 'Dentist Search',
+    })
+
+
+@login_required
+@admin_required
+def dentist_search_csv_view(request):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    api_key = getattr(settings, 'SERPAPI_KEY', '')
+    if not api_key:
+        return HttpResponse('SERPAPI_KEY is not configured.', status=400, content_type='text/plain')
+
+    form = DentistSearchForm(request.POST)
+    if not form.is_valid():
+        return HttpResponse('Invalid zip code input.', status=400, content_type='text/plain')
+
+    zip_codes = form.cleaned_data['zip_codes']
+    all_results = []
+    for zip_code in zip_codes:
+        try:
+            found = search_dentists(api_key, zip_code)
+            all_results.extend(found)
+        except RuntimeError:
+            pass  # Skip failed zips silently in CSV export
+
+    results = deduplicate(all_results)
+
+    # Build the CSV in memory and return as a downloadable attachment
+    output = StringIO()
+    writer = csv_module.DictWriter(output, fieldnames=DENTIST_FIELDNAMES)
+    writer.writeheader()
+    writer.writerows(results)
+
+    response = HttpResponse(output.getvalue(), content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=dentists.csv'
+    return response

@@ -1,94 +1,88 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 
 {% block title %}Add New Dentist{% endblock %}
+{% block nav_add_dentist %}active{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h1 class="mb-4">Add New Dentist</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Add Dentist</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ form.name.id_for_label }}" class="form-label">Dentist Name</label>
-                        {{ form.name }}
-                        {% if form.name.errors %}
-                            <div class="text-danger">{{ form.name.errors }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    {% if form.lab %}
-                    <div class="mb-3">
-                        <label for="{{ form.lab.id_for_label }}" class="form-label">Lab</label>
-                        {{ form.lab }}
-                        {% if form.lab.errors %}
-                            <div class="text-danger">{{ form.lab.errors }}</div>
-                        {% endif %}
-                    </div>
+<div class="main-grid-wide fade-in d1">
+    <!-- Form Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-icon">&#129463;</span> Add New Dentist</div>
+        </div>
+        <div class="panel-body">
+            <form method="post" class="portal-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Dentist Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="portal-alert error" style="margin-top:6px;">{{ form.name.errors }}</div>
                     {% endif %}
-                    
-                    <div class="card mt-4 mb-3">
-                        <div class="card-header">
-                            <h5>User Account Details</h5>
+                </div>
+
+                {% if form.lab %}
+                <div class="form-group">
+                    <label for="{{ form.lab.id_for_label }}">Lab</label>
+                    {{ form.lab }}
+                    {% if form.lab.errors %}
+                        <div class="portal-alert error" style="margin-top:6px;">{{ form.lab.errors }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="panel" style="margin-top:20px; margin-bottom:20px;">
+                    <div class="panel-header">
+                        <div class="panel-title"><span class="panel-title-icon">&#128100;</span> User Account Details</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="portal-alert info">
+                            A user account will be automatically created for this dentist with a secure password.
                         </div>
-                        <div class="card-body">
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i> A user account will be automatically created for this dentist with a secure password.
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="{{ form.username.id_for_label }}" class="form-label">Username (Optional)</label>
-                                {{ form.username }}
-                                <small class="form-text text-muted">{{ form.username.help_text }}</small>
-                                {% if form.username.errors %}
-                                    <div class="text-danger">{{ form.username.errors }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="{{ form.email.id_for_label }}" class="form-label">Email (Optional)</label>
-                                {{ form.email }}
-                                <small class="form-text text-muted">{{ form.email.help_text }}</small>
-                                {% if form.email.errors %}
-                                    <div class="text-danger">{{ form.email.errors }}</div>
-                                {% endif %}
-                            </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}">Username (Optional)</label>
+                            {{ form.username }}
+                            <small style="font-size:11px; color:var(--text3); display:block; margin-top:4px;">{{ form.username.help_text }}</small>
+                            {% if form.username.errors %}
+                                <div class="portal-alert error" style="margin-top:6px;">{{ form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}">Email (Optional)</label>
+                            {{ form.email }}
+                            <small style="font-size:11px; color:var(--text3); display:block; margin-top:4px;">{{ form.email.help_text }}</small>
+                            {% if form.email.errors %}
+                                <div class="portal-alert error" style="margin-top:6px;">{{ form.email.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
-                    
-                    <button type="submit" class="btn btn-success">Add Dentist</button>
-                    <a href="{% url 'price_management' %}" class="btn btn-secondary">Cancel</a>
-                </form>
-            </div>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <button type="submit" class="btn-portal">Add Dentist</button>
+                    <a href="{% url 'price_management' %}" class="btn-portal-outline">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">About Dentist Management</h5>
-                <p class="card-text">When you add a dentist:</p>
-                <ul>
-                    <li><strong>User account is automatically created</strong> with secure credentials</li>
-                    <li>Credentials will be displayed after creation (save them securely!)</li>
-                    <li>Set custom prices specific to this dentist</li>
-                    <li>Override default pricing tiers</li>
-                    <li>Offer special rates for preferred clients</li>
-                </ul>
-                <p class="card-text"><small class="text-muted">If no custom prices are set, default prices will apply.</small></p>
-            </div>
+
+    <!-- Info Sidebar -->
+    <div class="panel fade-in d2" style="align-self:start;">
+        <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-icon">&#128218;</span> About Dentist Management</div>
+        </div>
+        <div class="panel-body">
+            <p style="font-size:13px; color:var(--text2); margin-bottom:12px;">When you add a dentist:</p>
+            <ul style="font-size:12px; color:var(--text2); line-height:2; padding-left:16px; margin:0;">
+                <li><strong>User account is automatically created</strong> with secure credentials</li>
+                <li>Credentials will be displayed after creation (save them securely!)</li>
+                <li>Set custom prices specific to this dentist</li>
+                <li>Override default pricing tiers</li>
+                <li>Offer special rates for preferred clients</li>
+            </ul>
+            <p style="font-size:11px; color:var(--text3); margin-top:12px; margin-bottom:0;">If no custom prices are set, default prices will apply.</p>
         </div>
     </div>
 </div>

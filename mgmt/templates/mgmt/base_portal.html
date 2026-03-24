@@ -1,0 +1,805 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Fusion 2030 — Lab Portal{% endblock %}</title>
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:   #f8f4ed;
+  --cream2:  #f2ece0;
+  --navy:    #0d1e3d;
+  --navy2:   #162848;
+  --navy3:   #1e3a5f;
+  --gold:    #b8943a;
+  --gold2:   #c9a84c;
+  --gold3:   #e0c070;
+  --white:   #ffffff;
+  --text:    #1a2540;
+  --text2:   #3d4f6e;
+  --text3:   #6b7a94;
+  --border:  #ddd6c8;
+  --border2: #c8bfaf;
+  --green:   #2d7a4f;
+  --green-bg:#edf7f1;
+  --sidebar-w: 240px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { height:100%; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 300;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-brand {
+  padding: 24px 22px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-brand-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 20px;
+  color: var(--white); letter-spacing: 1px;
+}
+.sidebar-brand-name span { color: var(--gold2); }
+.sidebar-brand-sub {
+  font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-top: 3px;
+}
+
+.sidebar-lab {
+  padding: 16px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+}
+.sidebar-lab-label {
+  font-size: 9px; letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 4px;
+}
+.sidebar-lab-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 15px;
+  color: var(--gold3); line-height: 1.2;
+}
+.sidebar-lab-status {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 6px;
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #4ade80;
+  animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(0.7)}
+}
+.status-text {
+  font-size: 10px; color: #4ade80;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+
+/* Nav sections */
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+
+.nav-section-label {
+  font-size: 9px; letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  padding: 14px 22px 6px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.05);
+  border-left-color: rgba(201,168,76,0.4);
+}
+.nav-item.active {
+  background: rgba(201,168,76,0.1);
+  border-left-color: var(--gold2);
+}
+.nav-icon {
+  font-size: 15px; width: 18px;
+  flex-shrink: 0; text-align: center;
+}
+.nav-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 13px;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.75);
+}
+.nav-item.active .nav-label { color: var(--gold3); }
+.nav-item:hover .nav-label { color: var(--white); }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--gold2);
+  color: var(--navy);
+  font-size: 9px; font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.5px;
+}
+.nav-badge.new { background: #4ade80; }
+
+.sidebar-footer {
+  padding: 16px 22px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-footer-contact {
+  font-size: 9px; color: rgba(255,255,255,0.3);
+  line-height: 1.7; letter-spacing: 0.5px;
+}
+.sidebar-footer-contact strong {
+  color: rgba(255,255,255,0.55);
+  font-weight: 600; display: block;
+  margin-bottom: 2px;
+}
+
+/* ── MAIN CONTENT ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top bar */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 36px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 1px 8px rgba(13,30,61,0.05);
+}
+.topbar-greeting {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 17px; color: var(--navy);
+}
+.topbar-greeting span { color: var(--gold); }
+.topbar-date {
+  font-size: 12px; color: var(--text3);
+  margin-top: 1px;
+}
+.topbar-right {
+  display: flex; align-items: center; gap: 16px;
+}
+.topbar-avatar {
+  width: 36px; height: 36px;
+  background: var(--navy);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px;
+  color: var(--gold3); cursor: pointer;
+  text-decoration: none;
+}
+
+/* ── PAGE CONTENT ── */
+.content { padding: 32px 36px; flex: 1; }
+
+/* ── PANELS ── */
+.panel {
+  background: var(--white);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.panel-header {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--cream);
+}
+.panel-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-title-icon { font-size: 14px; }
+.panel-link {
+  font-size: 11px; color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.panel-link:hover { color: var(--navy); }
+.panel-body { padding: 18px 22px; }
+
+/* ── STAT CARDS ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold2);
+  padding: 20px 22px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.stat-card:hover {
+  box-shadow: 0 4px 20px rgba(13,30,61,0.1);
+  transform: translateY(-2px);
+}
+.stat-card.navy-top { border-top-color: var(--navy3); }
+.stat-card.green-top { border-top-color: var(--green); }
+.stat-label {
+  font-size: 9px; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 8px;
+}
+.stat-number {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 36px;
+  line-height: 1; color: var(--navy);
+}
+.stat-number.gold { color: var(--gold); }
+.stat-number.green { color: var(--green); }
+.stat-sub {
+  font-size: 11px; color: var(--text3);
+  margin-top: 5px; line-height: 1.4;
+}
+
+/* ── WELCOME BANNER ── */
+.welcome-banner {
+  background: var(--navy);
+  padding: 28px 36px;
+  margin-bottom: 28px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  position: relative; overflow: hidden;
+}
+.welcome-banner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold3), var(--gold));
+}
+.welcome-banner-glow {
+  position: absolute;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+  right: -50px; top: -100px; pointer-events: none;
+}
+.wb-left {}
+.wb-eyebrow {
+  font-size: 10px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--gold2);
+  margin-bottom: 6px;
+}
+.wb-headline {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 28px;
+  color: var(--white); line-height: 1.1;
+}
+.wb-headline span { color: var(--gold2); }
+.wb-sub {
+  font-size: 13px; color: rgba(255,255,255,0.5);
+  margin-top: 6px; max-width: 480px; line-height: 1.6;
+}
+.wb-right {
+  text-align: right; flex-shrink: 0;
+}
+.wb-membership {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 4px;
+}
+.wb-since {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 16px;
+  color: rgba(255,255,255,0.7);
+}
+.wb-territory {
+  margin-top: 10px;
+  display: flex; align-items: center; gap: 6px;
+  justify-content: flex-end;
+}
+.territory-badge {
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.3);
+  padding: 4px 10px;
+  font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--gold3);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+}
+
+/* ── MAIN GRID ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.main-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.main-grid-wide {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+/* ── TABLES IN PORTAL ── */
+.portal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.portal-table thead th {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+}
+.portal-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.portal-table tbody tr:hover {
+  background: var(--cream);
+}
+.portal-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Dentist rows */
+.dentist-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+  text-decoration: none;
+  color: inherit;
+}
+.dentist-row:last-child { border-bottom: none; }
+.dentist-row:hover { background: var(--cream); margin: 0 -22px; padding: 10px 22px; }
+.dentist-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--cream2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px; color: var(--navy3);
+  flex-shrink: 0;
+}
+.dentist-info { flex: 1; }
+.dentist-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px; color: var(--navy);
+}
+.dentist-detail { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* Pricing tier rows */
+.pricing-tier-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px; margin-bottom: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer; transition: border-color 0.2s;
+}
+.pricing-tier-row:hover { border-color: var(--gold2); }
+.pricing-tier-row:last-child { margin-bottom: 0; }
+.pt-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 14px; color: var(--navy);
+}
+.pt-badge {
+  font-size: 9px; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 2px 8px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+}
+.pt-badge.premium {
+  background: rgba(201,168,76,0.12);
+  color: var(--gold); border: 1px solid rgba(201,168,76,0.3);
+}
+.pt-badge.economy {
+  background: rgba(13,30,61,0.07);
+  color: var(--navy3); border: 1px solid rgba(13,30,61,0.15);
+}
+.pt-price {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 20px; color: var(--navy);
+}
+.pt-edit {
+  font-size: 10px; color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+  text-decoration: none;
+}
+.pt-edit:hover { color: var(--navy); }
+
+/* ── BUTTONS ── */
+.btn-portal {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: 2px; text-transform: uppercase;
+  border: none; cursor: pointer;
+  transition: background 0.2s;
+  text-decoration: none;
+  text-align: center;
+}
+.btn-portal:hover { background: var(--navy2); color: var(--white); }
+
+.btn-portal-outline {
+  display: inline-block;
+  padding: 9px 20px;
+  background: transparent;
+  border: 1.5px solid var(--gold2);
+  color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s;
+  text-decoration: none;
+  text-align: center;
+}
+.btn-portal-outline:hover {
+  background: var(--gold2); color: var(--navy);
+}
+
+.btn-portal-sm {
+  padding: 5px 12px;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+/* ── FORMS ── */
+.portal-form .form-group {
+  margin-bottom: 16px;
+}
+.portal-form label {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 11px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.portal-form input[type="text"],
+.portal-form input[type="email"],
+.portal-form input[type="password"],
+.portal-form input[type="number"],
+.portal-form input[type="file"],
+.portal-form select,
+.portal-form textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+.portal-form input:focus,
+.portal-form select:focus,
+.portal-form textarea:focus {
+  outline: none;
+  border-color: var(--gold2);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+}
+
+/* ── ALERTS ── */
+.portal-alert {
+  padding: 12px 18px;
+  border-left: 3px solid var(--gold2);
+  background: var(--cream2);
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.portal-alert.success {
+  border-left-color: var(--green);
+  background: var(--green-bg);
+  color: var(--green);
+}
+.portal-alert.error {
+  border-left-color: #dc3545;
+  background: #fef2f2;
+  color: #991b1b;
+}
+.portal-alert.info {
+  border-left-color: var(--navy3);
+  background: #eff6ff;
+  color: var(--navy3);
+}
+
+/* Services grid */
+.services-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.service-tile {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold2);
+  padding: 20px 18px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  text-decoration: none;
+  display: block;
+}
+.service-tile:hover {
+  box-shadow: 0 4px 18px rgba(13,30,61,0.1);
+  transform: translateY(-2px);
+}
+.service-tile.navy-tile { border-top-color: var(--navy3); }
+.service-tile.green-tile { border-top-color: var(--green); }
+.st-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+.st-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 15px;
+  text-transform: uppercase; color: var(--navy);
+  margin-bottom: 5px; line-height: 1.2;
+}
+.st-desc { font-size: 11.5px; color: var(--text3); line-height: 1.5; }
+.st-cta {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--gold); border-bottom: 1px solid rgba(184,148,58,0.3);
+  padding-bottom: 1px;
+}
+
+/* Badge */
+.portal-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.portal-badge.gold {
+  background: rgba(201,168,76,0.12);
+  color: var(--gold); border: 1px solid rgba(201,168,76,0.3);
+}
+.portal-badge.navy {
+  background: rgba(13,30,61,0.07);
+  color: var(--navy3); border: 1px solid rgba(13,30,61,0.15);
+}
+.portal-badge.green {
+  background: var(--green-bg);
+  color: var(--green); border: 1px solid rgba(45,122,79,0.2);
+}
+.portal-badge.red {
+  background: #fef2f2;
+  color: #991b1b; border: 1px solid rgba(153,27,27,0.2);
+}
+
+/* Fade in animation */
+.fade-in {
+  opacity: 0; transform: translateY(16px);
+  animation: fadeIn 0.5s forwards;
+}
+@keyframes fadeIn { to { opacity:1; transform:translateY(0); } }
+.d1{animation-delay:0.05s} .d2{animation-delay:0.1s}
+.d3{animation-delay:0.15s} .d4{animation-delay:0.2s}
+.d5{animation-delay:0.25s} .d6{animation-delay:0.3s}
+
+{% block extra_css %}{% endblock %}
+</style>
+</head>
+<body>
+
+{% if not user.is_authenticated %}
+<style>.sidebar{display:none} .main{margin-left:0} .content{display:flex;align-items:center;justify-content:center;flex:1}</style>
+{% endif %}
+
+{% if user.is_authenticated %}
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-name">FUSION <span>2030</span></div>
+    <div class="sidebar-brand-sub">Member Portal</div>
+  </div>
+
+  <div class="sidebar-lab">
+    <div class="sidebar-lab-label">Logged in as</div>
+    <div class="sidebar-lab-name">{{ user.first_name|default:user.username }}</div>
+    <div class="sidebar-lab-status">
+      <div class="status-dot"></div>
+      <div class="status-text">
+        {% if user.user_type == 'lab' %}Active Lab{% elif user.user_type == 'dentist' %}Dentist{% elif user.user_type == 'admin' %}Administrator{% else %}{{ user.get_user_type_display }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    {% if user.user_type == 'lab' or user.user_type == 'admin' %}
+    {# ── LAB / ADMIN NAV ── #}
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item {% block nav_dashboard %}{% endblock %}" href="{% url 'price_management' %}">
+      <span class="nav-icon">&#8862;</span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+
+    <div class="nav-section-label">Dentists</div>
+    <a class="nav-item {% block nav_dentists %}{% endblock %}" href="{% url 'price_management' %}#dentists">
+      <span class="nav-icon">&#129463;</span>
+      <span class="nav-label">My Dentists</span>
+      {% if dentist_count %}<span class="nav-badge">{{ dentist_count }}</span>{% endif %}
+    </a>
+    <a class="nav-item {% block nav_add_dentist %}{% endblock %}" href="{% url 'add_dentist' %}">
+      <span class="nav-icon">+</span>
+      <span class="nav-label">Add Dentist</span>
+    </a>
+    <a class="nav-item {% block nav_credits %}{% endblock %}" href="{% url 'credit_management' %}">
+      <span class="nav-icon">&#11088;</span>
+      <span class="nav-label">Crown Credits</span>
+    </a>
+
+    <div class="nav-section-label">Files</div>
+    <a class="nav-item {% block nav_lab_files %}{% endblock %}" href="{% url 'lab_file_list' %}">
+      <span class="nav-icon">&#128229;</span>
+      <span class="nav-label">Dentist Files</span>
+      {% if pending_files_count %}<span class="nav-badge new">{{ pending_files_count }}</span>{% endif %}
+    </a>
+    <a class="nav-item {% block nav_upload_lab %}{% endblock %}" href="{% url 'lab_upload_file' %}">
+      <span class="nav-icon">&#128228;</span>
+      <span class="nav-label">Upload for Dentist</span>
+    </a>
+
+    <div class="nav-section-label">Pricing</div>
+    <a class="nav-item {% block nav_default_prices %}{% endblock %}" href="{% url 'default_prices' %}">
+      <span class="nav-icon">&#128178;</span>
+      <span class="nav-label">Default Prices</span>
+    </a>
+
+    <div class="nav-section-label">Settings</div>
+    <a class="nav-item {% block nav_lab_profile %}{% endblock %}" href="{% url 'lab_profile' %}">
+      <span class="nav-icon">&#9881;&#65039;</span>
+      <span class="nav-label">Lab Profile</span>
+    </a>
+
+    {% elif user.user_type == 'dentist' %}
+    {# ── DENTIST NAV ── #}
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item {% block nav_dentist_dashboard %}{% endblock %}" href="{% url 'dentist_dashboard' %}">
+      <span class="nav-icon">&#8862;</span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+
+    <div class="nav-section-label">Crown Credits</div>
+    <a class="nav-item {% block nav_purchase_credits %}{% endblock %}" href="{% url 'purchase_credits' %}">
+      <span class="nav-icon">&#11088;</span>
+      <span class="nav-label">Purchase Credits</span>
+    </a>
+    <a class="nav-item {% block nav_purchase_history %}{% endblock %}" href="{% url 'purchase_history' %}">
+      <span class="nav-icon">&#128203;</span>
+      <span class="nav-label">Purchase History</span>
+    </a>
+
+    <div class="nav-section-label">Files</div>
+    <a class="nav-item {% block nav_upload_file %}{% endblock %}" href="{% url 'upload_file' %}">
+      <span class="nav-icon">&#128228;</span>
+      <span class="nav-label">Upload File</span>
+    </a>
+    <a class="nav-item {% block nav_my_files %}{% endblock %}" href="{% url 'dentist_file_list' %}">
+      <span class="nav-icon">&#128229;</span>
+      <span class="nav-label">My Files</span>
+    </a>
+
+    <div class="nav-section-label">Account</div>
+    <a class="nav-item {% block nav_change_password %}{% endblock %}" href="{% url 'dentist_change_password' %}">
+      <span class="nav-icon">&#128273;</span>
+      <span class="nav-label">Change Password</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-contact">
+      <strong>Need Help?</strong>
+      support@amsfusion.com
+    </div>
+  </div>
+</aside>
+{% endif %}
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div>
+      {% if user.is_authenticated %}
+      <div class="topbar-greeting">Welcome, <span>{{ user.first_name|default:user.username }}</span></div>
+      {% else %}
+      <div class="topbar-greeting">FUSION <span>2030</span></div>
+      {% endif %}
+      <div class="topbar-date">{% now "l, F j, Y" %}</div>
+    </div>
+    {% if user.is_authenticated %}
+    <div class="topbar-right">
+      <a href="{% url 'logout' %}" class="btn-portal btn-portal-sm" style="font-size:10px;">Logout</a>
+      <div class="topbar-avatar">{{ user.first_name|make_list|first|default:"L" }}{{ user.last_name|make_list|first|default:"" }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+  <div style="padding: 16px 36px 0;">
+    {% for message in messages %}
+      <div class="portal-alert {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}info{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Content -->
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+
+</main>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

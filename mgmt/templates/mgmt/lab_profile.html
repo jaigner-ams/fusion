@@ -1,246 +1,242 @@
-{% extends 'mgmt/base.html' %}
+{% extends 'mgmt/base_portal.html' %}
 {% load dict_extras %}
 
-{% block title %}Lab Profile - AMS Fusion{% endblock %}
+{% block title %}Lab Profile — AMS Fusion{% endblock %}
+{% block nav_lab_profile %}active{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Lab Profile Settings</h4>
+<div class="main-grid-wide fade-in d1">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-icon">&#9881;&#65039;</span> Lab Profile Settings</div>
+        </div>
+        <div class="panel-body">
+            <!-- Public Page Link -->
+            <div class="portal-alert info" style="margin-bottom:20px;">
+                <strong>Your Public Page:</strong>
+                <a href="{% url 'lab_public_page' user.username %}" target="_blank" style="color:var(--gold); margin-left:6px;">
+                    {{ request.scheme }}://{{ request.get_host }}{% url 'lab_public_page' user.username %}
+                </a>
+                <br>
+                <span style="font-size:11px; color:var(--text3);">Share this link with dentists to view your pricing and contact information.</span>
             </div>
-            <div class="card-body">
-                <!-- Public Page Link -->
-                <div class="alert alert-info mb-4">
-                    <strong>Your Public Page:</strong>
-                    <a href="{% url 'lab_public_page' user.username %}" target="_blank" class="ms-2">
-                        {{ request.scheme }}://{{ request.get_host }}{% url 'lab_public_page' user.username %}
-                    </a>
-                    <br>
-                    <small class="text-muted">Share this link with dentists to view your pricing and contact information.</small>
+
+            <form method="post" enctype="multipart/form-data" class="portal-form">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.first_name.errors }}</div>
+                    {% endif %}
                 </div>
 
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.email.errors }}</div>
+                    {% endif %}
+                </div>
 
-                    <div class="mb-3">
-                        <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
-                        {{ form.first_name }}
-                        {% if form.first_name.errors %}
-                            <div class="text-danger">{{ form.first_name.errors }}</div>
+                <div class="form-group">
+                    <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.phone.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.website.id_for_label }}">{{ form.website.label }}</label>
+                    {{ form.website }}
+                    {% if form.website.errors %}
+                        <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.website.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Address Fields -->
+                <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); margin:24px 0 14px; padding-top:16px; border-top:1px solid var(--border);">
+                    Business Address
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.street_address.id_for_label }}">{{ form.street_address.label }}</label>
+                    {{ form.street_address }}
+                    {% if form.street_address.errors %}
+                        <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.street_address.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div style="display:grid; grid-template-columns:2fr 1.5fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>
+                        {{ form.city }}
+                        {% if form.city.errors %}
+                            <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.city.errors }}</div>
                         {% endif %}
                     </div>
-
-                    <div class="mb-3">
-                        <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
-                        {{ form.email }}
-                        {% if form.email.errors %}
-                            <div class="text-danger">{{ form.email.errors }}</div>
+                    <div class="form-group">
+                        <label for="{{ form.state.id_for_label }}">{{ form.state.label }}</label>
+                        {{ form.state }}
+                        {% if form.state.errors %}
+                            <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.state.errors }}</div>
                         {% endif %}
                     </div>
-
-                    <div class="mb-3">
-                        <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
-                        {{ form.phone }}
-                        {% if form.phone.errors %}
-                            <div class="text-danger">{{ form.phone.errors }}</div>
+                    <div class="form-group">
+                        <label for="{{ form.zip_code.id_for_label }}">{{ form.zip_code.label }}</label>
+                        {{ form.zip_code }}
+                        {% if form.zip_code.errors %}
+                            <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.zip_code.errors }}</div>
                         {% endif %}
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="{{ form.website.id_for_label }}" class="form-label">{{ form.website.label }}</label>
-                        {{ form.website }}
-                        {% if form.website.errors %}
-                            <div class="text-danger">{{ form.website.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Address Fields -->
-                    <h6 class="mt-4 mb-3">Business Address</h6>
-                    <div class="mb-3">
-                        <label for="{{ form.street_address.id_for_label }}" class="form-label">{{ form.street_address.label }}</label>
-                        {{ form.street_address }}
-                        {% if form.street_address.errors %}
-                            <div class="text-danger">{{ form.street_address.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-5 mb-3">
-                            <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }}</label>
-                            {{ form.city }}
-                            {% if form.city.errors %}
-                                <div class="text-danger">{{ form.city.errors }}</div>
-                            {% endif %}
+                <div class="form-group">
+                    <label for="{{ form.lab_logo.id_for_label }}">{{ form.lab_logo.label }}</label>
+                    {% if user.lab_logo %}
+                        <div style="margin-bottom:8px;">
+                            <img src="{{ user.lab_logo.url }}" alt="Current Lab Logo" style="max-height:80px; max-width:240px; border:1px solid var(--border); padding:4px;">
+                            <div style="font-size:11px; color:var(--text3); margin-top:4px;">Current logo</div>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="{{ form.state.id_for_label }}" class="form-label">{{ form.state.label }}</label>
-                            {{ form.state }}
-                            {% if form.state.errors %}
-                                <div class="text-danger">{{ form.state.errors }}</div>
-                            {% endif %}
+                    {% endif %}
+                    {{ form.lab_logo }}
+                    {% if form.lab_logo.errors %}
+                        <div style="color:#991b1b; font-size:12px; margin-top:4px;">{{ form.lab_logo.errors }}</div>
+                    {% endif %}
+                    <div style="font-size:11px; color:var(--text3); margin-top:4px;">Upload a new logo to replace the current one (PNG, JPG, or GIF format recommended)</div>
+                </div>
+
+                <!-- Protected Zip Codes Section -->
+                <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); margin:24px 0 8px; padding-top:16px; border-top:1px solid var(--border);">
+                    Protected Zip Codes
+                </div>
+                <p style="font-size:12px; color:var(--text3); margin-bottom:16px;">Enter zip codes that are protected/assigned to your lab. Users searching for labs by zip code will find your lab.</p>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 1</label>
+                            {{ form.zip_protect_1 }}
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="{{ form.zip_code.id_for_label }}" class="form-label">{{ form.zip_code.label }}</label>
-                            {{ form.zip_code }}
-                            {% if form.zip_code.errors %}
-                                <div class="text-danger">{{ form.zip_code.errors }}</div>
-                            {% endif %}
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_1 }}
                         </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label for="{{ form.lab_logo.id_for_label }}" class="form-label">{{ form.lab_logo.label }}</label>
-                        {% if user.lab_logo %}
-                            <div class="mb-2">
-                                <img src="{{ user.lab_logo.url }}" alt="Current Lab Logo" style="max-height: 100px; max-width: 300px;" class="img-thumbnail">
-                                <p class="text-muted small mt-1">Current logo</p>
-                            </div>
-                        {% endif %}
-                        {{ form.lab_logo }}
-                        {% if form.lab_logo.errors %}
-                            <div class="text-danger">{{ form.lab_logo.errors }}</div>
-                        {% endif %}
-                        <small class="text-muted">Upload a new logo to replace the current one (PNG, JPG, or GIF format recommended)</small>
-                    </div>
-
-                    <!-- Protected Zip Codes Section -->
-                    <hr class="my-4">
-                    <h5 class="mb-3">Protected Zip Codes</h5>
-                    <p class="text-muted small mb-3">Enter zip codes that are protected/assigned to your lab. Users searching for labs by zip code will find your lab if they search for one of these codes.</p>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 1</label>
-                                    {{ form.zip_protect_1 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_1 }}
-                                </div>
-                            </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 2</label>
+                            {{ form.zip_protect_2 }}
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 2</label>
-                                    {{ form.zip_protect_2 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_2 }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 3</label>
-                                    {{ form.zip_protect_3 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_3 }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 4</label>
-                                    {{ form.zip_protect_4 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_4 }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 5</label>
-                                    {{ form.zip_protect_5 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_5 }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 6</label>
-                                    {{ form.zip_protect_6 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_6 }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 7</label>
-                                    {{ form.zip_protect_7 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_7 }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 8</label>
-                                    {{ form.zip_protect_8 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_8 }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 9</label>
-                                    {{ form.zip_protect_9 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_9 }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row g-2">
-                                <div class="col-8">
-                                    <label class="form-label small">Zip Code 10</label>
-                                    {{ form.zip_protect_10 }}
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small">Qty</label>
-                                    {{ form.zip_qty_10 }}
-                                </div>
-                            </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_2 }}
                         </div>
                     </div>
-
-                    <hr class="my-4">
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                        <a href="{% url 'price_management' %}" class="btn btn-secondary">Cancel</a>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 3</label>
+                            {{ form.zip_protect_3 }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_3 }}
+                        </div>
                     </div>
-                </form>
-            </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 4</label>
+                            {{ form.zip_protect_4 }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_4 }}
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 5</label>
+                            {{ form.zip_protect_5 }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_5 }}
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 6</label>
+                            {{ form.zip_protect_6 }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_6 }}
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 7</label>
+                            {{ form.zip_protect_7 }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_7 }}
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 8</label>
+                            {{ form.zip_protect_8 }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_8 }}
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 9</label>
+                            {{ form.zip_protect_9 }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_9 }}
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:8px; align-items:end;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Zip Code 10</label>
+                            {{ form.zip_protect_10 }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Qty</label>
+                            {{ form.zip_qty_10 }}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+                    <button type="submit" class="btn-portal">Save Changes</button>
+                    <a href="{% url 'price_management' %}" class="btn-portal-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="panel" style="align-self:start;">
+        <div class="panel-header">
+            <div class="panel-title">Profile Tips</div>
+        </div>
+        <div class="panel-body">
+            <ul style="font-size:12px; color:var(--text2); line-height:2; padding-left:16px; margin:0;">
+                <li>Lab name appears on all dentist-facing pages</li>
+                <li>Protected zip codes help dentists find your lab</li>
+                <li>Your public page URL can be shared with prospective dentists</li>
+                <li>A logo helps build brand recognition</li>
+            </ul>
         </div>
     </div>
 </div>

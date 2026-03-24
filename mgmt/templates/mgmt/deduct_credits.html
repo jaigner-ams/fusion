@@ -1,166 +1,148 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 
 {% block title %}{{ title }}{% endblock %}
+{% block nav_credits %}active{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h1 class="mb-4">{{ title }}</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'credit_management' %}">Credit Management</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Deduct Crown Credits</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">
-                    <i class="fas fa-minus-circle"></i> Deduct Crown Credits from {{ dentist.name }}
-                </h5>
+<div class="main-grid-wide fade-in d1">
+    <!-- Deduction Form Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-icon">&#10134;</span> Deduct Crown Credits from {{ dentist.name }}</div>
+        </div>
+        <div class="panel-body">
+            <div class="portal-alert info" style="margin-bottom:20px;">
+                <strong>Current Balance:</strong><br>
+                <span class="portal-badge navy" style="margin-top:6px;">Economy: {{ user_to_deduct.economy_credits }}</span>
+                <span class="portal-badge gold">Premium: {{ user_to_deduct.premium_credits }}</span>
+                <span class="portal-badge green">Total: {{ user_to_deduct.get_total_credits }}</span><br>
+                <strong style="margin-top:8px; display:inline-block;">User:</strong> {{ user_to_deduct.first_name|default:user_to_deduct.username }} ({{ user_to_deduct.username }})
             </div>
-            <div class="card-body">
-                <div class="alert alert-info mb-4">
-                    <strong>Current Balance:</strong><br>
-                    <span class="badge bg-info fs-6 me-2">Economy: {{ user_to_deduct.economy_credits }}</span>
-                    <span class="badge bg-warning fs-6 me-2">Premium: {{ user_to_deduct.premium_credits }}</span>
-                    <span class="badge bg-success fs-6">Total: {{ user_to_deduct.get_total_credits }}</span><br>
-                    <strong>User:</strong> {{ user_to_deduct.first_name|default:user_to_deduct.username }} ({{ user_to_deduct.username }})
+
+            <form method="post" class="portal-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="portal-alert error">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.credit_type.id_for_label }}">{{ form.credit_type.label }}</label>
+                    {{ form.credit_type }}
+                    {% if form.credit_type.errors %}
+                        <div class="portal-alert error" style="margin-top:6px;">
+                            {% for error in form.credit_type.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.credit_type.help_text %}
+                        <small style="font-size:11px; color:var(--text3); display:block; margin-top:4px;">{{ form.credit_type.help_text }}</small>
+                    {% endif %}
                 </div>
 
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {{ form.non_field_errors }}
-                    </div>
+                <div class="form-group">
+                    <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                        <div class="portal-alert error" style="margin-top:6px;">
+                            {% for error in form.amount.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
                     {% endif %}
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.credit_type.id_for_label }}" class="form-label">{{ form.credit_type.label }}</label>
-                        {{ form.credit_type }}
-                        {% if form.credit_type.errors %}
-                            <div class="text-danger">
-                                {% for error in form.credit_type.errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        {% if form.credit_type.help_text %}
-                            <div class="form-text">{{ form.credit_type.help_text }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.amount.id_for_label }}" class="form-label">{{ form.amount.label }}</label>
-                        {{ form.amount }}
-                        {% if form.amount.errors %}
-                            <div class="text-danger">
-                                {% for error in form.amount.errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        {% if form.amount.help_text %}
-                            <div class="form-text">{{ form.amount.help_text }}</div>
-                        {% endif %}
-                    </div>
+                    {% if form.amount.help_text %}
+                        <small style="font-size:11px; color:var(--text3); display:block; margin-top:4px;">{{ form.amount.help_text }}</small>
+                    {% endif %}
+                </div>
 
-                    <div class="mb-3">
-                        <label for="{{ form.reason.id_for_label }}" class="form-label">{{ form.reason.label }}</label>
-                        {{ form.reason }}
-                        {% if form.reason.errors %}
-                            <div class="text-danger">
-                                {% for error in form.reason.errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        {% if form.reason.help_text %}
-                            <div class="form-text">{{ form.reason.help_text }}</div>
-                        {% endif %}
-                    </div>
+                <div class="form-group">
+                    <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+                    {{ form.reason }}
+                    {% if form.reason.errors %}
+                        <div class="portal-alert error" style="margin-top:6px;">
+                            {% for error in form.reason.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.reason.help_text %}
+                        <small style="font-size:11px; color:var(--text3); display:block; margin-top:4px;">{{ form.reason.help_text }}</small>
+                    {% endif %}
+                </div>
 
-                    <div class="mb-3">
-                        <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
-                        {{ form.notes }}
-                        {% if form.notes.errors %}
-                            <div class="text-danger">
-                                {% for error in form.notes.errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
+                <div class="form-group">
+                    <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                        <div class="portal-alert error" style="margin-top:6px;">
+                            {% for error in form.notes.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to deduct these crown credits? This action cannot be undone.');">
-                            <i class="fas fa-minus-circle"></i> Deduct Crown Credits
-                        </button>
-                        <a href="{% url 'credit_management' %}" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
-            </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button type="submit" class="btn-portal" onclick="return confirm('Are you sure you want to deduct these crown credits? This action cannot be undone.');">
+                        Deduct Crown Credits
+                    </button>
+                    <a href="{% url 'credit_management' %}" class="btn-portal-outline">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0">Recent Transactions</h6>
+    <!-- Sidebar -->
+    <div>
+        <div class="panel fade-in d2">
+            <div class="panel-header">
+                <div class="panel-title"><span class="panel-title-icon">&#128203;</span> Recent Transactions</div>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 {% if recent_transactions %}
-                    <div class="list-group list-group-flush">
-                        {% for transaction in recent_transactions %}
-                        <div class="list-group-item p-2">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="small">
-                                    <strong class="{% if transaction.amount >= 0 %}text-success{% else %}text-danger{% endif %}">
-                                        {% if transaction.amount >= 0 %}+{% endif %}{{ transaction.amount }}
-                                        {% if transaction.is_reversed %}
-                                            <span class="badge bg-secondary ms-1">Reversed</span>
-                                        {% endif %}
-                                    </strong>
-                                    <span class="badge bg-{% if transaction.transaction_type == 'purchase' %}success{% elif transaction.transaction_type == 'deduction' %}warning{% else %}info{% endif %} ms-2">
-                                        {{ transaction.get_transaction_type_display }}
-                                    </span>
-                                    <span class="badge bg-{% if transaction.credit_type == 'premium' %}warning{% else %}info{% endif %} ms-1">
-                                        {{ transaction.get_credit_type_display }}
-                                    </span>
-                                </div>
-                                <small class="text-muted">{{ transaction.created_at|date:"M d" }}</small>
-                            </div>
-                            <div class="small text-muted mt-1">{{ transaction.reason }}</div>
-                            <div class="small text-muted">
-                                Balance: E:{{ transaction.economy_balance_after }} P:{{ transaction.premium_balance_after }}
-                                {% if transaction.can_be_reversed %}
-                                    <a href="{% url 'undo_deduction' transaction.id %}" class="btn btn-sm btn-outline-info ms-2" title="Undo this deduction">
-                                        <i class="fas fa-undo"></i> Undo
-                                    </a>
+                    {% for transaction in recent_transactions %}
+                    <div style="padding:10px 0; border-bottom:1px solid var(--border);">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div style="font-size:13px;">
+                                <strong style="color:{% if transaction.amount >= 0 %}var(--green){% else %}#991b1b{% endif %};">
+                                    {% if transaction.amount >= 0 %}+{% endif %}{{ transaction.amount }}
+                                </strong>
+                                {% if transaction.is_reversed %}
+                                    <span class="portal-badge navy" style="margin-left:4px;">Reversed</span>
                                 {% endif %}
+                                <span class="portal-badge {% if transaction.transaction_type == 'purchase' %}green{% elif transaction.transaction_type == 'deduction' %}gold{% else %}navy{% endif %}" style="margin-left:4px;">
+                                    {{ transaction.get_transaction_type_display }}
+                                </span>
+                                <span class="portal-badge {% if transaction.credit_type == 'premium' %}gold{% else %}navy{% endif %}" style="margin-left:2px;">
+                                    {{ transaction.get_credit_type_display }}
+                                </span>
                             </div>
+                            <span style="font-size:11px; color:var(--text3);">{{ transaction.created_at|date:"M d" }}</span>
                         </div>
-                        {% endfor %}
+                        <div style="font-size:12px; color:var(--text3); margin-top:4px;">{{ transaction.reason }}</div>
+                        <div style="font-size:11px; color:var(--text3); margin-top:2px;">
+                            Balance: E:{{ transaction.economy_balance_after }} P:{{ transaction.premium_balance_after }}
+                            {% if transaction.can_be_reversed %}
+                                <a href="{% url 'undo_deduction' transaction.id %}" class="pt-edit" style="margin-left:8px;" title="Undo this deduction">Undo</a>
+                            {% endif %}
+                        </div>
                     </div>
+                    {% endfor %}
                 {% else %}
-                    <p class="text-muted small">No transactions yet</p>
+                    <div style="font-size:13px; color:var(--text3);">No transactions yet</div>
                 {% endif %}
             </div>
         </div>
 
-        <div class="card mt-3">
-            <div class="card-body">
-                <h6 class="card-title text-warning">
-                    <i class="fas fa-exclamation-triangle"></i> Important Note
-                </h6>
-                <ul class="small mb-0">
+        <div class="panel fade-in d3" style="align-self:start;">
+            <div class="panel-header">
+                <div class="panel-title" style="color:var(--gold);"><span class="panel-title-icon">&#9888;</span> Important Note</div>
+            </div>
+            <div class="panel-body">
+                <ul style="font-size:12px; color:var(--text2); line-height:2; padding-left:16px; margin:0;">
                     <li>Credit deductions are permanent and cannot be undone</li>
                     <li>Always provide a clear reason for the deduction</li>
                     <li>The user will see this transaction in their history</li>

@@ -24,7 +24,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -49,7 +49,7 @@ def prospect_list(request):
 
     # Exclude caller-only statuses from Keith's list (until sent to him)
     caller_only_statuses = ['mailed', 'callback', 'not_interested', 'left_voicemail']
-    prospects = Prospect.objects.exclude(status__in=caller_only_statuses)
+    prospects = Prospect.objects.exclude(status__in=caller_only_statuses).annotate(note_count=Count('notes'))
 
     if source_filter == 'caller':
         prospects = prospects.filter(status__in=['sent_to_keith', 'keith_closed'])
@@ -523,7 +523,7 @@ def caller_dashboard(request):
 
     # Caller only sees mailed/callback/sent_to_keith/keith_closed statuses
     caller_statuses = ['mailed', 'callback', 'sent_to_keith', 'keith_closed', 'not_interested', 'left_voicemail']
-    prospects = Prospect.objects.filter(status__in=caller_statuses)
+    prospects = Prospect.objects.filter(status__in=caller_statuses).annotate(note_count=Count('notes'))
 
     if status_filter and status_filter in caller_statuses:
         prospects = prospects.filter(status=status_filter)
@@ -541,11 +541,15 @@ def caller_dashboard(request):
     status_counts['total'] = sum(status_counts.values())
 
     mailers = Mailer.objects.all()
+    selected_mailer = None
+    if mailer_filter:
+        selected_mailer = Mailer.objects.filter(pk=mailer_filter).first()
 
     context = {
         'prospects': prospects,
         'status_filter': status_filter,
         'mailer_filter': mailer_filter,
+        'selected_mailer': selected_mailer,
         'status_counts': status_counts,
         'mailers': mailers,
         'title': 'Caller Dashboard',

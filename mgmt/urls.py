@@ -24,8 +24,11 @@ urlpatterns = [
     path('my-files/', views.dentist_file_list_view, name='dentist_file_list'),
     path('lab-files/', views.lab_file_list_view, name='lab_file_list'),
     path('download-file/<int:file_id>/', views.download_file_view, name='download_file'),
+    path('download-script/<int:file_id>/', views.download_script_view, name='download_script'),
     path('stl-viewer/', views.stl_viewer, name='stl_viewer'),
     path('lab-profile/', views.lab_profile, name='lab_profile'),
     path('lab/<str:username>/', views.lab_public_page, name='lab_public_page'),
     path('lab/<str:username>/pdf/', views.lab_public_pdf, name='lab_public_pdf'),
+    path('dentist-search/', views.dentist_search_view, name='dentist_search'),
+    path('dentist-search/csv/', views.dentist_search_csv_view, name='dentist_search_csv'),
 ]

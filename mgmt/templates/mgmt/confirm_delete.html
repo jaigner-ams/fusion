@@ -1,34 +1,35 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 
 {% block title %}Delete {{ dentist.name }}{% endblock %}
+{% block nav_dentists %}active{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card border-danger">
-            <div class="card-header bg-danger text-white">
-                <h4 class="mb-0">Confirm Deletion</h4>
+<div style="max-width:550px; margin:0 auto;">
+    <div class="panel fade-in d1" style="border-top:3px solid #dc3545;">
+        <div class="panel-header" style="background:#fef2f2;">
+            <div class="panel-title" style="color:#991b1b;"><span class="panel-title-icon">&#9888;</span> Confirm Deletion</div>
+        </div>
+        <div class="panel-body">
+            <p style="font-size:14px; color:var(--text); margin-bottom:16px;">Are you sure you want to delete <strong>{{ dentist.name }}</strong>?</p>
+
+            {% with custom_count=dentist.custom_prices.count %}
+            {% if custom_count > 0 %}
+            <div class="portal-alert error">
+                <strong>Warning:</strong> This dentist has {{ custom_count }} custom price{{ custom_count|pluralize }} configured.
+                All custom pricing information will be permanently deleted.
             </div>
-            <div class="card-body">
-                <p>Are you sure you want to delete <strong>{{ dentist.name }}</strong>?</p>
-                
-                {% with custom_count=dentist.custom_prices.count %}
-                {% if custom_count > 0 %}
-                <div class="alert alert-warning">
-                    <strong>Warning:</strong> This dentist has {{ custom_count }} custom price{{ custom_count|pluralize }} configured. 
-                    All custom pricing information will be permanently deleted.
+            {% endif %}
+            {% endwith %}
+
+            <p style="font-size:13px; color:var(--text3); margin-bottom:20px;">This action cannot be undone.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div style="display:flex; gap:10px;">
+                    <button type="submit" class="btn-portal" style="background:#dc3545;">Yes, Delete</button>
+                    <a href="{% url 'price_management' %}" class="btn-portal-outline">Cancel</a>
                 </div>
-                {% endif %}
-                {% endwith %}
-                
-                <p>This action cannot be undone.</p>
-                
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                    <a href="{% url 'price_management' %}" class="btn btn-secondary">Cancel</a>
-                </form>
-            </div>
+            </form>
         </div>
     </div>
 </div>

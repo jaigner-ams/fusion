@@ -1,20 +1,21 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 
 {% block title %}{{ title }}{% endblock %}
+{% block nav_my_files %}active{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>{{ title }}</h2>
-        <a href="{% url 'upload_file' %}" class="btn btn-primary">Upload New File</a>
+<div class="panel fade-in d1">
+    <div class="panel-header">
+        <div class="panel-title"><span class="panel-title-icon">&#128229;</span> {{ title }}</div>
+        <a href="{% url 'upload_file' %}" class="btn-portal btn-portal-sm">Upload New File</a>
     </div>
-    
-    {% if files %}
-        <div class="table-responsive">
-            <table class="table table-striped">
+    <div class="panel-body">
+        {% if files %}
+            <table class="portal-table">
                 <thead>
                     <tr>
-                        <th>File Name</th>
+                        <th>Case File</th>
+                        <th>Script/Rx</th>
                         <th>Description</th>
                         <th>Uploaded By</th>
                         <th>Uploaded At</th>
@@ -25,24 +26,33 @@
                 <tbody>
                     {% for file in files %}
                         <tr>
-                            <td>{{ file.original_filename }}</td>
+                            <td style="font-weight:500;">{{ file.original_filename }}</td>
+                            <td>
+                                {% if file.script_file %}
+                                    <span class="portal-badge navy" title="{{ file.script_original_filename }}">
+                                        {{ file.script_original_filename|truncatechars:20 }}
+                                    </span>
+                                {% else %}
+                                    <span style="color:var(--text3);">-</span>
+                                {% endif %}
+                            </td>
                             <td>{{ file.description|default:"-" }}</td>
                             <td>
                                 {% if file.uploaded_by.user_type == 'lab' %}
-                                    <span class="badge bg-info">Your Lab</span>
+                                    <span class="portal-badge navy">Your Lab</span>
                                 {% else %}
-                                    <span class="badge bg-success">You</span>
+                                    <span class="portal-badge green">You</span>
                                 {% endif %}
                             </td>
-                            <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
+                            <td style="color:var(--text3);">{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
                             <td>
                                 {% if file.status == 'downloaded' %}
-                                    <span class="badge bg-success">Downloaded</span>
+                                    <span class="portal-badge green">Downloaded</span>
                                 {% else %}
-                                    <span class="badge bg-warning">Pending</span>
+                                    <span class="portal-badge gold">Pending</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td style="color:var(--text3);">
                                 {% if file.downloaded_at %}
                                     {{ file.downloaded_at|date:"Y-m-d H:i" }}
                                 {% else %}
@@ -53,11 +63,11 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-    {% else %}
-        <div class="alert alert-info">
-            You haven't uploaded any files yet. <a href="{% url 'upload_file' %}">Upload your first file</a>.
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="portal-alert info">
+                You haven't uploaded any files yet. <a href="{% url 'upload_file' %}" class="pt-edit">Upload your first file</a>.
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

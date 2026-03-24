@@ -29,8 +29,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--status',
             type=str,
-            default='prospect',
-            help='Status to assign to imported prospects (default: prospect). Use "mailed" for mailer imports.'
+            default='mailed',
+            help='Status to assign to imported prospects (default: mailed).'
         )
 
     def read_xlsx(self, file_path):
@@ -110,6 +110,7 @@ class Command(BaseCommand):
 
         created_count = 0
         skipped_count = 0
+        created_ids = []
 
         for row_data in rows:
             lab_name = row_data['lab_name']
@@ -131,7 +132,7 @@ class Command(BaseCommand):
             if dry_run:
                 self.stdout.write(f'  Would create: {lab_name} ({row_data["person_name"]})')
             else:
-                Prospect.objects.create(
+                prospect = Prospect.objects.create(
                     lab_name=lab_name,
                     person_name=row_data['person_name'],
                     address=row_data['address'],
@@ -142,22 +143,20 @@ class Command(BaseCommand):
                     email=row_data['email'],
                     status=import_status,
                 )
+                created_ids.append(prospect.id)
                 self.stdout.write(self.style.SUCCESS(f'  Created: {lab_name}'))
 
             created_count += 1
 
         # Create Mailer batch if prospects were imported and not a dry run
-        if not dry_run and created_count > 0:
+        if not dry_run and created_ids:
             mailer = Mailer.objects.create(
                 date=mailer_date,
                 description=f'Import from {file_path.split("/")[-1]}',
-                prospect_count=created_count,
+                prospect_count=len(created_ids),
             )
-            # Link all just-created prospects that have no mailer yet
-            Prospect.objects.filter(
-                status=import_status,
-                mailer__isnull=True
-            ).update(mailer=mailer)
+            # Link only the newly created prospects to this mailer
+            Prospect.objects.filter(id__in=created_ids).update(mailer=mailer)
             self.stdout.write(self.style.SUCCESS(f'Created Mailer batch: {mailer}'))
 
         if dry_run:

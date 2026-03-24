@@ -280,8 +280,8 @@ class Dentist(models.Model):
 
 class DefaultPriceList(models.Model):
     TYPE_CHOICES = [
-        ('economy', 'Economy Crowns'),
-        ('premium', 'Premium Crowns'),
+        ('economy', 'Economy'),
+        ('premium', 'Premium'),
     ]
 
     lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'})
@@ -305,8 +305,8 @@ class DefaultPriceList(models.Model):
 
 class PriceList(models.Model):
     TYPE_CHOICES = [
-        ('economy', 'Economy Crowns'),
-        ('premium', 'Premium Crowns'),
+        ('economy', 'Economy'),
+        ('premium', 'Premium'),
     ]
 
     dentist = models.ForeignKey(Dentist, on_delete=models.CASCADE, related_name='custom_prices')
@@ -336,8 +336,8 @@ class CreditPurchase(models.Model):
     ]
     
     QUALITY_CHOICES = [
-        ('economy', 'Economy Crowns'),
-        ('premium', 'Premium Crowns'),
+        ('economy', 'Economy'),
+        ('premium', 'Premium'),
     ]
 
     dentist = models.ForeignKey(Dentist, on_delete=models.CASCADE, related_name='credit_purchases')
@@ -415,8 +415,8 @@ class CreditTransaction(models.Model):
     ]
     
     CREDIT_TYPE_CHOICES = [
-        ('economy', 'Economy Crowns'),
-        ('premium', 'Premium Crowns'),
+        ('economy', 'Economy'),
+        ('premium', 'Premium'),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='credit_transactions')
@@ -506,6 +506,8 @@ class FileUpload(models.Model):
     lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'}, related_name='received_files')
     file = models.FileField(upload_to='dentist_uploads/%Y/%m/%d/')
     original_filename = models.CharField(max_length=255)
+    script_file = models.FileField(upload_to='dentist_uploads/scripts/%Y/%m/%d/', null=True, blank=True, help_text="Optional prescription/script document to accompany the case file")
+    script_original_filename = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True, help_text="Optional description of the file")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     uploaded_at = models.DateTimeField(auto_now_add=True)

@@ -1,97 +1,90 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 
 {% block title %}AMS Fusion Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h1 class="mb-4">AMS Fusion Dashboard</h1>
-    </div>
-</div>
+<!-- Main grid: Prices + Dentists -->
+<div class="main-grid fade-in d1">
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">{% if lab_name == 'All Labs' %}Default Prices{% else %}{{ lab_name|title }} Default Prices{% endif %}</h4>
-            </div>
-            <div class="card-body">
-                {% if default_prices %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Applied After (Units)</th>
-                                    <th>Price per Unit</th>
-                                    <th>Type</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for price in default_prices %}
-                                <tr>
-                                    <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
-                                    <td>${{ price.price|floatformat:2 }}</td>
-                                    <td>{{ price.get_type_display }}{% if price.product_description %} - {{ price.product_description }}{% endif %}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p class="text-muted">No default prices set yet.</p>
-                {% endif %}
-                <a href="{% url 'default_prices' %}" class="btn btn-primary">Manage Default Prices</a>
-            </div>
+    <!-- Default Prices -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-icon">&#128178;</span> {% if lab_name == 'All Labs' %}Default Prices{% else %}{{ lab_name|title }} Default Prices{% endif %}</div>
+            <a class="panel-link" href="{% url 'default_prices' %}">Manage &#8594;</a>
         </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0">{% if lab_name == 'All Labs' %}All Dentists{% else %}{{ lab_name|title }} Dentists{% endif %}</h4>
-            </div>
-            <div class="card-body">
-                {% if dentists %}
-                    <div class="list-group">
-                        {% for dentist in dentists %}
-                        <div class="dentist-card">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">{{ dentist.name }}</h5>
-                                    <small class="text-muted">
-                                        {% with custom_count=dentist.custom_prices.count %}
-                                        {{ custom_count }} custom price{{ custom_count|pluralize }} set
-                                        {% endwith %}
-                                        {% if dentist.user %}
-                                        <span class="badge bg-info ms-2">Has Login</span>
-                                        {% endif %}
-                                    </small>
-                                </div>
-                                <div>
-                                    <a href="{% url 'edit_dentist' dentist.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                                    <a href="{% url 'dentist_prices' dentist.id %}" class="btn btn-sm btn-outline-primary">Prices</a>
-                                    {% if dentist.user %}
-                                        <a href="{% url 'change_dentist_password' dentist.id %}" class="btn btn-sm btn-outline-warning">
-                                            <i class="fas fa-key"></i> Password
-                                        </a>
-                                    {% endif %}
-                                    <a href="{% url 'delete_dentist' dentist.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
-                                </div>
-                            </div>
-                        </div>
+        <div class="panel-body">
+            {% if default_prices %}
+                <table class="portal-table">
+                    <thead>
+                        <tr>
+                            <th>Applied After (Units)</th>
+                            <th>Price per Unit</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for price in default_prices %}
+                        <tr>
+                            <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
+                            <td style="font-family:'Barlow Condensed',sans-serif; font-weight:700; color:var(--navy);">${{ price.price|floatformat:2 }}</td>
+                            <td>{{ price.get_type_display }}{% if price.product_description %} &mdash; {{ price.product_description }}{% endif %}</td>
+                        </tr>
                         {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">No dentists added yet.</p>
-                {% endif %}
-                <a href="{% url 'add_dentist' %}" class="btn btn-success mt-3">Add New Dentist</a>
-                <a href="{% url 'credit_management' %}" class="btn btn-info mt-3 ms-2">Manage Crown Credits</a>
-                <a href="{% url 'lab_file_list' %}" class="btn btn-warning mt-3 ms-2">Files from Dentists</a>
-                <a href="{% url 'lab_upload_file' %}" class="btn btn-primary mt-3 ms-2">
-                    <i class="fas fa-upload"></i> Upload File for Dentist
-                </a>
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="color:var(--text3); font-size:13px; padding:12px 0;">No default prices set yet.</div>
+            {% endif %}
+            <div style="margin-top:16px;">
+                <a href="{% url 'default_prices' %}" class="btn-portal">Manage Default Prices</a>
             </div>
         </div>
     </div>
+
+    <!-- Dentists -->
+    <div class="panel" id="dentists">
+        <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-icon">&#129463;</span> {% if lab_name == 'All Labs' %}All Dentists{% else %}{{ lab_name|title }} Dentists{% endif %}</div>
+            <a class="panel-link" href="{% url 'add_dentist' %}">+ Add &#8594;</a>
+        </div>
+        <div class="panel-body">
+            {% if dentists %}
+                {% for dentist in dentists %}
+                <div class="dentist-row" style="cursor:default;">
+                    <div class="dentist-avatar">{{ dentist.name|make_list|first }}</div>
+                    <div class="dentist-info">
+                        <div class="dentist-name">{{ dentist.name }}</div>
+                        <div class="dentist-detail">
+                            {% with custom_count=dentist.custom_prices.count %}
+                            {{ custom_count }} custom price{{ custom_count|pluralize }}
+                            {% endwith %}
+                            {% if dentist.user %}
+                                &middot; <span style="color:var(--green);">Has Login</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-shrink:0;">
+                        <a href="{% url 'edit_dentist' dentist.id %}" class="btn-portal-outline btn-portal-sm">Edit</a>
+                        <a href="{% url 'dentist_prices' dentist.id %}" class="btn-portal-outline btn-portal-sm">Prices</a>
+                        {% if dentist.user %}
+                            <a href="{% url 'change_dentist_password' dentist.id %}" class="btn-portal-outline btn-portal-sm">Password</a>
+                        {% endif %}
+                        <a href="{% url 'delete_dentist' dentist.id %}" class="btn-portal-outline btn-portal-sm" style="border-color:#dc3545; color:#dc3545;">Delete</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="color:var(--text3); font-size:13px; padding:12px 0;">No dentists added yet.</div>
+            {% endif %}
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+                <a href="{% url 'add_dentist' %}" class="btn-portal">+ Add New Dentist</a>
+                <a href="{% url 'credit_management' %}" class="btn-portal-outline">Crown Credits</a>
+                <a href="{% url 'lab_file_list' %}" class="btn-portal-outline">Files from Dentists</a>
+                <a href="{% url 'lab_upload_file' %}" class="btn-portal-outline">Upload File</a>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}

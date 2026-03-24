@@ -69,3 +69,20 @@ def caller_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return wrapper
+
+def admin_required(view_func):
+    """
+    Decorator to ensure only admin users can access the view
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        if not request.user.is_admin_user():
+            messages.error(request, 'You must be an admin to access this page.')
+            return redirect('login')
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper

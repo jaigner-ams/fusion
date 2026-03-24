@@ -65,6 +65,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'prospects.context_processors.nav_mailers',
+                'mgmt.context_processors.lab_portal_context',
             ],
         },
     },
@@ -181,6 +182,9 @@ SERVER_EMAIL = 'AMS Fusion <info@amsfusion.com>'
 # Site URL for email links (update with your actual domain)
 SITE_URL = 'https://amsfusion.com'
 
+# Email addresses to notify when a file is uploaded
+FILE_UPLOAD_NOTIFICATION_EMAILS = ['brandon@americasmiles.com']
+
 # Logging Configuration
 # Logs Django errors and 500s to /var/www/fusion/django_errors.log
 LOGGING = {
@@ -213,6 +217,9 @@ LOGGING = {
         },
     },
 }
+
+# SerpAPI Configuration (for admin dentist search)
+SERPAPI_KEY = '0cfba1832e5a50ba3bffbfd2a142923cc6fa5810dafe19617d44bcdf41b6dcd0'
 
 # Twilio SMS Configuration (for Keith's appointment reminders)
 TWILIO_ACCOUNT_SID = ''

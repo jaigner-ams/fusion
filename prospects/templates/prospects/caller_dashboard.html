@@ -46,6 +46,13 @@
     </a>
 </div>
 
+{% if selected_mailer %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Mailer: {{ selected_mailer.date|date:"m/d/Y" }}{% if selected_mailer.description %} - {{ selected_mailer.description }}{% endif %}</h5>
+    <a href="{% url 'prospects:caller_dashboard' %}{% if status_filter %}?status={{ status_filter }}{% endif %}" class="btn btn-sm btn-outline-secondary">Show All Mailers</a>
+</div>
+{% endif %}
+
 <!-- Prospects Table -->
 <div class="card">
     {% if prospects %}
@@ -64,11 +71,12 @@
                 </thead>
                 <tbody>
                     {% for prospect in prospects %}
-                        <tr>
+                        <tr{% if prospect.note_count %} class="has-notes"{% endif %}>
                             <td>
                                 <a href="{% url 'prospects:caller_detail' prospect.pk %}{% if status_filter or mailer_filter %}?{% if status_filter %}status={{ status_filter }}{% endif %}{% if status_filter and mailer_filter %}&{% endif %}{% if mailer_filter %}mailer={{ mailer_filter }}{% endif %}{% endif %}" class="text-theme text-decoration-none">
                                     <strong>{{ prospect.lab_name }}</strong>
                                 </a>
+                                {% if prospect.note_count %}<span title="Has notes">📝</span>{% else %}<span title="No notes yet">✉️</span>{% endif %}
                             </td>
                             <td>{{ prospect.person_name }}</td>
                             <td>{{ prospect.phone|default:"-" }}</td>

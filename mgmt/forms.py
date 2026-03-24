@@ -1,3 +1,4 @@
+import re
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase, CreditTransaction, FileUpload
@@ -472,25 +473,29 @@ class ZipCodeSearchForm(forms.Form):
 class FileUploadForm(forms.ModelForm):
     class Meta:
         model = FileUpload
-        fields = ['file', 'description']
+        fields = ['file', 'script_file', 'description']
         widgets = {
             'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
+            'script_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Optional description of the file'
             })
         }
-    
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         self.dentist = kwargs.pop('dentist', None)
         super().__init__(*args, **kwargs)
-        
-        self.fields['file'].label = 'Select File'
-        self.fields['file'].help_text = 'Choose a file to upload for the lab'
+
+        self.fields['file'].label = 'Case File'
+        self.fields['file'].help_text = 'Choose a case file to upload for the lab'
+        self.fields['script_file'].label = 'Script / Prescription (Optional)'
+        self.fields['script_file'].help_text = 'Optionally attach a script or prescription document to go with this case'
+        self.fields['script_file'].required = False
         self.fields['description'].required = False
-    
+
     def clean_file(self):
         file = self.cleaned_data.get('file')
         if file:
@@ -498,15 +503,49 @@ class FileUploadForm(forms.ModelForm):
             if file.size > 500 * 1024 * 1024:
                 raise forms.ValidationError('File size cannot exceed 500MB')
         return file
-    
+
+    def clean_script_file(self):
+        script_file = self.cleaned_data.get('script_file')
+        if script_file:
+            # Check file size (limit to 50MB for script documents)
+            if script_file.size > 50 * 1024 * 1024:
+                raise forms.ValidationError('Script file size cannot exceed 50MB')
+        return script_file
+
     def save(self, commit=True):
         upload = super().save(commit=False)
         upload.uploaded_by = self.user
         upload.dentist = self.dentist
         upload.lab = self.dentist.lab
         upload.original_filename = self.cleaned_data['file'].name
-        
+
+        script_file = self.cleaned_data.get('script_file')
+        if script_file:
+            upload.script_original_filename = script_file.name
+
         if commit:
             upload.save()
-        
+
         return upload
+
+
+
+
+
+class DentistSearchForm(forms.Form):
+    zip_codes = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 5,
+            'placeholder': 'Enter zip codes separated by commas or newlines\ne.g. 90210, 10001\n30301',
+        }),
+        label='Zip Codes',
+    )
+
+    def clean_zip_codes(self):
+        raw = self.cleaned_data['zip_codes']
+        parts = re.split(r'[,\n]+', raw)
+        zips = [z.strip() for z in parts if z.strip()]
+        if not zips:
+            raise forms.ValidationError('Please enter at least one zip code.')
+        return zips

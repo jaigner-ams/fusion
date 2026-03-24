@@ -1,123 +1,104 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 {% load static %}
 
+{% block title %}Purchase History{% endblock %}
+{% block nav_purchase_history %}active{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Purchase History</h2>
-                <div class="text-end">
-                    <span class="text-muted">Current Balance:</span>
-                    <div class="mt-1">
-                        <span class="badge bg-info me-2">Economy: {{ user.economy_credits }}</span>
-                        <span class="badge bg-warning">Premium: {{ user.premium_credits }}</span>
-                        <span class="badge bg-success ms-2">Total: {{ user.get_total_credits }}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'dentist_dashboard' %}">Dashboard</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Purchase History</li>
-                </ol>
-            </nav>
+<!-- Header with breadcrumb -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;" class="fade-in d1">
+    <div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:22px; color:var(--navy); text-transform:uppercase; letter-spacing:1px;">Purchase History</div>
+        <div style="font-size:12px; color:var(--text3); margin-top:4px;">
+            <a href="{% url 'dentist_dashboard' %}" class="pt-edit">Dashboard</a>
+            <span style="margin:0 6px; color:var(--border);">/</span>
+            <span>Purchase History</span>
         </div>
     </div>
-    
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Total Crown Credits Purchased</h5>
-                    <h2 class="text-primary">{{ total_credits }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Total Amount Spent</h5>
-                    <h2 class="text-success">${{ total_spent }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Current Balance</h5>
-                    <div class="mb-2">
-                        <span class="badge bg-info">Economy: {{ user.economy_credits }}</span>
-                        <span class="badge bg-warning">Premium: {{ user.premium_credits }}</span>
-                    </div>
-                    <h2 class="text-success">{{ user.get_total_credits }}</h2>
-                    <a href="{% url 'purchase_credits' %}" class="btn btn-primary btn-sm mt-2">Buy More</a>
-                </div>
-            </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <span class="portal-badge navy">Economy: {{ user.economy_credits }}</span>
+        <span class="portal-badge gold">Premium: {{ user.premium_credits }}</span>
+        <span class="portal-badge green">Total: {{ user.get_total_credits }}</span>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row fade-in d2" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stat-card navy-top">
+        <div class="stat-label">Total Credits Purchased</div>
+        <div class="stat-number">{{ total_credits }}</div>
+        <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card green-top">
+        <div class="stat-label">Total Amount Spent</div>
+        <div class="stat-number green">${{ total_spent }}</div>
+        <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Current Balance</div>
+        <div class="stat-number gold">{{ user.get_total_credits }}</div>
+        <div class="stat-sub">
+            Economy: {{ user.economy_credits }} &middot; Premium: {{ user.premium_credits }}
+            <br>
+            <a href="{% url 'purchase_credits' %}" class="pt-edit" style="margin-top:4px; display:inline-block;">Buy More</a>
         </div>
     </div>
-    
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4>All Purchases</h4>
-                </div>
-                <div class="card-body">
-                    {% if purchases %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Quantity</th>
-                                    <th>Quality Type</th>
-                                    <th>Unit Price</th>
-                                    <th>Total Price</th>
-                                    <th>Status</th>
-                                    <th>Completed</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for purchase in purchases %}
-                                <tr>
-                                    <td>{{ purchase.created_at|date:"M d, Y H:i" }}</td>
-                                    <td>{{ purchase.quantity }}</td>
-                                    <td>
-                                        <span class="badge bg-{% if purchase.quality_type == 'premium' %}warning{% else %}info{% endif %}">
-                                            {{ purchase.get_quality_type_display }}
-                                        </span>
-                                    </td>
-                                    <td>${{ purchase.unit_price }}</td>
-                                    <td><strong>${{ purchase.total_price }}</strong></td>
-                                    <td>
-                                        <span class="badge bg-{% if purchase.status == 'completed' %}success{% elif purchase.status == 'pending' %}warning{% else %}secondary{% endif %}">
-                                            {{ purchase.get_status_display }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {% if purchase.completed_at %}
-                                            {{ purchase.completed_at|date:"M d, Y H:i" }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <h5 class="text-muted">No purchases yet</h5>
-                        <p class="text-muted">Start by purchasing your first crown credits!</p>
-                        <a href="{% url 'purchase_credits' %}" class="btn btn-primary">Purchase Crown Credits</a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+</div>
+
+<!-- Purchases Table -->
+<div class="panel fade-in d3">
+    <div class="panel-header">
+        <div class="panel-title"><span class="panel-title-icon">&#128203;</span> All Purchases</div>
+    </div>
+    <div class="panel-body">
+        {% if purchases %}
+        <table class="portal-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Quantity</th>
+                    <th>Quality Type</th>
+                    <th>Unit Price</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th>Completed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in purchases %}
+                <tr>
+                    <td style="color:var(--text3);">{{ purchase.created_at|date:"M d, Y H:i" }}</td>
+                    <td style="font-weight:500;">{{ purchase.quantity }}</td>
+                    <td>
+                        <span class="portal-badge {% if purchase.quality_type == 'premium' %}gold{% else %}navy{% endif %}">
+                            {{ purchase.get_quality_type_display }}
+                        </span>
+                    </td>
+                    <td>${{ purchase.unit_price }}</td>
+                    <td style="font-family:'Barlow Condensed',sans-serif; font-weight:700; color:var(--navy);">${{ purchase.total_price }}</td>
+                    <td>
+                        <span class="portal-badge {% if purchase.status == 'completed' %}green{% elif purchase.status == 'pending' %}gold{% else %}navy{% endif %}">
+                            {{ purchase.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="color:var(--text3);">
+                        {% if purchase.completed_at %}
+                            {{ purchase.completed_at|date:"M d, Y H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center; padding:40px 0;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; color:var(--text3); margin-bottom:8px;">No purchases yet</div>
+            <p style="color:var(--text3); font-size:13px; margin-bottom:16px;">Start by purchasing your first crown credits!</p>
+            <a href="{% url 'purchase_credits' %}" class="btn-portal">Purchase Crown Credits</a>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

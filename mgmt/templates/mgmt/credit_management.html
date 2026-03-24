@@ -1,218 +1,182 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 {% load dict_extras %}
 
 {% block title %}{{ title }}{% endblock %}
+{% block nav_credits %}active{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h1 class="mb-4">{{ title }}</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'price_management' %}">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Credit Management</li>
-            </ol>
-        </nav>
+
+<!-- Stats Row -->
+<div class="stats-row fade-in d1">
+    <div class="stat-card green-top">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-number green">${{ total_revenue }}</div>
+        <div class="stat-sub">Lifetime credit sales</div>
+    </div>
+    <div class="stat-card navy-top">
+        <div class="stat-label">Crown Credits Sold</div>
+        <div class="stat-number">{{ total_credits_sold }}</div>
+        <div class="stat-sub">Total credits purchased</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Pending Purchases</div>
+        <div class="stat-number gold">{{ pending_purchases }}</div>
+        <div class="stat-sub">Awaiting completion</div>
+    </div>
+    <div class="stat-card navy-top">
+        <div class="stat-label">Active Dentists</div>
+        <div class="stat-number">{{ dentists.count }}</div>
+        <div class="stat-sub">Dentists with accounts</div>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Total Revenue</h5>
-                <h2 class="text-success">${{ total_revenue }}</h2>
-            </div>
+<!-- Purchases Panel -->
+<div class="panel fade-in d2">
+    <div class="panel-header">
+        <div class="panel-title"><span class="panel-title-icon">&#11088;</span> Crown Credit Purchases</div>
+        <div style="display:flex; gap:10px;">
+            <a href="{% url 'credit_deductions' %}" class="btn-portal-outline btn-portal-sm">View Deductions</a>
+            <a href="{% url 'credit_transactions' %}" class="btn-portal-outline btn-portal-sm">View All Transactions</a>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Crown Credits Sold</h5>
-                <h2 class="text-primary">{{ total_credits_sold }}</h2>
-            </div>
+    <div class="panel-body">
+        {% if purchases %}
+        <table class="portal-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Dentist</th>
+                    <th>User</th>
+                    <th>Quantity</th>
+                    <th>Quality</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in purchases %}
+                <tr{% if purchase.status == 'pending' %} style="background:rgba(201,168,76,0.06);"{% endif %}>
+                    <td style="color:var(--text3);">{{ purchase.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--navy);">{{ purchase.dentist.name }}</span>
+                        {% if not user.is_admin_user and purchase.dentist.lab != user %}
+                            <br><span style="font-size:11px; color:var(--text3);">({{ purchase.dentist.lab.username }})</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ purchase.user.first_name|default:purchase.user.username }}</td>
+                    <td>{{ purchase.quantity }}</td>
+                    <td>
+                        <span class="portal-badge {% if purchase.quality_type == 'premium' %}gold{% else %}navy{% endif %}">
+                            {{ purchase.get_quality_type_display }}
+                        </span>
+                    </td>
+                    <td>${{ purchase.unit_price }}</td>
+                    <td style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--navy);">${{ purchase.total_price }}</td>
+                    <td>
+                        <span class="portal-badge {% if purchase.status == 'completed' %}green{% elif purchase.status == 'pending' %}gold{% else %}navy{% endif %}">
+                            {{ purchase.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if purchase.status == 'pending' %}
+                            <form method="post" action="{% url 'toggle_purchase_status' purchase.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-portal btn-portal-sm"
+                                        onclick="return confirm('Complete this purchase and add {{ purchase.quantity }} credits to {{ purchase.user.first_name|default:purchase.user.username }}?');">
+                                    Complete
+                                </button>
+                            </form>
+                        {% elif purchase.status == 'completed' %}
+                            <form method="post" action="{% url 'toggle_purchase_status' purchase.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-portal-outline btn-portal-sm" style="border-color:#991b1b; color:#991b1b;"
+                                        onclick="return confirm('Cancel this purchase and remove {{ purchase.quantity }} credits from {{ purchase.user.first_name|default:purchase.user.username }}?');">
+                                    Cancel
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center; padding:30px; color:var(--text3); font-size:13px;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--navy); margin-bottom:6px;">No credit purchases yet</div>
+            Credit purchases will appear here when dentists start buying credits.
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Pending Purchases</h5>
-                <h2 class="text-warning">{{ pending_purchases }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Active Dentists</h5>
-                <h2 class="text-info">{{ dentists.count }}</h2>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>Crown Credit Purchases</h4>
-                <div>
-                    <a href="{% url 'credit_deductions' %}" class="btn btn-outline-warning btn-sm me-2">
-                        <i class="fas fa-minus-circle"></i> View Deductions
-                    </a>
-                    <a href="{% url 'credit_transactions' %}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-history"></i> View All Transactions
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                {% if purchases %}
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Dentist</th>
-                                <th>User</th>
-                                <th>Quantity</th>
-                                <th>Quality</th>
-                                <th>Unit Price</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for purchase in purchases %}
-                            <tr class="{% if purchase.status == 'pending' %}table-warning{% endif %}">
-                                <td>{{ purchase.created_at|date:"M d, Y H:i" }}</td>
-                                <td>
-                                    <strong>{{ purchase.dentist.name }}</strong>
-                                    {% if not user.is_admin_user and purchase.dentist.lab != user %}
-                                        <small class="text-muted">({{ purchase.dentist.lab.username }})</small>
-                                    {% endif %}
-                                </td>
-                                <td>{{ purchase.user.first_name|default:purchase.user.username }}</td>
-                                <td>{{ purchase.quantity }}</td>
-                                <td>
-                                    <span class="badge bg-{% if purchase.quality_type == 'premium' %}warning{% else %}info{% endif %}">
-                                        {{ purchase.get_quality_type_display }}
-                                    </span>
-                                </td>
-                                <td>${{ purchase.unit_price }}</td>
-                                <td><strong>${{ purchase.total_price }}</strong></td>
-                                <td>
-                                    <span class="badge bg-{% if purchase.status == 'completed' %}success{% elif purchase.status == 'pending' %}warning{% else %}secondary{% endif %}">
-                                        {{ purchase.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if purchase.status == 'pending' %}
-                                        <form method="post" action="{% url 'toggle_purchase_status' purchase.id %}" class="d-inline">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-success" 
-                                                    onclick="return confirm('Complete this purchase and add {{ purchase.quantity }} credits to {{ purchase.user.first_name|default:purchase.user.username }}?')">
-                                                Complete
-                                            </button>
-                                        </form>
-                                    {% elif purchase.status == 'completed' %}
-                                        <form method="post" action="{% url 'toggle_purchase_status' purchase.id %}" class="d-inline">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                    onclick="return confirm('Cancel this purchase and remove {{ purchase.quantity }} credits from {{ purchase.user.first_name|default:purchase.user.username }}?')">
-                                                Cancel
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <h5 class="text-muted">No credit purchases yet</h5>
-                    <p class="text-muted">Credit purchases will appear here when dentists start buying credits.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 
+<!-- Dentist Balances Panel -->
 {% if dentists %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h4>Dentist Crown Credit Balances</h4>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Dentist</th>
-                                <th>Username</th>
-                                <th>Current Crown Credits</th>
-                                <th>Total Purchased</th>
-                                <th>Total Spent</th>
-                                <th>Last Purchase</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for dentist in dentists %}
-                            {% if dentist.user %}
-                            <tr>
-                                <td><strong>{{ dentist.name }}</strong></td>
-                                <td>{{ dentist.user.username }}</td>
-                                <td>
-                                    <span class="badge bg-info">E: {{ dentist.user.economy_credits }}</span>
-                                    <span class="badge bg-warning">P: {{ dentist.user.premium_credits }}</span>
-                                    <span class="badge bg-success">T: {{ dentist.user.get_total_credits }}</span>
-                                </td>
-                                <td>
-                                    {% with stats=dentist_stats|get_item:dentist.id %}
-                                        {{ stats.total_purchased|default:0 }}
-                                    {% endwith %}
-                                </td>
-                                <td>
-                                    {% with stats=dentist_stats|get_item:dentist.id %}
-                                        ${{ stats.total_spent|default:0|floatformat:2 }}
-                                    {% endwith %}
-                                </td>
-                                <td>
-                                    {% with last_purchase=dentist.credit_purchases.first %}
-                                        {% if last_purchase %}
-                                            {{ last_purchase.created_at|date:"M d, Y" }}
-                                        {% else %}
-                                            Never
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td>
-                                    <div class="btn-group-sm" role="group">
-                                        {% if dentist.user.credits > 0 %}
-                                            <a href="{% url 'deduct_credits' dentist.id %}" class="btn btn-sm btn-outline-warning me-1">
-                                                <i class="fas fa-minus-circle"></i> Deduct
-                                            </a>
-                                        {% endif %}
-                                        <a href="{% url 'change_dentist_password' dentist.id %}" class="btn btn-sm btn-outline-primary" title="Change Password">
-                                            <i class="fas fa-key"></i> Password
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
+<div class="panel fade-in d3">
+    <div class="panel-header">
+        <div class="panel-title"><span class="panel-title-icon">&#129463;</span> Dentist Crown Credit Balances</div>
+    </div>
+    <div class="panel-body">
+        <table class="portal-table">
+            <thead>
+                <tr>
+                    <th>Dentist</th>
+                    <th>Username</th>
+                    <th>Current Crown Credits</th>
+                    <th>Total Purchased</th>
+                    <th>Total Spent</th>
+                    <th>Last Purchase</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dentist in dentists %}
+                {% if dentist.user %}
+                <tr>
+                    <td>
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--navy);">{{ dentist.name }}</span>
+                    </td>
+                    <td style="color:var(--text3);">{{ dentist.user.username }}</td>
+                    <td>
+                        <span class="portal-badge navy">E: {{ dentist.user.economy_credits }}</span>
+                        <span class="portal-badge gold">P: {{ dentist.user.premium_credits }}</span>
+                        <span class="portal-badge green">T: {{ dentist.user.get_total_credits }}</span>
+                    </td>
+                    <td>
+                        {% with stats=dentist_stats|get_item:dentist.id %}
+                            {{ stats.total_purchased|default:0 }}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% with stats=dentist_stats|get_item:dentist.id %}
+                            ${{ stats.total_spent|default:0|floatformat:2 }}
+                        {% endwith %}
+                    </td>
+                    <td style="color:var(--text3);">
+                        {% with last_purchase=dentist.credit_purchases.first %}
+                            {% if last_purchase %}
+                                {{ last_purchase.created_at|date:"M d, Y" }}
+                            {% else %}
+                                Never
                             {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+                        {% endwith %}
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:8px;">
+                            {% if dentist.user.credits > 0 %}
+                                <a href="{% url 'deduct_credits' dentist.id %}" class="pt-edit">Deduct</a>
+                            {% endif %}
+                            <a href="{% url 'change_dentist_password' dentist.id %}" class="pt-edit">Password</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endif %}
+
 {% endblock %}

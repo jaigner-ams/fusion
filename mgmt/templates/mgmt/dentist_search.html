@@ -1,0 +1,89 @@
+{% extends base_template|default:'mgmt/base.html' %}
+
+{% block title %}Dentist Search{% endblock %}
+
+{% block content %}
+<div class="panel fade-in d1">
+    <div class="panel-header">
+        <div class="panel-title">Dentist Search</div>
+    </div>
+    <div class="panel-body">
+        {% if messages %}
+            {% for message in messages %}
+                <div style="margin-bottom:12px; padding:10px 14px; border-radius:4px;
+                    background:{% if message.tags == 'error' %}#fdecea{% elif message.tags == 'warning' %}#fff8e1{% else %}#e8f5e9{% endif %};
+                    color:#333;
+                    border-left:4px solid {% if message.tags == 'error' %}#c0392b{% elif message.tags == 'warning' %}#f39c12{% else %}#27ae60{% endif %};">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="margin-bottom:16px;">
+                <label for="id_zip_codes" style="display:block; font-weight:600; margin-bottom:6px;">Zip Codes</label>
+                {{ form.zip_codes }}
+                {% if form.zip_codes.errors %}
+                    <div style="color:#c0392b; margin-top:4px;">{{ form.zip_codes.errors }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn-portal">Search</button>
+        </form>
+    </div>
+</div>
+
+{% if results is not None %}
+<div class="panel fade-in d2" style="margin-top:20px;">
+    <div class="panel-header">
+        <div class="panel-title">Results</div>
+        {% if results %}
+        <form method="post" action="{% url 'dentist_search_csv' %}">
+            {% csrf_token %}
+            <input type="hidden" name="zip_codes" value="{{ submitted_zip_codes }}">
+            <button type="submit" class="btn-portal-outline btn-portal-sm">Download CSV</button>
+        </form>
+        {% endif %}
+    </div>
+    <div class="panel-body">
+        {% if results %}
+            <p style="margin-bottom:12px; color:#555;">
+                Found <strong>{{ results|length }}</strong> dentist{% if results|length != 1 %}s{% endif %}.
+            </p>
+            <div style="overflow-x:auto;">
+                <table class="portal-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Rating</th>
+                            <th>Zip Code</th>
+                            <th>Maps</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dentist in results %}
+                        <tr>
+                            <td>{{ dentist.name }}</td>
+                            <td>{{ dentist.phone }}</td>
+                            <td>{{ dentist.address }}</td>
+                            <td>{{ dentist.rating }}</td>
+                            <td>{{ dentist.zip_code }}</td>
+                            <td>
+                                {% if dentist.maps_url %}
+                                    <a href="{{ dentist.maps_url }}" target="_blank" rel="noopener noreferrer">View</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="color:#555;">No dentists found for the given zip codes.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

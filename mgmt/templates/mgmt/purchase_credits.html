@@ -1,189 +1,180 @@
-{% extends 'mgmt/base.html' %}
+{% extends base_template|default:'mgmt/base.html' %}
 {% load static %}
 
+{% block title %}Purchase Credits{% endblock %}
+{% block nav_purchase_credits %}active{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Purchase Crown Credits</h2>
-                <div class="text-end">
-                    <span class="text-muted">Current Balance:</span>
-                    <div class="mt-1">
-                        <span class="badge bg-info me-2">Economy: {{ user.economy_credits }}</span>
-                        <span class="badge bg-warning">Premium: {{ user.premium_credits }}</span>
-                        <span class="badge bg-success ms-2">Total: {{ user.get_total_credits }}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'dentist_dashboard' %}">Dashboard</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Purchase Credits</li>
-                </ol>
-            </nav>
+<!-- Header with balance -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;" class="fade-in d1">
+    <div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:22px; color:var(--navy); text-transform:uppercase; letter-spacing:1px;">Purchase Crown Credits</div>
+        <div style="font-size:12px; color:var(--text3); margin-top:4px;">
+            <a href="{% url 'dentist_dashboard' %}" class="pt-edit">Dashboard</a>
+            <span style="margin:0 6px; color:var(--border);">/</span>
+            <span>Purchase Credits</span>
         </div>
     </div>
-    
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Credit Purchase Form</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post" id="credit-form">
-                        {% csrf_token %}
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.quantity.id_for_label }}" class="form-label">Number of Credits</label>
-                                {{ form.quantity }}
-                                {% if form.quantity.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.quantity.errors %}
-                                            <div>{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">Enter the number of credits you want to purchase (minimum 5)</div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label for="{{ form.quality_type.id_for_label }}" class="form-label">Quality Type</label>
-                                {{ form.quality_type }}
-                                {% if form.quality_type.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.quality_type.errors %}
-                                            <div>{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div id="price-preview" class="alert alert-info" style="display: none;">
-                            <h5>Price Preview</h5>
-                            <div id="price-details"></div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'dentist_dashboard' %}" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-success" id="purchase-btn" disabled>
-                                Purchase Credits
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <span class="portal-badge navy">Economy: {{ user.economy_credits }}</span>
+        <span class="portal-badge gold">Premium: {{ user.premium_credits }}</span>
+        <span class="portal-badge green">Total: {{ user.get_total_credits }}</span>
+    </div>
+</div>
+
+<div class="main-grid-wide fade-in d2">
+    <!-- Purchase Form -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-icon">&#11088;</span> Credit Purchase Form</div>
         </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Your Pricing</h5>
+        <div class="panel-body">
+            <form method="post" id="credit-form" class="portal-form">
+                {% csrf_token %}
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <div class="form-group">
+                        <label for="{{ form.quantity.id_for_label }}">Number of Credits</label>
+                        {{ form.quantity }}
+                        {% if form.quantity.errors %}
+                            <div style="color:#991b1b; font-size:12px; margin-top:4px;">
+                                {% for error in form.quantity.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div style="font-size:11px; color:var(--text3); margin-top:4px;">Enter the number of credits you want to purchase (minimum 5)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.quality_type.id_for_label }}">Quality Type</label>
+                        {{ form.quality_type }}
+                        {% if form.quality_type.errors %}
+                            <div style="color:#991b1b; font-size:12px; margin-top:4px;">
+                                {% for error in form.quality_type.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="card-body">
-                    {% if custom_prices %}
-                    <h6 class="text-success">Custom Prices</h6>
-                    <div class="table-responsive mb-3">
-                        <table class="table table-sm">
-                            <thead>
+
+                <div id="price-preview" class="portal-alert info" style="display: none;">
+                    <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; color:var(--navy); margin-bottom:6px;">Price Preview</div>
+                    <div id="price-details"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                    <a href="{% url 'dentist_dashboard' %}" class="btn-portal-outline">Cancel</a>
+                    <button type="submit" class="btn-portal" id="purchase-btn" disabled>
+                        Purchase Credits
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pricing Sidebar -->
+    <div>
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Your Pricing</div>
+            </div>
+            <div class="panel-body">
+                {% if custom_prices %}
+                <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--green); margin-bottom:8px;">Custom Prices</div>
+                <table class="portal-table" style="margin-bottom:16px;">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Credits</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for price in custom_prices %}
+                        <tr>
+                            <td>{{ price.get_type_display }}</td>
+                            <td>{{ price.applied_after }}+</td>
+                            <td>${{ price.price|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+
+                {% if has_default_prices %}
+                <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--navy3); margin-bottom:10px;">{% if custom_prices %}{{ lab_name|title }} Default Prices{% else %}{{ lab_name|title }} Prices{% endif %}</div>
+
+                <!-- Premium Crowns Section -->
+                {% if premium_prices %}
+                <div style="margin-bottom:14px;">
+                    <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); border-bottom:2px solid var(--gold); padding-bottom:4px; margin-bottom:8px;">
+                        Premium Crowns
+                        <span style="display:block; font-size:10px; font-weight:400; letter-spacing:0.5px; text-transform:none; color:var(--text3); margin-top:2px;">100% made at this location</span>
+                    </div>
+                    <table class="portal-table">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type_name, prices in premium_prices.items %}
+                                {% for price in prices %}
                                 <tr>
-                                    <th>Type</th>
-                                    <th>Credits</th>
-                                    <th>Price</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for price in custom_prices %}
-                                <tr>
-                                    <td>{{ price.get_type_display }}</td>
-                                    <td>{{ price.applied_after }}+</td>
+                                    <td>{{ type_name }}</td>
+                                    <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
                                     <td>${{ price.price|floatformat:2 }}</td>
                                 </tr>
                                 {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% endif %}
-                    
-                    {% if has_default_prices %}
-                    <h6 class="text-info mb-3">{% if custom_prices %}{{ lab_name|title }} Default Prices{% else %}{{ lab_name|title }} Prices{% endif %}</h6>
-
-                    <!-- Premium Crowns Section -->
-                    {% if premium_prices %}
-                    <div class="mb-3">
-                        <h6 class="text-danger border-bottom border-danger pb-2 mb-2">
-                            <i class="bi bi-gem me-1"></i>Premium Crowns
-                            <small class="d-block text-muted" style="font-size: 0.75em; font-weight: normal;">100% made at this location</small>
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th>Qty</th>
-                                        <th>Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for type_name, prices in premium_prices.items %}
-                                        {% for price in prices %}
-                                        <tr>
-                                            <td>{{ type_name }}</td>
-                                            <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
-                                            <td>${{ price.price|floatformat:2 }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Economy Crowns Section -->
-                    {% if economy_prices %}
-                    <div class="mb-2">
-                        <h6 class="text-warning border-bottom border-warning pb-2 mb-2">
-                            <i class="bi bi-tag me-1"></i>Economy Crowns
-                            <small class="d-block text-muted" style="font-size: 0.75em; font-weight: normal;">Produced in concert with our centralized milling center</small>
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Qty</th>
-                                        <th>Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for type_name, prices in economy_prices.items %}
-                                        {% for price in prices %}
-                                        <tr>
-                                            <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
-                                            <td>${{ price.price|floatformat:2 }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% endif %}
-                    
-                    {% if not custom_prices and not default_prices %}
-                    <p class="text-muted">No pricing configured. Please contact your lab.</p>
-                    {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% endif %}
+
+                <!-- Economy Crowns Section -->
+                {% if economy_prices %}
+                <div>
+                    <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--navy3); border-bottom:2px solid var(--navy3); padding-bottom:4px; margin-bottom:8px;">
+                        Economy Crowns
+                        <span style="display:block; font-size:10px; font-weight:400; letter-spacing:0.5px; text-transform:none; color:var(--text3); margin-top:2px;">Produced in concert with our centralized milling center</span>
+                    </div>
+                    <table class="portal-table">
+                        <thead>
+                            <tr>
+                                <th>Qty</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type_name, prices in economy_prices.items %}
+                                {% for price in prices %}
+                                <tr>
+                                    <td>{% if price.is_cod %}COD{% else %}{{ price.applied_after }}+{% endif %}</td>
+                                    <td>${{ price.price|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if not custom_prices and not default_prices %}
+                <p style="color:var(--text3); font-size:13px;">No pricing configured. Please contact your lab.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const quantityField = document.getElementById('{{ form.quantity.id_for_label }}');
@@ -191,16 +182,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const pricePreview = document.getElementById('price-preview');
     const priceDetails = document.getElementById('price-details');
     const purchaseBtn = document.getElementById('purchase-btn');
-    
+
     function updatePricePreview() {
         const quantity = parseInt(quantityField.value) || 0;
         const quality = qualityField.value;
-        
+
         if (quantity > 0 && quality) {
             // Calculate price based on pricing tiers
             let pricePerUnit = 0;
             let priceSource = '';
-            
+
             // Custom prices take precedence
             {% if custom_prices %}
             const customPrices = [
@@ -208,17 +199,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 {type: '{{ price.type }}', applied_after: {{ price.applied_after }}, price: {{ price.price }}},
                 {% endfor %}
             ];
-            
+
             const customPrice = customPrices
                 .filter(p => p.type === quality && quantity >= p.applied_after)
                 .sort((a, b) => b.applied_after - a.applied_after)[0];
-            
+
             if (customPrice) {
                 pricePerUnit = customPrice.price;
                 priceSource = `Custom pricing: ${quantity} credits @ $${pricePerUnit}/credit`;
             }
             {% endif %}
-            
+
             // Fall back to default prices if no custom price found
             if (pricePerUnit === 0) {
                 {% if default_prices %}
@@ -227,18 +218,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     {type: '{{ price.type }}', applied_after: {{ price.applied_after }}, price: {{ price.price }}},
                     {% endfor %}
                 ];
-                
+
                 const defaultPrice = defaultPrices
                     .filter(p => p.type === quality && quantity >= p.applied_after)
                     .sort((a, b) => b.applied_after - a.applied_after)[0];
-                
+
                 if (defaultPrice) {
                     pricePerUnit = defaultPrice.price;
                     priceSource = `Default pricing: ${quantity} credits @ $${pricePerUnit}/credit`;
                 }
                 {% endif %}
             }
-            
+
             if (pricePerUnit > 0) {
                 const totalPrice = (pricePerUnit * quantity).toFixed(2);
                 priceDetails.innerHTML = `
@@ -259,10 +250,10 @@ document.addEventListener('DOMContentLoaded', function() {
             purchaseBtn.disabled = true;
         }
     }
-    
+
     quantityField.addEventListener('input', updatePricePreview);
     qualityField.addEventListener('change', updatePricePreview);
-    
+
     // Initial update
     updatePricePreview();
 });
