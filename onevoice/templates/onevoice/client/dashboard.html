@@ -1,0 +1,162 @@
+{% extends "onevoice/base_onevoice.html" %}
+
+{% block title %}One Voice — Client Dashboard{% endblock %}
+{% block nav_client_dashboard %}active{% endblock %}
+
+{% block content %}
+{% if client %}
+<div class="welcome-banner fade-in d1">
+  <div class="welcome-banner-glow"></div>
+  <div class="wb-left">
+    <div class="wb-eyebrow">One Voice Program</div>
+    <div class="wb-headline">{{ client.lab_name }} <span>Dashboard</span></div>
+    <div class="wb-sub">Your managed marketing program at a glance.</div>
+  </div>
+  <div style="text-align:right;flex-shrink:0;">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px;">Program Status</div>
+    <span class="portal-badge {% if client.status == 'active' %}green{% elif client.status == 'onboarding' %}gold{% else %}gray{% endif %}" style="font-size:12px;padding:4px 12px;">
+      {{ client.get_status_display }}
+    </span>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row fade-in d2">
+  <div class="stat-card">
+    <div class="stat-label">Prospect List Size</div>
+    <div class="stat-number">{{ total_dentists }}</div>
+    <div class="stat-sub">Active dentists on your list</div>
+  </div>
+  <div class="stat-card green-top">
+    <div class="stat-label">Emails Captured</div>
+    <div class="stat-number green">{{ email_count }}</div>
+    <div class="stat-sub">Dentist emails obtained</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Upcoming Appointments</div>
+    <div class="stat-number gold">{{ upcoming_appointments.count }}</div>
+    <div class="stat-sub">Scheduled visits</div>
+  </div>
+  <div class="stat-card {% if reorder_needed %}red-top{% else %}navy-top{% endif %}">
+    <div class="stat-label">Postcards on Hand</div>
+    <div class="stat-number {% if reorder_needed %}red{% endif %}">{{ total_on_hand }}</div>
+    <div class="stat-sub">{% if reorder_needed %}Reorder needed{% else %}Total inventory{% endif %}</div>
+  </div>
+</div>
+
+<div class="stats-row fade-in d2" style="grid-template-columns:repeat(3,1fr);margin-top:-12px;">
+  <div class="stat-card">
+    <div class="stat-label">Last Activity</div>
+    <div style="font-size:14px;font-weight:600;margin-top:8px;">{{ last_activity|date:"M j, Y g:i A"|default:"No activity yet" }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Next Mailing</div>
+    <div style="font-size:14px;font-weight:600;margin-top:8px;">{% if next_mailing %}{{ next_mailing.scheduled_date|date:"M j, Y" }}{% else %}Not scheduled{% endif %}</div>
+    <div class="stat-sub">{% if last_mailing %}Last: {{ last_mailing.scheduled_date|date:"M j, Y" }}{% endif %}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Unread Notifications</div>
+    <div class="stat-number {% if unread_count > 0 %}gold{% endif %}" style="font-size:28px;">{{ unread_count }}</div>
+  </div>
+</div>
+
+<div class="main-grid fade-in d3">
+  <!-- Upcoming Appointments -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128197;</span> Upcoming Appointments</div>
+    </div>
+    <div class="panel-body">
+      {% if upcoming_appointments %}
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Dentist</th>
+            <th>Practice</th>
+            <th>Date</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for appt in upcoming_appointments %}
+          <tr>
+            <td><strong>{{ appt.dentist.name }}</strong></td>
+            <td>{{ appt.dentist.practice_name }}</td>
+            <td>{{ appt.appointment_date|date:"M j, Y" }}</td>
+            <td>{{ appt.appointment_time|time:"g:i A" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">&#128197;</div>
+        <div class="empty-state-text">No upcoming appointments</div>
+        <p style="margin-top:8px;font-size:12px;color:var(--text3);">Your CSR will book appointments during call sessions.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- List Status Breakdown -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128203;</span> List Status Breakdown</div>
+    </div>
+    <div class="panel-body">
+      {% if status_counts %}
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for status, count in status_counts.items %}
+          <tr>
+            <td>
+              <span class="portal-badge {% if status == 'never_called' %}gray{% elif status == 'no_answer' %}orange{% elif status == 'email_captured' %}blue{% elif status == 'called_no_email' %}orange{% elif status == 'appointment' %}green{% elif status == 'do_not_contact' %}red{% else %}gray{% endif %}">
+                {{ status|title }}
+              </span>
+            </td>
+            <td><strong>{{ count }}</strong></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">&#128203;</div>
+        <div class="empty-state-text">No prospect data yet</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Contact AMS -->
+<div class="panel fade-in d4">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128222;</span> Contact AMS</div>
+  </div>
+  <div class="panel-body" style="display:flex;gap:40px;">
+    <div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Phone</div>
+      <div style="font-size:15px;font-weight:600;">708-502-3411</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Email</div>
+      <div style="font-size:15px;font-weight:600;">info@amsfusion.com</div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="empty-state-icon">&#9888;&#65039;</div>
+  <div class="empty-state-text">No client profile found</div>
+  <p style="margin-top:8px;font-size:12px;color:var(--text3);">Contact your administrator to set up your account.</p>
+</div>
+{% endif %}
+{% endblock %}

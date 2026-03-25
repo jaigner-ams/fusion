@@ -1,0 +1,26 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Correction Request{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">CORRECTION REQUEST</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ dentist.name }} &middot; {{ dentist.practice_name }}</p>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>What needs to be corrected?</label>
+        {{ form.correction_notes }}
+      </div>
+      <div class="portal-alert info">Your request will be sent to the admin for review.</div>
+      <div style="display:flex;gap:12px;margin-top:16px;">
+        <button type="submit" class="btn-gold">Submit Request</button>
+        <a href="{% url 'onevoice:client_prospect_list' %}" class="btn-portal-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

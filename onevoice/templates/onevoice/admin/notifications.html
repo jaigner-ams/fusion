@@ -1,0 +1,40 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Notifications{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">NOTIFICATIONS</h1>
+</div>
+
+<div class="panel">
+  <div class="panel-body" style="padding:0;">
+    {% if notifications %}
+    <table class="portal-table">
+      <thead><tr><th></th><th>Type</th><th>Title</th><th>Client</th><th>Date</th><th></th></tr></thead>
+      <tbody>
+        {% for notif in notifications %}
+        <tr style="{% if not notif.read %}background:var(--cream);font-weight:500;{% endif %}">
+          <td style="width:8px;padding:0;">{% if not notif.read %}<div style="width:6px;height:6px;background:var(--gold2);border-radius:50%;margin:0 auto;"></div>{% endif %}</td>
+          <td><span class="portal-badge navy">{{ notif.get_notification_type_display }}</span></td>
+          <td>{{ notif.title }}</td>
+          <td>{{ notif.client.lab_name|default:"—" }}</td>
+          <td>{{ notif.created_at|date:"M j, g:i A" }}</td>
+          <td>
+            {% if not notif.read %}
+            <form method="post" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="mark_read" value="{{ notif.pk }}">
+              <button type="submit" class="panel-link" style="border:none;background:none;cursor:pointer;">Mark Read</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No notifications</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

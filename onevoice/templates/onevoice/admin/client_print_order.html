@@ -1,0 +1,78 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Print Orders{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">PRINT ORDERS</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.lab_name }} &middot; Placeholder — workflow TBD</p>
+</div>
+
+<div class="portal-alert info" style="margin-bottom:20px;">
+  Print order placement workflow is pending. Use this form to log orders manually for now.
+</div>
+
+<!-- Log Order -->
+<div class="panel" style="margin-bottom:24px;">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">+</span> Log Print Order</div>
+  </div>
+  <div class="panel-body">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Vendor</label>
+          <input type="text" name="vendor" placeholder="Print vendor name...">
+        </div>
+        <div class="form-group">
+          <label>Confirmation Number</label>
+          <input type="text" name="confirmation_number" placeholder="Order #...">
+        </div>
+        <div class="form-group">
+          <label>Mail Date</label>
+          <input type="date" name="mail_date">
+        </div>
+        <div class="form-group">
+          <label>Expected Delivery</label>
+          <input type="date" name="expected_delivery">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" rows="2" placeholder="Optional notes..."></textarea>
+      </div>
+      <button type="submit" class="btn-gold">Log Order</button>
+    </form>
+  </div>
+</div>
+
+<!-- Order History -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128230;</span> Order History</div>
+  </div>
+  <div class="panel-body" style="padding:0;">
+    {% if orders %}
+    <table class="portal-table">
+      <thead><tr><th>Vendor</th><th>Confirmation</th><th>Mail Date</th><th>Expected Delivery</th><th>Notes</th><th>Logged</th></tr></thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td>{{ o.vendor|default:"—" }}</td>
+          <td>{{ o.confirmation_number|default:"—" }}</td>
+          <td>{{ o.mail_date|date:"M j, Y"|default:"—" }}</td>
+          <td>{{ o.expected_delivery|date:"M j, Y"|default:"—" }}</td>
+          <td style="max-width:200px;">{{ o.notes|truncatechars:50|default:"—" }}</td>
+          <td>{{ o.created_at|date:"M j, Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No print orders logged</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="btn-portal-outline" style="margin-top:16px;">Back to Client</a>
+{% endblock %}

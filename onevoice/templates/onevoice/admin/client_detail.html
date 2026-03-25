@@ -1,0 +1,149 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — {{ client.lab_name }}{% endblock %}
+{% block nav_clients %}active{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">{{ client.lab_name }}</h1>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.owner_name }} &middot; {{ client.phone }} &middot; {{ client.email }}</p>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <a href="{% url 'onevoice:client_edit' pk=client.pk %}" class="btn-portal-outline btn-portal-sm">Edit</a>
+    <a href="{% url 'onevoice:send_agreement' pk=client.pk %}" class="btn-portal btn-portal-sm">Send Agreement</a>
+  </div>
+</div>
+
+<!-- Status + Quick Stats -->
+<div class="stats-row fade-in d1">
+  <div class="stat-card">
+    <div class="stat-label">Status</div>
+    <div style="margin-top:4px;">
+      <span class="portal-badge {% if client.status == 'active' %}green{% elif client.status == 'onboarding' %}gold{% elif client.status == 'paused' %}orange{% else %}gray{% endif %}" style="font-size:12px;padding:4px 12px;">
+        {{ client.get_status_display }}
+      </span>
+    </div>
+    <div class="stat-sub">Mode {{ client.call_session_mode }} &middot; {{ client.get_membership_tier_display }}</div>
+  </div>
+  <div class="stat-card navy-top">
+    <div class="stat-label">List Size</div>
+    <div class="stat-number">{{ dentist_count }}</div>
+    <div class="stat-sub">of {{ client.mailing_list_size }} included{% if overage > 0 %} <span style="color:var(--red);">(+{{ overage }} overage)</span>{% endif %}</div>
+  </div>
+  <div class="stat-card green-top">
+    <div class="stat-label">Appointments</div>
+    <div class="stat-number green">{{ appointments.count }}</div>
+    <div class="stat-sub">Upcoming scheduled</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Agreements</div>
+    <div class="stat-number">{{ agreements.count }}</div>
+    <div class="stat-sub">
+      {% for a in agreements %}{% if a.signed %}Signed{% else %}Pending{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+      {% if not agreements %}None sent{% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Action Tiles -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;" class="fade-in d2">
+  <a href="{% url 'onevoice:import_dentist_list' pk=client.pk %}" style="text-decoration:none;display:block;background:var(--white);border:1px solid var(--border);padding:16px;text-align:center;transition:transform 0.2s;">
+    <div style="font-size:24px;margin-bottom:6px;">&#128196;</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);">Import List</div>
+  </a>
+  <a href="{% url 'onevoice:assign_csr' pk=client.pk %}" style="text-decoration:none;display:block;background:var(--white);border:1px solid var(--border);padding:16px;text-align:center;">
+    <div style="font-size:24px;margin-bottom:6px;">&#128101;</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);">Assign CSR</div>
+  </a>
+  <a href="{% url 'onevoice:client_postcards' pk=client.pk %}" style="text-decoration:none;display:block;background:var(--white);border:1px solid var(--border);padding:16px;text-align:center;">
+    <div style="font-size:24px;margin-bottom:6px;">&#128232;</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);">Postcards</div>
+  </a>
+  <a href="{% url 'onevoice:client_schedule' pk=client.pk %}" style="text-decoration:none;display:block;background:var(--white);border:1px solid var(--border);padding:16px;text-align:center;">
+    <div style="font-size:24px;margin-bottom:6px;">&#128197;</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);">Schedule</div>
+  </a>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;" class="fade-in d2">
+  <a href="{% url 'onevoice:client_inventory' pk=client.pk %}" style="text-decoration:none;display:block;background:var(--white);border:1px solid var(--border);padding:16px;text-align:center;">
+    <div style="font-size:24px;margin-bottom:6px;">&#128230;</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);">Inventory</div>
+  </a>
+  <a href="{% url 'onevoice:client_billing' pk=client.pk %}" style="text-decoration:none;display:block;background:var(--white);border:1px solid var(--border);padding:16px;text-align:center;">
+    <div style="font-size:24px;margin-bottom:6px;">&#128176;</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);">Billing</div>
+  </a>
+  <a href="{% url 'onevoice:client_print_order' pk=client.pk %}" style="text-decoration:none;display:block;background:var(--white);border:1px solid var(--border);padding:16px;text-align:center;">
+    <div style="font-size:24px;margin-bottom:6px;">&#128424;</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);">Print Orders</div>
+  </a>
+  <a href="{% url 'onevoice:send_agreement' pk=client.pk %}" style="text-decoration:none;display:block;background:var(--white);border:1px solid var(--border);padding:16px;text-align:center;">
+    <div style="font-size:24px;margin-bottom:6px;">&#128221;</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);">Agreement</div>
+  </a>
+</div>
+
+<!-- Status Breakdown + Imports -->
+<div class="main-grid fade-in d3">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128203;</span> List Status Breakdown</div>
+    </div>
+    <div class="panel-body">
+      {% if status_map %}
+      <table class="portal-table">
+        <thead><tr><th>Status</th><th>Count</th></tr></thead>
+        <tbody>
+          {% for status, count in status_map.items %}
+          <tr>
+            <td><span class="portal-badge {% if status == 'never_called' %}gray{% elif status == 'no_answer' %}orange{% elif status == 'email_captured' %}blue{% elif status == 'called_no_email' %}orange{% elif status == 'appointment' %}green{% elif status == 'do_not_contact' %}red{% else %}gray{% endif %}">{{ status|title }}</span></td>
+            <td><strong>{{ count }}</strong></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No dentists imported yet</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128196;</span> Recent Imports</div>
+    </div>
+    <div class="panel-body">
+      {% if imports %}
+      <table class="portal-table">
+        <thead><tr><th>File</th><th>Imported</th><th>Filtered</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for imp in imports %}
+          <tr>
+            <td>{{ imp.file_name }}</td>
+            <td><strong>{{ imp.imported_count }}</strong></td>
+            <td>{{ imp.filtered_count }}</td>
+            <td>{{ imp.imported_at|date:"M j, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No imports yet</div></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Internal Notes -->
+{% if client.internal_notes %}
+<div class="panel fade-in d4">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128221;</span> Internal Notes</div>
+    <span class="portal-badge red">Admin Only</span>
+  </div>
+  <div class="panel-body">
+    <p style="font-size:13px;line-height:1.6;white-space:pre-wrap;">{{ client.internal_notes }}</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

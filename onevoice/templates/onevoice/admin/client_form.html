@@ -1,0 +1,112 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — {% if is_edit %}Edit{% else %}Onboard{% endif %} Client{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">
+    {% if is_edit %}EDIT CLIENT{% else %}ONBOARD NEW CLIENT{% endif %}
+  </h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">
+    {% if is_edit %}Update {{ client.lab_name }}{% else %}Create a new One Voice client account{% endif %}
+  </p>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Lab Name</label>
+          {{ form.lab_name }}
+          {% if form.lab_name.errors %}<div style="color:var(--red);font-size:11px;margin-top:4px;">{{ form.lab_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>Owner Name</label>
+          {{ form.owner_name }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Address</label>
+        {{ form.address }}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>City</label>
+          {{ form.city }}
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          {{ form.state }}
+        </div>
+        <div class="form-group">
+          <label>Zip Code</label>
+          {{ form.zip_code }}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Phone</label>
+          {{ form.phone }}
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          {{ form.email }}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Membership Tier</label>
+          {{ form.membership_tier }}
+        </div>
+        <div class="form-group">
+          <label>Call Session Mode</label>
+          {{ form.call_session_mode }}
+        </div>
+        <div class="form-group">
+          <label>Mailing List Size</label>
+          {{ form.mailing_list_size }}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Monthly Fee</label>
+          {{ form.monthly_fee }}
+        </div>
+        {% if is_edit %}
+        <div class="form-group">
+          <label>Status</label>
+          {{ form.status }}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label>Internal Notes (Admin only)</label>
+        {{ form.internal_notes }}
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button type="submit" class="btn-gold">{% if is_edit %}Save Changes{% else %}Onboard Client{% endif %}</button>
+        {% if is_edit %}
+        <a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="btn-portal-outline">Cancel</a>
+        {% else %}
+        <a href="{% url 'onevoice:client_list' %}" class="btn-portal-outline">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if not is_edit %}
+<div class="portal-alert info" style="margin-top:16px;">
+  A login account will be auto-generated and emailed to the client on creation.
+</div>
+{% endif %}
+{% endblock %}

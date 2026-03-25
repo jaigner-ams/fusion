@@ -24,7 +24,15 @@ class UniversalLoginView(View):
     
     def get_success_url(self, user):
         """Redirect based on user type"""
-        if user.is_admin_user() or user.is_lab_user():
+        if user.is_superadmin_user() or user.is_ov_admin_user():
+            return reverse_lazy('onevoice:admin_dashboard')
+        elif user.is_csr_user():
+            return reverse_lazy('onevoice:csr_dashboard')
+        elif user.is_designer_user():
+            return reverse_lazy('onevoice:designer_dashboard')
+        elif user.is_ov_client_user():
+            return reverse_lazy('onevoice:client_dashboard')
+        elif user.is_admin_user() or user.is_lab_user():
             return reverse_lazy('price_management')
         elif user.is_caller_user():
             return reverse_lazy('prospects:caller_dashboard')
@@ -60,6 +68,10 @@ class UniversalLoginView(View):
                     messages.success(request, f'Welcome {user.first_name or username}!')
                 elif user.is_dentist_user():
                     messages.success(request, f'Welcome Dr. {user.first_name or username}!')
+                elif user.is_superadmin_user():
+                    messages.success(request, f'Welcome Super Admin {user.first_name or username}!')
+                elif user.is_onevoice_user():
+                    messages.success(request, f'Welcome {user.first_name or username}!')
                 else:
                     messages.success(request, f'Welcome {user.first_name or username}!')
                 

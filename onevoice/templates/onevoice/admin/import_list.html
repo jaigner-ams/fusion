@@ -1,0 +1,89 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Import Dentist List{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">IMPORT DENTIST LIST</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.lab_name }} &middot; Upload CSV from Data Axle</p>
+</div>
+
+{% if not show_preview %}
+<!-- Upload Form -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128196;</span> Upload CSV File</div>
+  </div>
+  <div class="panel-body">
+    <form method="post" enctype="multipart/form-data" class="portal-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>CSV File (Data Axle export)</label>
+        <input type="file" name="csv_file" accept=".csv" required>
+      </div>
+      <div class="portal-alert info">
+        <strong>Auto-filtering:</strong> The system will keep General Practice and Prosthodontists, and remove Endodontists, Orthodontists, Oral Surgeons, Periodontists, and Pedodontists.
+      </div>
+      <button type="submit" class="btn-gold">Upload &amp; Preview</button>
+    </form>
+  </div>
+</div>
+
+{% else %}
+<!-- Preview Results -->
+<div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+  <div class="stat-card green-top">
+    <div class="stat-label">Will Import</div>
+    <div class="stat-number green">{{ keep_count }}</div>
+    <div class="stat-sub">GP + Prosthodontist</div>
+  </div>
+  <div class="stat-card red-top">
+    <div class="stat-label">Filtered Out</div>
+    <div class="stat-number red">{{ filter_count }}</div>
+    <div class="stat-sub">Specialists removed</div>
+  </div>
+  <div class="stat-card navy-top">
+    <div class="stat-label">Total Rows</div>
+    <div class="stat-number">{{ total_count }}</div>
+    <div class="stat-sub">In CSV file</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128203;</span> Preview — Records to Import</div>
+  </div>
+  <div class="panel-body" style="padding:0;max-height:400px;overflow-y:auto;">
+    <table class="portal-table">
+      <thead>
+        <tr><th>Name</th><th>Practice</th><th>Specialty</th><th>City/State</th><th>Phone</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr style="{% if not row.keep %}opacity:0.4;text-decoration:line-through;{% endif %}">
+          <td>{{ row.name }}</td>
+          <td>{{ row.practice_name }}</td>
+          <td>{{ row.specialty_raw }}</td>
+          <td>{{ row.city }}{% if row.state %}, {{ row.state }}{% endif %}</td>
+          <td>{{ row.phone }}</td>
+          <td>
+            {% if row.keep %}
+            <span class="portal-badge green">Keep</span>
+            {% else %}
+            <span class="portal-badge red">Filtered</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<form method="post" style="margin-top:16px;display:flex;gap:12px;">
+  {% csrf_token %}
+  <input type="hidden" name="confirm_import" value="1">
+  <button type="submit" class="btn-green">Confirm Import ({{ keep_count }} records)</button>
+  <a href="{% url 'onevoice:import_dentist_list' pk=client.pk %}" class="btn-portal-outline">Cancel &amp; Re-upload</a>
+</form>
+{% endif %}
+{% endblock %}

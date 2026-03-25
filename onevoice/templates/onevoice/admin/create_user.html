@@ -1,0 +1,66 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Create Staff User{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">CREATE STAFF USER</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">Create a new CSR, Designer, or OV Admin account</p>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div class="portal-alert error">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Username</label>
+          {{ form.username }}
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          {{ form.user_type }}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        {{ form.email }}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Password</label>
+          {{ form.password }}
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          {{ form.password_confirm }}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button type="submit" class="btn-gold">Create User</button>
+        <a href="{% url 'onevoice:admin_dashboard' %}" class="btn-portal-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

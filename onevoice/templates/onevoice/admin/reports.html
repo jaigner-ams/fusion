@@ -1,0 +1,101 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Reports{% endblock %}
+{% block nav_reports %}active{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">REPORTS &amp; ANALYTICS</h1>
+</div>
+
+<!-- Program-wide -->
+<div class="stats-row fade-in d1">
+  <div class="stat-card">
+    <div class="stat-label">Active Clients</div>
+    <div class="stat-number">{{ total_active_clients }}</div>
+  </div>
+  <div class="stat-card green-top">
+    <div class="stat-label">Total Appointments</div>
+    <div class="stat-number green">{{ total_appointments }}</div>
+  </div>
+  <div class="stat-card navy-top">
+    <div class="stat-label">Emails Captured</div>
+    <div class="stat-number">{{ total_emails }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Cases Won</div>
+    <div class="stat-number gold">{{ total_cases_won }}</div>
+  </div>
+</div>
+
+<div class="stats-row fade-in d2" style="grid-template-columns:repeat(3,1fr);">
+  <div class="stat-card">
+    <div class="stat-label">Total Calls</div>
+    <div class="stat-number">{{ total_calls }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Call-to-Appointment Rate</div>
+    <div class="stat-number {% if call_to_appt_rate >= 5 %}green{% else %}red{% endif %}">{{ call_to_appt_rate|floatformat:1 }}%</div>
+    <div class="stat-sub">Benchmark: 5%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Call-to-Email Rate</div>
+    <div class="stat-number {% if call_to_email_rate >= 65 %}green{% else %}red{% endif %}">{{ call_to_email_rate|floatformat:1 }}%</div>
+    <div class="stat-sub">Benchmark: 65%</div>
+  </div>
+</div>
+
+<div class="main-grid fade-in d3">
+  <!-- CSR Performance -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128101;</span> CSR Performance</div>
+    </div>
+    <div class="panel-body" style="padding:0;">
+      {% if csr_stats %}
+      <table class="portal-table">
+        <thead><tr><th>CSR</th><th>Calls</th><th>Appointments</th><th>Emails</th></tr></thead>
+        <tbody>
+          {% for csr in csr_stats %}
+          <tr>
+            <td><strong>{{ csr.first_name }} {{ csr.last_name }}</strong></td>
+            <td>{{ csr.total_calls }}</td>
+            <td>{{ csr.appointments_booked }}</td>
+            <td>{{ csr.emails_captured }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No CSR data yet</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Client Success -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#127970;</span> Client Success</div>
+    </div>
+    <div class="panel-body" style="padding:0;">
+      {% if client_stats %}
+      <table class="portal-table">
+        <thead><tr><th>Client</th><th>Dentists</th><th>Appts</th><th>Emails</th><th>Won</th></tr></thead>
+        <tbody>
+          {% for c in client_stats %}
+          <tr>
+            <td><strong>{{ c.lab_name }}</strong></td>
+            <td>{{ c.total_dentists }}</td>
+            <td>{{ c.total_appointments }}</td>
+            <td>{{ c.emails_captured }}</td>
+            <td>{{ c.cases_won }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No client data yet</div></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Schedule{% endblock %}
+{% block nav_client_schedule %}active{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">SCHEDULE</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">Mailing dates and call sessions</p>
+</div>
+
+<div class="main-grid">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128232;</span> Postcard Mailings</div>
+    </div>
+    <div class="panel-body" style="padding:0;">
+      {% if mailings %}
+      <table class="portal-table">
+        <thead><tr><th>Date</th><th>Description</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for m in mailings %}
+          <tr>
+            <td>{{ m.scheduled_date|date:"M j, Y" }}</td>
+            <td>{{ m.description|default:"—" }}</td>
+            <td><span class="portal-badge {% if m.completed %}green{% else %}navy{% endif %}">{% if m.completed %}Sent{% else %}Scheduled{% endif %}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No mailings scheduled</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128222;</span> Call Sessions</div>
+    </div>
+    <div class="panel-body" style="padding:0;">
+      {% if sessions %}
+      <table class="portal-table">
+        <thead><tr><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for s in sessions %}
+          <tr>
+            <td>{{ s.scheduled_date|date:"M j, Y" }}</td>
+            <td><span class="portal-badge {% if s.status == 'completed' %}green{% elif s.status == 'in_progress' %}gold{% elif s.status == 'cancelled' %}red{% else %}navy{% endif %}">{{ s.get_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No sessions scheduled</div></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

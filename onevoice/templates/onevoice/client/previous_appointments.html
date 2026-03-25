@@ -1,0 +1,40 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Previous Appointments{% endblock %}
+{% block nav_client_appointments %}active{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">PREVIOUS APPOINTMENTS</h1>
+  </div>
+  <a href="{% url 'onevoice:client_appointments' %}" class="btn-portal-outline btn-portal-sm">Upcoming</a>
+</div>
+
+<div class="panel">
+  <div class="panel-body" style="padding:0;">
+    {% if appointments %}
+    <table class="portal-table">
+      <thead><tr><th>Dentist</th><th>Practice</th><th>Date</th><th>Case Status</th><th>Follow-up</th><th></th></tr></thead>
+      <tbody>
+        {% for appt in appointments %}
+        <tr>
+          <td><strong>{{ appt.dentist.name }}</strong></td>
+          <td>{{ appt.dentist.practice_name|default:"—" }}</td>
+          <td>{{ appt.appointment_date|date:"M j, Y" }}</td>
+          <td>
+            <span class="portal-badge {% if appt.case_status == 'won' %}green{% elif appt.case_status == 'lost' %}red{% elif appt.case_status == 'not_yet' %}orange{% else %}gray{% endif %}">
+              {{ appt.get_case_status_display }}
+            </span>
+          </td>
+          <td>{{ appt.followup_date|date:"M j"|default:"—" }}</td>
+          <td><a href="{% url 'onevoice:client_followup' pk=appt.pk %}" class="panel-link">Update</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No previous appointments</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

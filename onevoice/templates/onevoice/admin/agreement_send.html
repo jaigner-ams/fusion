@@ -1,0 +1,29 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Send Agreement{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">SEND SERVICE AGREEMENT</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.lab_name }} &middot; {{ client.owner_name }}</p>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Agreement Text</label>
+        {{ form.agreement_text }}
+        <p style="font-size:11px;color:var(--text3);margin-top:4px;">This text will be displayed to the client. They will type their name and click "I Agree" to sign.</p>
+      </div>
+      <div class="portal-alert info">
+        The agreement becomes <strong>immutable</strong> once the client signs. It cannot be modified after submission.
+      </div>
+      <div style="display:flex;gap:12px;margin-top:16px;">
+        <button type="submit" class="btn-gold">Send Agreement to Client</button>
+        <a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="btn-portal-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

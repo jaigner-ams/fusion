@@ -1,0 +1,79 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — My Availability{% endblock %}
+{% block nav_client_availability %}active{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">MY AVAILABILITY</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">Set when your CSR can book appointments for you</p>
+</div>
+
+<!-- Current Availability -->
+<div class="panel" style="margin-bottom:24px;">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#9200;</span> Current Availability</div>
+  </div>
+  <div class="panel-body" style="padding:0;">
+    {% if availability %}
+    <table class="portal-table">
+      <thead><tr><th>Type</th><th>Day/Date</th><th>Time</th><th></th></tr></thead>
+      <tbody>
+        {% for avail in availability %}
+        <tr>
+          <td><span class="portal-badge {% if avail.availability_type == 'recurring' %}navy{% else %}gold{% endif %}">{{ avail.get_availability_type_display }}</span></td>
+          <td>{% if avail.availability_type == 'recurring' %}{{ avail.get_day_of_week_display }}{% else %}{{ avail.specific_date|date:"M j, Y" }}{% endif %}</td>
+          <td>{{ avail.start_time|time:"g:i A" }} — {{ avail.end_time|time:"g:i A" }}</td>
+          <td>
+            <form method="post" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="delete_id" value="{{ avail.pk }}">
+              <button type="submit" class="panel-link" style="border:none;background:none;cursor:pointer;color:var(--red);">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No availability set</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Add -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">+</span> Add Availability</div>
+  </div>
+  <div class="panel-body">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Type</label>
+          {{ form.availability_type }}
+        </div>
+        <div class="form-group">
+          <label>Day of Week (recurring)</label>
+          {{ form.day_of_week }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Specific Date (if specific)</label>
+        {{ form.specific_date }}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Start Time</label>
+          {{ form.start_time }}
+        </div>
+        <div class="form-group">
+          <label>End Time</label>
+          {{ form.end_time }}
+        </div>
+      </div>
+      <button type="submit" class="btn-gold">Add Availability</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Contact AMS{% endblock %}
+{% block nav_client_contact %}active{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">CONTACT AMS</h1>
+</div>
+
+<div class="main-grid">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128172;</span> Send a Message</div>
+    </div>
+    <div class="panel-body">
+      <form method="post" class="portal-form">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Subject</label>
+          <input type="text" name="subject" required placeholder="What's this about?">
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea name="message" rows="5" required placeholder="Your message..."></textarea>
+        </div>
+        <button type="submit" class="btn-gold" style="width:100%;">Send Message</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128222;</span> Direct Contact</div>
+    </div>
+    <div class="panel-body">
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">Phone</div>
+        <div style="font-size:20px;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--navy);">708-502-3411</div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">Email</div>
+        <div style="font-size:15px;font-weight:600;">info@amsfusion.com</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">Hours</div>
+        <div style="font-size:13px;">Monday — Friday, 9 AM — 5 PM CT</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

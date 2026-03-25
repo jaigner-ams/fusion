@@ -1,0 +1,90 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — {{ client.lab_name }}{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">{{ client.lab_name }}</h1>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.owner_name }} &middot; Mode {{ client.call_session_mode }} &middot; {{ dentist_count }} dentists</p>
+  </div>
+  <a href="{% url 'onevoice:csr_dentist_list' client_pk=client.pk %}" class="btn-gold">Open Dentist List</a>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">List Size</div>
+    <div class="stat-number">{{ dentist_count }}</div>
+  </div>
+  <div class="stat-card green-top">
+    <div class="stat-label">Emails Captured</div>
+    <div class="stat-number green">{{ email_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Appointments</div>
+    <div class="stat-number gold">{{ appt_count }}</div>
+  </div>
+  <div class="stat-card navy-top">
+    <div class="stat-label">Call Session</div>
+    <div style="margin-top:8px;">
+      {% if latest_session %}
+      <span class="portal-badge {% if latest_session.status == 'in_progress' %}gold{% elif latest_session.status == 'completed' %}green{% else %}navy{% endif %}">
+        {{ latest_session.get_status_display }}
+      </span>
+      {% else %}
+      <span class="portal-badge gray">None</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Status Breakdown -->
+<div class="main-grid">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128203;</span> List Status</div>
+    </div>
+    <div class="panel-body">
+      {% for status, count in status_map.items %}
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+        <span class="portal-badge {% if status == 'never_called' %}gray{% elif status == 'no_answer' %}orange{% elif status == 'email_captured' %}blue{% elif status == 'called_no_email' %}orange{% elif status == 'appointment' %}green{% elif status == 'do_not_contact' %}red{% endif %}">
+          {{ status|title }}
+        </span>
+        <strong>{{ count }}</strong>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128222;</span> Session Controls</div>
+    </div>
+    <div class="panel-body">
+      {% if latest_session and latest_session.status == 'scheduled' %}
+      <p style="margin-bottom:12px;font-size:13px;">Next session: <strong>{{ latest_session.scheduled_date|date:"M j, Y" }}</strong></p>
+      <form method="post" action="{% url 'onevoice:csr_session_begin' pk=latest_session.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-green" style="width:100%;">Begin Call Session</button>
+      </form>
+      {% elif latest_session and latest_session.status == 'in_progress' %}
+      <div class="portal-alert success">Call session in progress since {{ latest_session.started_at|date:"g:i A" }}</div>
+      <form method="post" action="{% url 'onevoice:csr_session_done' pk=latest_session.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-red" style="width:100%;margin-top:8px;">I'm Done</button>
+      </form>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No active session</div></div>
+      {% endif %}
+
+      {% if next_mailing %}
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Next Mailing</div>
+        <div style="font-size:14px;font-weight:600;margin-top:4px;">{{ next_mailing.scheduled_date|date:"M j, Y" }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<a href="{% url 'onevoice:csr_dashboard' %}" class="btn-portal-outline" style="margin-top:8px;">Back to Dashboard</a>
+{% endblock %}

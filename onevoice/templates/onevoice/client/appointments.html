@@ -1,0 +1,39 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Upcoming Appointments{% endblock %}
+{% block nav_client_appointments %}active{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">UPCOMING APPOINTMENTS</h1>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ appointments.count }} scheduled</p>
+  </div>
+  <a href="{% url 'onevoice:client_previous_appointments' %}" class="btn-portal-outline btn-portal-sm">Previous Appointments</a>
+</div>
+
+<div class="panel">
+  <div class="panel-body" style="padding:0;">
+    {% if appointments %}
+    <table class="portal-table">
+      <thead><tr><th>Dentist</th><th>Practice</th><th>Date</th><th>Time</th><th>Address</th></tr></thead>
+      <tbody>
+        {% for appt in appointments %}
+        <tr>
+          <td><strong>{{ appt.dentist.name }}</strong></td>
+          <td>{{ appt.dentist.practice_name|default:"—" }}</td>
+          <td>{{ appt.appointment_date|date:"M j, Y" }}</td>
+          <td>{{ appt.appointment_time|time:"g:i A" }}</td>
+          <td style="font-size:11px;">{{ appt.dentist.address }} {{ appt.dentist.city }}{% if appt.dentist.state %}, {{ appt.dentist.state }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">&#128197;</div>
+      <div class="empty-state-text">No upcoming appointments</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

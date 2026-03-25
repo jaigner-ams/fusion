@@ -1,0 +1,68 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Client Postcards{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">POSTCARD DESIGNS</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.lab_name }}</p>
+</div>
+
+<!-- Assign from library -->
+<div class="panel" style="margin-bottom:24px;">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">+</span> Assign Template from Library</div>
+  </div>
+  <div class="panel-body">
+    <form method="post" class="portal-form" style="display:flex;gap:12px;align-items:flex-end;">
+      {% csrf_token %}
+      <div class="form-group" style="margin:0;flex:1;">
+        <label>Template</label>
+        <select name="template_id" class="form-control">
+          {% for tmpl in master_templates %}
+          <option value="{{ tmpl.pk }}">{{ tmpl.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-portal btn-portal-sm" style="height:38px;">Assign to Client</button>
+    </form>
+  </div>
+</div>
+
+<!-- Client Designs -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128232;</span> Client Designs</div>
+  </div>
+  <div class="panel-body" style="padding:0;">
+    {% if designs %}
+    <table class="portal-table">
+      <thead>
+        <tr><th>Name</th><th>Status</th><th>Approved</th><th>Locked</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for d in designs %}
+        <tr>
+          <td><strong>{{ d.name }}</strong></td>
+          <td><span class="portal-badge {% if d.status == 'approved' or d.status == 'locked' %}green{% elif d.status == 'pending_approval' %}gold{% else %}gray{% endif %}">{{ d.get_status_display }}</span></td>
+          <td>{% if d.approved_by_client %}{{ d.approved_at|date:"M j" }}{% else %}—{% endif %}</td>
+          <td>{% if d.locked %}<span class="portal-badge red">Locked</span>{% else %}—{% endif %}</td>
+          <td>
+            {% if d.locked %}
+            <form method="post" action="{% url 'onevoice:postcard_unlock' pk=d.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn-portal-outline btn-portal-sm">Unlock</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No designs assigned yet</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="btn-portal-outline" style="margin-top:16px;">Back to Client</a>
+{% endblock %}

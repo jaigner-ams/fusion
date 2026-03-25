@@ -29,6 +29,7 @@ urlpatterns = [
     path('find-lab/', mgmt_views.lab_search_view, name='lab_search_root'),
     path('prices/', include('mgmt.urls')),
     path('prospects/', include('prospects.urls', namespace='prospects')),
+    path('onevoice/', include('onevoice.urls', namespace='onevoice')),
     path('accounts/login/', LabLoginView.as_view(), name='login'),
     path('accounts/logout/', CustomLogoutView.as_view(), name='logout'),
 ]

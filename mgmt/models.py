@@ -17,6 +17,11 @@ class CustomUser(AbstractUser):
         ('lab', 'Lab'),
         ('dentist', 'Dentist'),
         ('caller', 'Caller'),
+        ('superadmin', 'Super Admin'),
+        ('ov_admin', 'OV Admin'),
+        ('csr', 'CSR'),
+        ('designer', 'Designer'),
+        ('ov_client', 'OV Client'),
     ]
 
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='dentist')
@@ -68,6 +73,24 @@ class CustomUser(AbstractUser):
 
     def is_caller_user(self):
         return self.user_type == 'caller'
+
+    def is_superadmin_user(self):
+        return self.user_type == 'superadmin'
+
+    def is_ov_admin_user(self):
+        return self.user_type == 'ov_admin'
+
+    def is_csr_user(self):
+        return self.user_type == 'csr'
+
+    def is_designer_user(self):
+        return self.user_type == 'designer'
+
+    def is_ov_client_user(self):
+        return self.user_type == 'ov_client'
+
+    def is_onevoice_user(self):
+        return self.user_type in ('superadmin', 'ov_admin', 'csr', 'designer', 'ov_client')
     
     def get_total_credits(self):
         """Get total crown credits (economy + premium)"""

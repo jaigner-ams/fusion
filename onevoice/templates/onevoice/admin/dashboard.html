@@ -1,0 +1,122 @@
+{% extends "onevoice/base_onevoice.html" %}
+
+{% block title %}One Voice — Admin Dashboard{% endblock %}
+{% block nav_admin_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="welcome-banner fade-in d1">
+  <div class="welcome-banner-glow"></div>
+  <div class="wb-left">
+    <div class="wb-eyebrow">One Voice Program</div>
+    <div class="wb-headline">Admin <span>Dashboard</span></div>
+    <div class="wb-sub">Manage clients, CSR assignments, postcard campaigns, and program operations.</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row fade-in d2">
+  <div class="stat-card">
+    <div class="stat-label">Active Clients</div>
+    <div class="stat-number green">{{ active_clients }}</div>
+    <div class="stat-sub">{{ onboarding_clients }} onboarding</div>
+  </div>
+  <div class="stat-card navy-top">
+    <div class="stat-label">Total Clients</div>
+    <div class="stat-number">{{ total_clients }}</div>
+    <div class="stat-sub">All programs</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pending Corrections</div>
+    <div class="stat-number {% if pending_corrections > 0 %}red{% endif %}">{{ pending_corrections }}</div>
+    <div class="stat-sub">Client-submitted requests</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Removal Requests</div>
+    <div class="stat-number {% if removal_requests > 0 %}red{% endif %}">{{ removal_requests }}</div>
+    <div class="stat-sub">Flagged by clients</div>
+  </div>
+</div>
+
+<div class="main-grid fade-in d3">
+  <!-- Recent Clients -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#127970;</span> Recent Clients</div>
+    </div>
+    <div class="panel-body">
+      {% if recent_clients %}
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Lab Name</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Tier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in recent_clients %}
+          <tr>
+            <td><strong>{{ client.lab_name }}</strong></td>
+            <td>{{ client.owner_name }}</td>
+            <td>
+              <span class="portal-badge {% if client.status == 'active' %}green{% elif client.status == 'onboarding' %}gold{% elif client.status == 'paused' %}orange{% else %}gray{% endif %}">
+                {{ client.get_status_display }}
+              </span>
+            </td>
+            <td>{{ client.get_membership_tier_display }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">&#127970;</div>
+        <div class="empty-state-text">No clients yet</div>
+        <p style="margin-top:8px;font-size:12px;color:var(--text3);">Onboard your first client to get started.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Upcoming Sessions -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128222;</span> Upcoming Call Sessions</div>
+    </div>
+    <div class="panel-body">
+      {% if upcoming_sessions %}
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Date</th>
+            <th>CSR</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for session in upcoming_sessions %}
+          <tr>
+            <td><strong>{{ session.client.lab_name }}</strong></td>
+            <td>{{ session.scheduled_date|date:"M j, Y" }}</td>
+            <td>{{ session.csr.first_name|default:session.csr.username }}</td>
+            <td>
+              <span class="portal-badge {% if session.status == 'in_progress' %}gold{% else %}navy{% endif %}">
+                {{ session.get_status_display }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">&#128197;</div>
+        <div class="empty-state-text">No upcoming sessions</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

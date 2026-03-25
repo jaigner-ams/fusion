@@ -1,0 +1,42 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Assign CSR{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">ASSIGN CSR</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.lab_name }} &middot; {{ dentist_count }} dentists on list</p>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Select CSRs (max 2)</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          {% for csr in csrs %}
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;">
+            <input type="checkbox" name="csrs" value="{{ csr.id }}" {% if csr.id in assigned_ids %}checked{% endif %}>
+            {{ csr.first_name }} {{ csr.last_name }} ({{ csr.username }})
+          </label>
+          {% endfor %}
+        </div>
+        {% if not csrs %}
+        <div class="portal-alert info" style="margin-top:8px;">No CSR users found. <a href="{% url 'onevoice:create_ov_user' %}">Create one</a>.</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label>Split At Record # (if 2 CSRs)</label>
+        <input type="number" name="split_at" class="form-control" placeholder="e.g. 50" style="max-width:200px;">
+        <p style="font-size:11px;color:var(--text3);margin-top:4px;">Records 1 to N go to first CSR, rest to second CSR.</p>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:16px;">
+        <button type="submit" class="btn-gold">Save Assignment</button>
+        <a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="btn-portal-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

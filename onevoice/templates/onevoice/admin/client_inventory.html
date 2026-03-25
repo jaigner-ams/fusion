@@ -1,0 +1,44 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Inventory{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">POSTCARD INVENTORY</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.lab_name }}</p>
+</div>
+
+<div class="panel">
+  <div class="panel-body" style="padding:0;">
+    {% if inventory %}
+    <table class="portal-table">
+      <thead><tr><th>Design</th><th>On Hand</th><th>Reorder At</th><th>Last Restocked</th><th></th></tr></thead>
+      <tbody>
+        {% for inv in inventory %}
+        <tr>
+          <td><strong>{{ inv.design.name }}</strong></td>
+          <td>
+            <span style="{% if inv.is_below_threshold %}color:var(--red);font-weight:700;{% endif %}">{{ inv.quantity_on_hand }}</span>
+            {% if inv.is_below_threshold %}<span class="portal-badge red" style="margin-left:4px;">Low</span>{% endif %}
+          </td>
+          <td>{{ inv.reorder_threshold }}</td>
+          <td>{{ inv.last_restocked|date:"M j, Y"|default:"Never" }}</td>
+          <td>
+            <form method="post" class="portal-form" style="display:flex;gap:8px;align-items:center;">
+              {% csrf_token %}
+              <input type="hidden" name="inventory_id" value="{{ inv.pk }}">
+              <input type="number" name="quantity" placeholder="Qty" style="width:80px;padding:4px 8px;">
+              <button type="submit" class="btn-portal-outline btn-portal-sm">Update</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No inventory records</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="btn-portal-outline" style="margin-top:16px;">Back to Client</a>
+{% endblock %}

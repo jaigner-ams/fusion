@@ -1,0 +1,67 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Dentist List{% endblock %}
+
+{% block extra_css %}
+.dentist-status-bar { width: 4px; border-radius: 2px; min-height: 40px; }
+.status-never_called { background: #9ca3af; }
+.status-no_answer { background: #eab308; }
+.status-email_captured { background: #3b82f6; }
+.status-called_no_email { background: #f97316; }
+.status-appointment { background: #22c55e; }
+.status-do_not_contact { background: #ef4444; }
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">DENTIST LIST</h1>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.lab_name }} &middot; {{ dentists.count }} records</p>
+  </div>
+  <a href="{% url 'onevoice:csr_client_panel' client_pk=client.pk %}" class="btn-portal-outline btn-portal-sm">Back to Client</a>
+</div>
+
+<!-- Filter -->
+<div style="margin-bottom:16px;display:flex;gap:6px;flex-wrap:wrap;">
+  <a href="?status=" class="portal-badge {% if not status_filter %}gold{% else %}navy{% endif %}" style="text-decoration:none;padding:4px 10px;">All</a>
+  {% for val, label in status_choices %}
+  {% if val != 'removed' %}
+  <a href="?status={{ val }}" class="portal-badge {% if status_filter == val %}gold{% else %}{% if val == 'never_called' %}gray{% elif val == 'no_answer' %}orange{% elif val == 'email_captured' %}blue{% elif val == 'called_no_email' %}orange{% elif val == 'appointment' %}green{% elif val == 'do_not_contact' %}red{% endif %}{% endif %}" style="text-decoration:none;padding:4px 10px;">
+    {{ label }}
+  </a>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-body" style="padding:0;">
+    {% if dentists %}
+    <table class="portal-table">
+      <thead>
+        <tr><th style="width:8px;"></th><th>Dentist</th><th>Practice</th><th>Phone</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for d in dentists %}
+        <tr>
+          <td style="padding:0;"><div class="dentist-status-bar status-{{ d.status }}"></div></td>
+          <td>
+            <strong>{{ d.name }}</strong>
+            {% if d.callback_flag %}<span class="portal-badge gold" style="margin-left:4px;font-size:8px;">Callback</span>{% endif %}
+          </td>
+          <td>{{ d.practice_name|default:"—" }}</td>
+          <td>{{ d.phone|default:"—" }}</td>
+          <td>
+            <span class="portal-badge {% if d.status == 'never_called' %}gray{% elif d.status == 'no_answer' %}orange{% elif d.status == 'email_captured' %}blue{% elif d.status == 'called_no_email' %}orange{% elif d.status == 'appointment' %}green{% elif d.status == 'do_not_contact' %}red{% endif %}">
+              {{ d.get_status_display }}
+            </span>
+          </td>
+          <td><a href="{% url 'onevoice:csr_dentist_record' pk=d.pk %}" class="panel-link">Open</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No dentists match filter</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

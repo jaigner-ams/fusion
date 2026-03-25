@@ -1,0 +1,73 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Postcards{% endblock %}
+{% block nav_client_postcards %}active{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">POSTCARDS</h1>
+</div>
+
+<!-- My Designs -->
+{% if designs %}
+<div class="panel" style="margin-bottom:24px;">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128232;</span> My Designs</div>
+  </div>
+  <div class="panel-body">
+    {% for d in designs %}
+    <div style="display:flex;align-items:center;gap:16px;padding:12px 0;{% if not forloop.last %}border-bottom:1px solid var(--border);{% endif %}">
+      {% if d.customized_image %}
+      <img src="{{ d.customized_image.url }}" style="width:120px;height:80px;object-fit:cover;border:1px solid var(--border);">
+      {% elif d.template_image %}
+      <img src="{{ d.template_image.url }}" style="width:120px;height:80px;object-fit:cover;border:1px solid var(--border);">
+      {% endif %}
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:14px;">{{ d.name }}</div>
+        <div style="margin-top:4px;">
+          <span class="portal-badge {% if d.status == 'locked' %}green{% elif d.status == 'pending_approval' %}gold{% else %}gray{% endif %}">{{ d.get_status_display }}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        {% if d.status == 'pending_approval' and not d.locked %}
+        <form method="post" action="{% url 'onevoice:client_postcard_approve' pk=d.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-green btn-portal-sm" onclick="return confirm('Approve and lock this design?')">Approve</button>
+        </form>
+        {% endif %}
+        {% if not d.locked %}
+        <form method="post" action="{% url 'onevoice:client_postcard_comment' pk=d.pk %}" style="display:flex;gap:4px;">
+          {% csrf_token %}
+          <input type="text" name="comment" placeholder="Add comment..." style="padding:4px 8px;border:1px solid var(--border);font-size:11px;width:160px;">
+          <button type="submit" class="btn-portal-outline btn-portal-sm">Send</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Template Gallery -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#127912;</span> Design Template Gallery</div>
+  </div>
+  <div class="panel-body">
+    {% if master_templates %}
+    <div class="main-grid-3">
+      {% for tmpl in master_templates %}
+      <div style="border:1px solid var(--border);text-align:center;padding:16px;">
+        {% if tmpl.template_image %}
+        <img src="{{ tmpl.template_image.url }}" alt="{{ tmpl.name }}" style="max-width:100%;max-height:150px;">
+        {% endif %}
+        <div style="font-weight:600;margin-top:8px;">{{ tmpl.name }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No templates available</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

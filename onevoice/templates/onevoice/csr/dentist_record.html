@@ -1,0 +1,120 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — {{ dentist.name }}{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">{{ dentist.name }}</h1>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ dentist.practice_name|default:"" }} &middot; {{ client.lab_name }}</p>
+  </div>
+  <span class="portal-badge {% if dentist.status == 'never_called' %}gray{% elif dentist.status == 'no_answer' %}orange{% elif dentist.status == 'email_captured' %}blue{% elif dentist.status == 'called_no_email' %}orange{% elif dentist.status == 'appointment' %}green{% elif dentist.status == 'do_not_contact' %}red{% endif %}" style="font-size:12px;padding:5px 14px;">
+    {{ dentist.get_status_display }}
+  </span>
+</div>
+
+{% if locked_by_other %}
+<div class="portal-alert error">
+  This record is currently being edited by {{ dentist.locked_by.first_name|default:dentist.locked_by.username }}. Read-only view.
+</div>
+{% endif %}
+
+<div class="main-grid">
+  <!-- Contact Info -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128100;</span> Contact Info</div>
+    </div>
+    <div class="panel-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+        <div><span style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Phone</span><br><strong>{{ dentist.phone|default:"—" }}</strong></div>
+        <div><span style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Email</span><br><strong>{{ dentist.email|default:"—" }}</strong></div>
+        <div><span style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Contact Person</span><br><strong>{{ dentist.contact_person|default:"—" }}</strong></div>
+        <div><span style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Office Manager</span><br><strong>{{ dentist.office_manager|default:"—" }}</strong></div>
+        <div style="grid-column:span 2;"><span style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:1px;">Address</span><br><strong>{{ dentist.address }} {{ dentist.city }}{% if dentist.state %}, {{ dentist.state }}{% endif %} {{ dentist.zip_code }}</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Call -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128222;</span> Log Call</div>
+    </div>
+    <div class="panel-body">
+      {% if not locked_by_other %}
+      <form method="post" class="portal-form">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Call Outcome</label>
+          {{ form.outcome }}
+        </div>
+        <div class="form-group">
+          <label>Email Captured</label>
+          {{ form.email_captured }}
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          {{ form.notes }}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>Callback Date</label>
+            {{ form.callback_date }}
+          </div>
+          <div class="form-group">
+            <label>Callback Time</label>
+            {{ form.callback_time }}
+          </div>
+        </div>
+        <button type="submit" class="btn-gold" style="width:100%;">Save Call Record</button>
+      </form>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">Record locked — read only</div></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Call History -->
+<div class="panel" style="margin-top:4px;">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128214;</span> Call History</div>
+  </div>
+  <div class="panel-body" style="padding:0;">
+    {% if call_history %}
+    <table class="portal-table">
+      <thead><tr><th>Date</th><th>CSR</th><th>Outcome</th><th>Notes</th></tr></thead>
+      <tbody>
+        {% for call in call_history %}
+        <tr>
+          <td>{{ call.called_at|date:"M j, g:i A" }}</td>
+          <td>{{ call.csr.first_name|default:call.csr.username }}</td>
+          <td><span class="portal-badge navy">{{ call.get_outcome_display }}</span></td>
+          <td style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ call.notes|truncatechars:60 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No call history</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<a href="{% url 'onevoice:csr_dentist_list' client_pk=client.pk %}" class="btn-portal-outline" style="margin-top:16px;">Back to List</a>
+{% endblock %}
+
+{% block extra_js %}
+{% if not locked_by_other %}
+<script>
+// Heartbeat to keep lock alive
+setInterval(function() {
+  $.post("{% url 'onevoice:dentist_lock' pk=dentist.pk %}", {csrfmiddlewaretoken: '{{ csrf_token }}'});
+}, 60000);
+// Release on leave
+$(window).on('beforeunload', function() {
+  navigator.sendBeacon("{% url 'onevoice:dentist_unlock' pk=dentist.pk %}", new URLSearchParams({csrfmiddlewaretoken: '{{ csrf_token }}'}));
+});
+</script>
+{% endif %}
+{% endblock %}

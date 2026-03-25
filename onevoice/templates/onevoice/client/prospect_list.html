@@ -1,0 +1,63 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — My Prospect List{% endblock %}
+{% block nav_client_prospects %}active{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">MY PROSPECT LIST</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ dentists.count }} dentists &middot; Read only</p>
+</div>
+
+<!-- Filter -->
+<div style="margin-bottom:16px;display:flex;gap:6px;flex-wrap:wrap;">
+  <a href="?status=" class="portal-badge {% if not status_filter %}gold{% else %}navy{% endif %}" style="text-decoration:none;padding:4px 10px;">All</a>
+  {% for val, label in status_choices %}
+  {% if val != 'removed' %}
+  <a href="?status={{ val }}" class="portal-badge {% if status_filter == val %}gold{% else %}gray{% endif %}" style="text-decoration:none;padding:4px 10px;">{{ label }}</a>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-body" style="padding:0;">
+    {% if dentists %}
+    <table class="portal-table">
+      <thead>
+        <tr><th>Dentist</th><th>Practice</th><th>City</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for d in dentists %}
+        <tr style="border-left:4px solid {{ d.get_status_color }};">
+          <td><strong>{{ d.name }}</strong></td>
+          <td>{{ d.practice_name|default:"—" }}</td>
+          <td>{{ d.city }}{% if d.state %}, {{ d.state }}{% endif %}</td>
+          <td>
+            <span class="portal-badge {% if d.status == 'never_called' %}gray{% elif d.status == 'no_answer' %}orange{% elif d.status == 'email_captured' %}blue{% elif d.status == 'called_no_email' %}orange{% elif d.status == 'appointment' %}green{% elif d.status == 'do_not_contact' %}red{% endif %}">
+              {{ d.get_status_display }}
+            </span>
+          </td>
+          <td style="white-space:nowrap;">
+            {% if not d.correction_requested %}
+            <a href="{% url 'onevoice:client_correction' pk=d.pk %}" class="panel-link" style="margin-right:8px;">Correction</a>
+            {% else %}
+            <span class="portal-badge gold" style="font-size:8px;">Pending</span>
+            {% endif %}
+            {% if not d.removal_flagged %}
+            <form method="post" action="{% url 'onevoice:client_removal' pk=d.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="panel-link" style="border:none;background:none;cursor:pointer;color:var(--red);" onclick="return confirm('Flag {{ d.name }} for removal?')">Remove</button>
+            </form>
+            {% else %}
+            <span class="portal-badge red" style="font-size:8px;">Flagged</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No prospects on your list</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

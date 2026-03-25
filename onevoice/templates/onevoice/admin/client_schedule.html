@@ -1,0 +1,102 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Schedule{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">SCHEDULE</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.lab_name }} &middot; Mailing &amp; Call Sessions</p>
+</div>
+
+<div class="main-grid">
+  <!-- Mailing Schedule -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128232;</span> Mailing Schedule</div>
+    </div>
+    <div class="panel-body">
+      {% if mailings %}
+      <table class="portal-table">
+        <thead><tr><th>Date</th><th>Description</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for m in mailings %}
+          <tr>
+            <td>{{ m.scheduled_date|date:"M j, Y" }}</td>
+            <td>{{ m.description|default:"—" }}</td>
+            <td><span class="portal-badge {% if m.completed %}green{% else %}navy{% endif %}">{% if m.completed %}Sent{% else %}Scheduled{% endif %}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No mailings scheduled</div></div>
+      {% endif %}
+
+      <form method="post" class="portal-form" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="mailing">
+        <div style="display:flex;gap:12px;align-items:flex-end;">
+          <div class="form-group" style="margin:0;flex:1;">
+            <label>Date</label>
+            {{ mailing_form.scheduled_date }}
+          </div>
+          <div class="form-group" style="margin:0;flex:2;">
+            <label>Description</label>
+            {{ mailing_form.description }}
+          </div>
+          <button type="submit" class="btn-portal btn-portal-sm" style="height:38px;">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Call Sessions -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128222;</span> Call Sessions</div>
+    </div>
+    <div class="panel-body">
+      {% if sessions %}
+      <table class="portal-table">
+        <thead><tr><th>Date</th><th>Time</th><th>CSR</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for s in sessions %}
+          <tr>
+            <td>{{ s.scheduled_date|date:"M j, Y" }}</td>
+            <td>{{ s.scheduled_time|time:"g:i A"|default:"TBD" }}</td>
+            <td>{{ s.csr.first_name|default:"Unassigned" }}</td>
+            <td><span class="portal-badge {% if s.status == 'completed' %}green{% elif s.status == 'in_progress' %}gold{% elif s.status == 'cancelled' %}red{% else %}navy{% endif %}">{{ s.get_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="empty-state-text">No sessions scheduled</div></div>
+      {% endif %}
+
+      <form method="post" class="portal-form" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="session">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group" style="margin:0;">
+            <label>Date</label>
+            {{ session_form.scheduled_date }}
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Time</label>
+            {{ session_form.scheduled_time }}
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>CSR</label>
+            {{ session_form.csr }}
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button type="submit" class="btn-portal btn-portal-sm" style="height:38px;">Add Session</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="btn-portal-outline" style="margin-top:8px;">Back to Client</a>
+{% endblock %}

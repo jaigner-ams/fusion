@@ -1,0 +1,148 @@
+{% extends "onevoice/base_onevoice.html" %}
+
+{% block title %}One Voice — CSR Dashboard{% endblock %}
+{% block nav_csr_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="welcome-banner fade-in d1">
+  <div class="welcome-banner-glow"></div>
+  <div class="wb-left">
+    <div class="wb-eyebrow">Call Session Representative</div>
+    <div class="wb-headline">CSR <span>Dashboard</span></div>
+    <div class="wb-sub">View your clients, call sessions, and calendar at a glance.</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row fade-in d2">
+  <div class="stat-card">
+    <div class="stat-label">Today's Sessions</div>
+    <div class="stat-number gold">{{ todays_sessions.count }}</div>
+    <div class="stat-sub">{{ today|date:"l, M j" }}</div>
+  </div>
+  <div class="stat-card navy-top">
+    <div class="stat-label">This Week</div>
+    <div class="stat-number">{{ this_week_sessions.count }}</div>
+    <div class="stat-sub">Scheduled sessions</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Next Week</div>
+    <div class="stat-number">{{ next_week_sessions.count }}</div>
+    <div class="stat-sub">Upcoming sessions</div>
+  </div>
+  <div class="stat-card green-top">
+    <div class="stat-label">Active Clients</div>
+    <div class="stat-number green">{{ clients.count }}</div>
+    <div class="stat-sub">All One Voice clients</div>
+  </div>
+</div>
+
+<div class="main-grid fade-in d3">
+  <!-- Today's Sessions -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128222;</span> Today's Sessions</div>
+    </div>
+    <div class="panel-body">
+      {% if todays_sessions %}
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for session in todays_sessions %}
+          <tr>
+            <td><strong>{{ session.client.lab_name }}</strong></td>
+            <td>{{ session.scheduled_time|time:"g:i A"|default:"TBD" }}</td>
+            <td>
+              <span class="portal-badge {% if session.status == 'in_progress' %}gold{% else %}navy{% endif %}">
+                {{ session.get_status_display }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">&#128197;</div>
+        <div class="empty-state-text">No sessions today</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Active Clients -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#127970;</span> Active Clients</div>
+    </div>
+    <div class="panel-body">
+      {% if clients %}
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Lab Name</th>
+            <th>Mode</th>
+            <th>List Size</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+          <tr>
+            <td><strong><a href="{% url 'onevoice:csr_client_panel' client_pk=client.pk %}" style="color:var(--navy);text-decoration:none;">{{ client.lab_name }}</a></strong></td>
+            <td>
+              <span class="portal-badge navy">Mode {{ client.call_session_mode }}</span>
+            </td>
+            <td>{{ client.get_active_dentist_count }}</td>
+            <td><a href="{% url 'onevoice:csr_client_panel' client_pk=client.pk %}" class="panel-link">Open</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">&#127970;</div>
+        <div class="empty-state-text">No active clients</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Calendar View -->
+<div class="panel fade-in d4">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128197;</span> Two-Week Calendar</div>
+  </div>
+  <div class="panel-body" style="padding:12px;">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+      <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px;">Mon</div>
+      <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px;">Tue</div>
+      <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px;">Wed</div>
+      <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px;">Thu</div>
+      <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px;">Fri</div>
+      <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px;opacity:0.5;">Sat</div>
+      <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px;opacity:0.5;">Sun</div>
+      {% for day in calendar_days %}
+      <div style="min-height:70px;border:1px solid {% if day.is_today %}var(--gold2){% else %}var(--border){% endif %};padding:6px;{% if day.is_today %}background:rgba(201,168,76,0.08);{% elif day.is_past %}opacity:0.5;{% elif day.is_weekend %}background:var(--cream2);{% endif %}">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:{% if day.is_today %}800{% else %}600{% endif %};font-size:12px;color:{% if day.is_today %}var(--gold){% else %}var(--text3){% endif %};margin-bottom:4px;">
+          {{ day.date|date:"M j" }}
+        </div>
+        {% for s in day.sessions %}
+        <div style="background:{% if s.status == 'in_progress' %}rgba(201,168,76,0.2){% elif s.status == 'completed' %}rgba(45,122,79,0.15){% else %}rgba(13,30,61,0.07){% endif %};padding:2px 4px;margin-bottom:2px;font-size:10px;border-left:2px solid {% if s.status == 'in_progress' %}var(--gold2){% elif s.status == 'completed' %}var(--green){% else %}var(--navy3){% endif %};">
+          <strong>{{ s.client.lab_name|truncatechars:12 }}</strong>
+          {% if s.scheduled_time %}<br>{{ s.scheduled_time|time:"g:iA" }}{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

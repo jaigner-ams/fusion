@@ -1,0 +1,65 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Clients{% endblock %}
+{% block nav_clients %}active{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">ALL CLIENTS</h1>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ clients.count }} total clients</p>
+  </div>
+  <a href="{% url 'onevoice:client_add' %}" class="btn-gold">+ Onboard New Client</a>
+</div>
+
+<!-- Filter -->
+<div style="margin-bottom:20px;display:flex;gap:8px;">
+  <a href="{% url 'onevoice:client_list' %}" class="portal-badge {% if not status_filter %}gold{% else %}navy{% endif %}" style="text-decoration:none;padding:5px 12px;">All</a>
+  {% for val, label in status_choices %}
+  <a href="?status={{ val }}" class="portal-badge {% if status_filter == val %}gold{% else %}navy{% endif %}" style="text-decoration:none;padding:5px 12px;">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-body" style="padding:0;">
+    {% if clients %}
+    <table class="portal-table">
+      <thead>
+        <tr>
+          <th>Lab Name</th>
+          <th>Owner</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Tier</th>
+          <th>Mode</th>
+          <th>List Size</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for client in clients %}
+        <tr>
+          <td><strong><a href="{% url 'onevoice:client_detail' pk=client.pk %}" style="color:var(--navy);text-decoration:none;">{{ client.lab_name }}</a></strong></td>
+          <td>{{ client.owner_name }}</td>
+          <td>{{ client.phone }}</td>
+          <td>
+            <span class="portal-badge {% if client.status == 'active' %}green{% elif client.status == 'onboarding' %}gold{% elif client.status == 'paused' %}orange{% else %}gray{% endif %}">
+              {{ client.get_status_display }}
+            </span>
+          </td>
+          <td style="font-size:11px;">{{ client.get_membership_tier_display }}</td>
+          <td><span class="portal-badge navy">M{{ client.call_session_mode }}</span></td>
+          <td>{{ client.get_active_dentist_count }}/{{ client.mailing_list_size }}</td>
+          <td><a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="panel-link">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">&#127970;</div>
+      <div class="empty-state-text">No clients found</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

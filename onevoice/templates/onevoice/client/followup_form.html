@@ -1,0 +1,48 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Follow-up{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">APPOINTMENT FOLLOW-UP</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ appointment.dentist.name }} &middot; {{ appointment.appointment_date|date:"M j, Y" }}</p>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Case Status</label>
+        <div style="display:flex;gap:16px;margin-top:4px;">
+          {% for value, label in form.fields.case_status.choices %}
+          {% if value %}
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;cursor:pointer;">
+            <input type="radio" name="case_status" value="{{ value }}" {% if appointment.case_status == value %}checked{% endif %}>
+            {{ label }}
+          </label>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        {{ form.client_notes }}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>Follow-up Date</label>
+          {{ form.followup_date }}
+        </div>
+        <div class="form-group">
+          <label>Follow-up Notes</label>
+          {{ form.followup_notes }}
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:16px;">
+        <button type="submit" class="btn-gold">Save</button>
+        <a href="{% url 'onevoice:client_previous_appointments' %}" class="btn-portal-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
