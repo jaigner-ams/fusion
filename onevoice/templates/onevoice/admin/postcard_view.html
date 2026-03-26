@@ -1,0 +1,37 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — {{ design.name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">{{ design.name }}</h1>
+  <p style="font-size:12px;color:var(--text3);margin-top:4px;">
+    {% if design.is_master_template %}Master Template{% else %}{{ design.client.lab_name }}{% endif %}
+    &middot; {{ design.get_status_display }}
+    &middot; Added {{ design.created_at|date:"M j, Y" }}
+  </p>
+</div>
+
+<div class="panel">
+  <div class="panel-body" style="text-align:center;">
+    {% if design.customized_image %}
+    <img src="{{ design.customized_image.url }}" alt="{{ design.name }}" style="max-width:100%;border:1px solid var(--border);">
+    {% elif design.template_image %}
+    <img src="{{ design.template_image.url }}" alt="{{ design.name }}" style="max-width:100%;border:1px solid var(--border);">
+    {% else %}
+    <div class="empty-state"><div class="empty-state-text">No image uploaded</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<div style="display:flex;gap:12px;margin-top:16px;">
+  {% if design.client %}
+  <a href="{% url 'onevoice:client_postcards' pk=design.client.pk %}" class="btn-portal-outline">Back to Client Postcards</a>
+  {% else %}
+  <a href="{% url 'onevoice:postcard_library' %}" class="btn-portal-outline">Back to Library</a>
+  {% endif %}
+  <form method="post" action="{% url 'onevoice:postcard_delete' pk=design.pk %}" style="display:inline;" onsubmit="return confirm('Delete this postcard design? This cannot be undone.')">
+    {% csrf_token %}
+    <button type="submit" class="btn-portal-outline" style="color:var(--red);border-color:var(--red);">Delete Postcard</button>
+  </form>
+</div>
+{% endblock %}

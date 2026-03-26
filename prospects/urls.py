@@ -23,4 +23,5 @@ urlpatterns = [
     path('<int:pk>/print/', views.prospect_print, name='prospect_print'),
     path('<int:pk>/create-account/', views.create_lab_account, name='create_lab_account'),
     path('<int:pk>/send-fusion-email/', views.send_fusion_email, name='send_fusion_email'),
+    path('api/taken-times/', views.taken_times_api, name='taken_times_api'),
 ]

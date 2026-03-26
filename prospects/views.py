@@ -25,7 +25,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -365,21 +365,21 @@ def create_lab_account(request, pk):
     if request.method == 'POST':
         form = CreateLabAccountForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
             email = form.cleaned_data['email']
+            username = email or prospect.email
             send_email = form.cleaned_data['send_email']
 
             # Check if username already exists
             if CustomUser.objects.filter(username=username).exists():
-                messages.error(request, f'Username "{username}" already exists. Please choose a different username.')
+                messages.error(request, f'An account with email "{username}" already exists.')
                 return render(request, 'prospects/create_lab_account.html', {
                     'form': form,
                     'prospect': prospect,
                     'title': f'Create Account for {prospect.lab_name}'
                 })
 
-            # Generate a memorable password
-            password = generate_simple_password()
+            # Use zip code as password
+            password = prospect.zip_code or generate_simple_password()
 
             # Create the lab user account
             lab_user = CustomUser.objects.create_user(
@@ -451,17 +451,7 @@ def create_lab_account(request, pk):
 
             return redirect('prospects:prospect_detail', pk=pk)
     else:
-        # Pre-populate form with prospect data
-        # Generate default username from lab name
-        base_username = ''.join(prospect.lab_name.lower().split())[:20]
-        username = base_username
-        counter = 1
-        while CustomUser.objects.filter(username=username).exists():
-            username = f"{base_username}{counter}"
-            counter += 1
-
         form = CreateLabAccountForm(initial={
-            'username': username,
             'email': prospect.email,
             'send_email': bool(prospect.email),
         })
@@ -489,13 +479,14 @@ def send_fusion_email(request, pk):
         return redirect('prospects:prospect_edit', pk=pk)
 
     try:
+        fusion_url = 'https://fusiondentaldesigncenters.com/fusion-program-details/?' + urlencode({'lab': prospect.lab_name})
         send_mail(
             subject='What is Fusion',
             message=(
                 f'Thank you {prospect.person_name} for your interest in Fusion.\n\n'
                 'Below is a web link that has a Video and Text description of Fusion.\n'
                 'I look forward to a follow up phone call with you soon.\n\n'
-                'https://fusiondentaldesigncenters.com/fusion-a-rescue-response-for-the-dental-lab-industry/\n\n'
+                f'{fusion_url}\n\n'
                 'You can always reach me on my personal cell phone at 708 502-3411\n\n'
                 'To learn more about what AmericaSmiles can do to help you succeed in the dental lab industry, visit:\n'
                 'https://americasmiles.net/\n\n\n'
@@ -507,6 +498,8 @@ def send_fusion_email(request, pk):
             recipient_list=[prospect.email],
             fail_silently=False,
         )
+        prospect.fusion_email_sent = True
+        prospect.save()
         messages.success(request, f'"What is Fusion" email sent to {prospect.email}.')
     except Exception as e:
         messages.error(request, f'Failed to send email: {str(e)}')
@@ -836,6 +829,30 @@ def caller_delete_note(request, pk):
     if params:
         edit_url += '?' + urlencode(params)
     return redirect(edit_url)
+
+
+@login_required
+def taken_times_api(request):
+    """Return taken time slots for a given date as JSON"""
+    date_str = request.GET.get('date', '')
+    exclude_pk = request.GET.get('exclude', '')
+    if not date_str:
+        return JsonResponse({'taken': []})
+    try:
+        selected_date = date.fromisoformat(date_str)
+    except ValueError:
+        return JsonResponse({'taken': []})
+    taken = Prospect.objects.filter(
+        next_contact_date=selected_date,
+        next_contact_time__isnull=False,
+    )
+    if exclude_pk:
+        try:
+            taken = taken.exclude(pk=int(exclude_pk))
+        except (ValueError, TypeError):
+            pass
+    times = [p.next_contact_time.strftime('%H:%M') for p in taken]
+    return JsonResponse({'taken': times})
 
 
 @login_required

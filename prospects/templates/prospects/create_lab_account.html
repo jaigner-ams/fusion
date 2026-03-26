@@ -18,18 +18,7 @@
                 {% csrf_token %}
 
                 <div class="mb-3">
-                    <label for="id_username" class="form-label">Username</label>
-                    {{ form.username }}
-                    {% if form.username.help_text %}
-                        <div class="form-text text-muted">{{ form.username.help_text }}</div>
-                    {% endif %}
-                    {% if form.username.errors %}
-                        <div class="text-danger small">{{ form.username.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="mb-3">
-                    <label for="id_email" class="form-label">Email Address</label>
+                    <label for="id_email" class="form-label">Email Address (used as username)</label>
                     {{ form.email }}
                     {% if form.email.help_text %}
                         <div class="form-text text-muted">{{ form.email.help_text }}</div>
@@ -54,7 +43,7 @@
                 <hr class="border-secondary">
 
                 <div class="alert alert-info">
-                    <strong>Note:</strong> A random password will be generated automatically.
+                    <strong>Note:</strong> The password will be set to the prospect's zip code ({{ prospect.zip_code|default:"N/A" }}).
                     The new lab user will be able to:
                     <ul class="mb-0 mt-2">
                         <li>Set up their default pricing tiers</li>

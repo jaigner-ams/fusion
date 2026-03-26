@@ -21,12 +21,14 @@ def csr_dashboard(request):
     clients = OVClient.objects.filter(status='active')
 
     todays_sessions = OVCallSession.objects.filter(
+        csr=request.user,
         scheduled_date=today,
         status__in=['scheduled', 'in_progress'],
     ).select_related('client', 'csr')
 
     week_end = today + timedelta(days=(6 - today.weekday()))
     this_week_sessions = OVCallSession.objects.filter(
+        csr=request.user,
         scheduled_date__gte=today,
         scheduled_date__lte=week_end,
     ).select_related('client', 'csr')
@@ -34,6 +36,7 @@ def csr_dashboard(request):
     next_week_start = week_end + timedelta(days=1)
     next_week_end = next_week_start + timedelta(days=6)
     next_week_sessions = OVCallSession.objects.filter(
+        csr=request.user,
         scheduled_date__gte=next_week_start,
         scheduled_date__lte=next_week_end,
     ).select_related('client', 'csr')
@@ -43,6 +46,7 @@ def csr_dashboard(request):
     calendar_days = []
     current_week_start = today - timedelta(days=today.weekday())  # Monday
     all_sessions = OVCallSession.objects.filter(
+        csr=request.user,
         scheduled_date__gte=current_week_start,
         scheduled_date__lte=next_week_end,
     ).select_related('client', 'csr')

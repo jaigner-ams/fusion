@@ -13,7 +13,7 @@ class OVClientForm(forms.ModelForm):
         fields = [
             'lab_name', 'owner_name', 'address', 'city', 'state', 'zip_code',
             'phone', 'email', 'membership_tier', 'call_session_mode',
-            'mailing_list_size', 'monthly_fee', 'status', 'internal_notes',
+            'mailing_list_size', 'monthly_fee', 'internal_notes',
         ]
         widgets = {
             'lab_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -28,8 +28,17 @@ class OVClientForm(forms.ModelForm):
             'call_session_mode': forms.Select(attrs={'class': 'form-control'}),
             'mailing_list_size': forms.NumberInput(attrs={'class': 'form-control'}),
             'monthly_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
             'internal_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+
+class OVClientEditForm(OVClientForm):
+    """Extends OVClientForm with status field for editing existing clients."""
+    class Meta(OVClientForm.Meta):
+        fields = OVClientForm.Meta.fields + ['status']
+        widgets = {
+            **OVClientForm.Meta.widgets,
+            'status': forms.Select(attrs={'class': 'form-control'}),
         }
 
 
@@ -92,6 +101,23 @@ class OVCallSessionForm(forms.ModelForm):
             'scheduled_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'csr': forms.Select(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['csr'].queryset = CustomUser.objects.filter(user_type='csr')
+
+
+class OVCallSessionEditForm(forms.ModelForm):
+    class Meta:
+        model = OVCallSession
+        fields = ['scheduled_date', 'scheduled_time', 'csr', 'status', 'notes']
+        widgets = {
+            'scheduled_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'scheduled_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'csr': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):

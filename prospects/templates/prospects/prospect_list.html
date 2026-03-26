@@ -129,7 +129,7 @@
                 </thead>
                 <tbody>
                     {% for prospect in prospects %}
-                        <tr{% if prospect.note_count %} class="has-notes"{% endif %}>
+                        <tr{% if prospect.fusion_email_sent %} style="background-color: #d1fae5 !important;"{% endif %}{% if prospect.note_count %} class="has-notes"{% endif %}>
                             <td>
                                 <a href="{% url 'prospects:prospect_detail' prospect.pk %}{{ filter_querystring }}" class="text-theme text-decoration-none">
                                     <strong>{{ prospect.lab_name }}</strong>

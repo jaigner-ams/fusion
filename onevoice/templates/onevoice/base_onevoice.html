@@ -783,6 +783,27 @@ body {
 </main>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(function(){
+  $('input[type="password"]').each(function(){
+    var $inp = $(this);
+    var $wrap = $('<div style="position:relative;"></div>');
+    $inp.wrap($wrap);
+    var $btn = $('<button type="button" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:2px 6px;">Show</button>');
+    $inp.after($btn);
+    $inp.css('padding-right','52px');
+    $btn.on('click', function(){
+      if($inp.attr('type')==='password'){
+        $inp.attr('type','text');
+        $btn.text('Hide');
+      } else {
+        $inp.attr('type','password');
+        $btn.text('Show');
+      }
+    });
+  });
+});
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

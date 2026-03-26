@@ -24,6 +24,14 @@
     <form method="post" id="prospect-form">
         {% csrf_token %}
 
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- AMS History Selection -->
         <div class="mb-4">
             <label class="form-label fw-bold">AMS History</label>
@@ -61,7 +69,7 @@
 
         <hr class="border-secondary">
 
-        <!-- Monthly Fee -->
+        <!-- Monthly Fee & QuickBooks ID -->
         <div class="row mb-3">
             <div class="col-md-4">
                 <label for="id_monthly_fee" class="form-label">Monthly Fee</label>
@@ -69,6 +77,10 @@
                     <span class="input-group-text bg-secondary border-secondary text-white">$</span>
                     {{ form.monthly_fee }}
                 </div>
+            </div>
+            <div class="col-md-4">
+                <label for="id_quickbooks_id" class="form-label">QuickBooks ID</label>
+                {{ form.quickbooks_id }}
             </div>
         </div>
 
@@ -204,4 +216,46 @@
         </div>
     </form>
 </div>
+
+<script>
+(function() {
+    const dateInput = document.getElementById('id_next_contact_date');
+    const timeSelect = document.getElementById('id_next_contact_time');
+    if (!dateInput || !timeSelect) return;
+
+    const allOptions = Array.from(timeSelect.options).map(o => ({value: o.value, text: o.text}));
+    const excludePk = '{{ prospect.pk|default:"" }}';
+    const originalDate = dateInput.value;
+    const originalTime = timeSelect.value;
+
+    function updateTimeSlots() {
+        const dateVal = dateInput.value;
+        if (!dateVal) {
+            rebuildOptions([]);
+            return;
+        }
+        let url = '{% url "prospects:taken_times_api" %}?date=' + dateVal;
+        if (excludePk) url += '&exclude=' + excludePk;
+        fetch(url)
+            .then(r => r.json())
+            .then(data => rebuildOptions(data.taken || []));
+    }
+
+    function rebuildOptions(takenTimes) {
+        const prevSelected = timeSelect.value;
+        timeSelect.innerHTML = '';
+        allOptions.forEach(opt => {
+            if (opt.value && takenTimes.includes(opt.value)) return;
+            const o = document.createElement('option');
+            o.value = opt.value;
+            o.text = opt.text;
+            if (opt.value === prevSelected) o.selected = true;
+            timeSelect.appendChild(o);
+        });
+    }
+
+    dateInput.addEventListener('change', updateTimeSlots);
+    if (dateInput.value) updateTimeSlots();
+})();
+</script>
 {% endblock %}

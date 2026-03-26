@@ -28,6 +28,7 @@
           <th>Lab Name</th>
           <th>Owner</th>
           <th>Phone</th>
+          <th>QB ID</th>
           <th>Status</th>
           <th>Tier</th>
           <th>Mode</th>
@@ -41,6 +42,7 @@
           <td><strong><a href="{% url 'onevoice:client_detail' pk=client.pk %}" style="color:var(--navy);text-decoration:none;">{{ client.lab_name }}</a></strong></td>
           <td>{{ client.owner_name }}</td>
           <td>{{ client.phone }}</td>
+          <td style="font-size:11px;">{% if client.prospect and client.prospect.quickbooks_id %}{{ client.prospect.quickbooks_id }}{% else %}—{% endif %}</td>
           <td>
             <span class="portal-badge {% if client.status == 'active' %}green{% elif client.status == 'onboarding' %}gold{% elif client.status == 'paused' %}orange{% else %}gray{% endif %}">
               {{ client.get_status_display }}

@@ -16,6 +16,15 @@
     <form method="post" class="portal-form">
       {% csrf_token %}
 
+      {% if form.errors %}
+      <div class="portal-alert error" style="margin-bottom:16px;">
+        Please fix the errors below:
+        {% for field, errors in form.errors.items %}
+          <strong>{{ field }}:</strong> {{ errors.0 }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         <div class="form-group">
           <label>Lab Name</label>

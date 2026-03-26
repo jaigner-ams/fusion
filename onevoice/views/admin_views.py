@@ -59,6 +59,65 @@ def admin_dashboard(request):
         recipient=request.user, read=False,
     ).count()
 
+    # Auto-sync: create OVClient records for OneVoice prospects that don't have one yet
+    from prospects.models import Prospect
+    ov_prospects = Prospect.objects.filter(
+        ams_history='current_onevoice',
+    ).exclude(
+        ov_client__isnull=False,
+    )
+    for prospect in ov_prospects:
+        username = prospect.email or generate_username(prospect.person_name, prospect.lab_name)
+        password = prospect.zip_code or generate_password()
+        if CustomUser.objects.filter(username=username).exists():
+            continue
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=prospect.email or '',
+            password=password,
+            user_type='ov_client',
+            first_name=prospect.person_name.split()[0] if prospect.person_name else '',
+            last_name=' '.join(prospect.person_name.split()[1:]) if prospect.person_name else '',
+        )
+        client = OVClient.objects.create(
+            prospect=prospect,
+            user=user,
+            lab_name=prospect.lab_name,
+            owner_name=prospect.person_name,
+            address=prospect.address or '',
+            city=prospect.city or '',
+            state=prospect.state or '',
+            zip_code=prospect.zip_code or '',
+            phone=prospect.phone or '',
+            email=prospect.email or '',
+            status='active',
+        )
+        # Send welcome email
+        email_context = {
+            'client': client,
+            'username': username,
+            'password': password,
+            'site_url': getattr(settings, 'SITE_URL', 'https://amsfusion.com'),
+        }
+        try:
+            html_message = render_to_string('onevoice/emails/welcome.html', email_context)
+            send_mail(
+                subject='Welcome to One Voice — AmericaSmiles Network',
+                message=f'Welcome to One Voice! Your login: {username} / {password}',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[prospect.email] if prospect.email else [],
+                html_message=html_message,
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+    # Re-fetch after sync
+    clients = OVClient.objects.all()
+    total_clients = clients.count()
+    active_clients = clients.filter(status='active').count()
+    onboarding_clients = clients.filter(status='onboarding').count()
+
     context = {
         'active_clients': active_clients,
         'onboarding_clients': onboarding_clients,
@@ -67,7 +126,7 @@ def admin_dashboard(request):
         'removal_requests': removal_requests,
         'upcoming_sessions': upcoming_sessions,
         'unread_count': unread_count,
-        'recent_clients': clients.select_related('user')[:10],
+        'recent_clients': clients.select_related('user', 'prospect')[:10],
     }
     return render(request, 'onevoice/admin/dashboard.html', context)
 
@@ -77,7 +136,7 @@ def admin_dashboard(request):
 @ov_admin_required
 def client_list(request):
     status_filter = request.GET.get('status', '')
-    clients = OVClient.objects.all().select_related('user')
+    clients = OVClient.objects.all().select_related('user', 'prospect')
     if status_filter:
         clients = clients.filter(status=status_filter)
 
@@ -100,8 +159,8 @@ def client_add(request):
             client = form.save(commit=False)
 
             # Create user account
-            username = generate_username(client.owner_name, client.lab_name)
-            password = generate_password()
+            username = client.email or generate_username(client.owner_name, client.lab_name)
+            password = client.zip_code or generate_password()
             user = CustomUser.objects.create_user(
                 username=username,
                 email=client.email,
@@ -183,15 +242,15 @@ def client_detail(request, pk):
 @ov_admin_required
 def client_edit(request, pk):
     client = get_object_or_404(OVClient, pk=pk)
-    from onevoice.forms import OVClientForm
+    from onevoice.forms import OVClientEditForm
     if request.method == 'POST':
-        form = OVClientForm(request.POST, instance=client)
+        form = OVClientEditForm(request.POST, instance=client)
         if form.is_valid():
             form.save()
             messages.success(request, f'Client "{client.lab_name}" updated.')
             return redirect('onevoice:client_detail', pk=client.pk)
     else:
-        form = OVClientForm(instance=client)
+        form = OVClientEditForm(instance=client)
 
     return render(request, 'onevoice/admin/client_form.html', {'form': form, 'is_edit': True, 'client': client})
 
@@ -360,17 +419,19 @@ def import_dentist_list(request, pk):
             # Normalize field names (case-insensitive)
             row = {k.strip().lower(): v.strip() for k, v in raw_row.items() if k}
 
-            # Map common Data Axle fields
-            name = row.get('contact name', row.get('name', row.get('full name', row.get('first name', '') + ' ' + row.get('last name', ''))))
-            practice = row.get('company name', row.get('practice name', row.get('company', row.get('business name', ''))))
-            specialty_raw = row.get('primary sic description', row.get('specialty', row.get('sic description', row.get('primary specialty', ''))))
-            address = row.get('address', row.get('street address', row.get('mailing address', '')))
+            # Map CSV fields (upload.csv format)
+            first = row.get('first name', '')
+            last = row.get('last name', '')
+            name = (first + ' ' + last).strip() if (first or last) else row.get('name', '')
+            practice = row.get('practice', row.get('practice name', ''))
+            specialty_raw = row.get('specialty', '')
+            address = row.get('address', '')
             city = row.get('city', '')
-            state = row.get('state', row.get('st', ''))
-            zip_code = row.get('zip code', row.get('zip', row.get('postal code', '')))
-            phone = row.get('phone', row.get('telephone', row.get('phone number', '')))
-            email = row.get('email', row.get('email address', ''))
-            contact = row.get('contact person', row.get('contact', ''))
+            state = row.get('st', row.get('state', ''))
+            zip_code = row.get('zip', row.get('zip code', ''))
+            phone = row.get('phone', '')
+            email = row.get('email 1', row.get('email', ''))
+            contact = row.get('send name', row.get('contact', ''))
 
             specialty_code = classify_specialty(specialty_raw)
             keep = should_keep(specialty_code)
@@ -517,6 +578,30 @@ def postcard_unlock(request, pk):
     return redirect('onevoice:client_postcards', pk=design.client_id)
 
 
+# ── Postcard View / Delete ──
+
+@ov_admin_required
+def postcard_view(request, pk):
+    design = get_object_or_404(OVPostcardDesign, pk=pk)
+    return render(request, 'onevoice/admin/postcard_view.html', {'design': design})
+
+
+@ov_admin_required
+def postcard_delete(request, pk):
+    design = get_object_or_404(OVPostcardDesign, pk=pk)
+    if request.method == 'POST':
+        redirect_url = 'onevoice:postcard_library'
+        redirect_kwargs = {}
+        if design.client_id:
+            redirect_url = 'onevoice:client_postcards'
+            redirect_kwargs = {'pk': design.client_id}
+        name = design.name
+        design.delete()
+        messages.success(request, f'Postcard "{name}" deleted.')
+        return redirect(redirect_url, **redirect_kwargs)
+    return redirect('onevoice:postcard_library')
+
+
 # ── Client Inventory ──
 
 @ov_admin_required
@@ -585,6 +670,39 @@ def client_schedule(request, pk):
         'session_form': session_form,
         'csrs': csrs,
     })
+
+
+# ── Edit Call Session ──
+
+@ov_admin_required
+def edit_call_session(request, pk):
+    session = get_object_or_404(OVCallSession, pk=pk)
+    from onevoice.forms import OVCallSessionEditForm
+
+    if request.method == 'POST':
+        form = OVCallSessionEditForm(request.POST, instance=session)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Call session updated.')
+            return redirect('onevoice:client_schedule', pk=session.client_id)
+    else:
+        form = OVCallSessionEditForm(instance=session)
+
+    return render(request, 'onevoice/admin/edit_call_session.html', {
+        'form': form, 'session': session, 'client': session.client,
+    })
+
+
+# ── Delete Call Session ──
+
+@ov_admin_required
+def delete_call_session(request, pk):
+    session = get_object_or_404(OVCallSession, pk=pk)
+    client_pk = session.client_id
+    if request.method == 'POST':
+        session.delete()
+        messages.success(request, 'Call session deleted.')
+    return redirect('onevoice:client_schedule', pk=client_pk)
 
 
 # ── Client Billing ──

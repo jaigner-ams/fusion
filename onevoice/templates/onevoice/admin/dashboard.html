@@ -52,12 +52,13 @@
             <th>Owner</th>
             <th>Status</th>
             <th>Tier</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {% for client in recent_clients %}
           <tr>
-            <td><strong>{{ client.lab_name }}</strong></td>
+            <td><strong><a href="{% url 'onevoice:client_detail' pk=client.pk %}" style="color:var(--navy);text-decoration:none;">{{ client.lab_name }}</a></strong></td>
             <td>{{ client.owner_name }}</td>
             <td>
               <span class="portal-badge {% if client.status == 'active' %}green{% elif client.status == 'onboarding' %}gold{% elif client.status == 'paused' %}orange{% else %}gray{% endif %}">
@@ -65,6 +66,7 @@
               </span>
             </td>
             <td>{{ client.get_membership_tier_display }}</td>
+            <td><a href="{% url 'onevoice:client_detail' pk=client.pk %}" class="panel-link">View</a></td>
           </tr>
           {% endfor %}
         </tbody>
@@ -93,6 +95,7 @@
             <th>Date</th>
             <th>CSR</th>
             <th>Status</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -106,6 +109,7 @@
                 {{ session.get_status_display }}
               </span>
             </td>
+            <td><a href="{% url 'onevoice:edit_call_session' pk=session.pk %}" class="panel-link">Edit</a></td>
           </tr>
           {% endfor %}
         </tbody>
@@ -119,4 +123,5 @@
     </div>
   </div>
 </div>
+
 {% endblock %}

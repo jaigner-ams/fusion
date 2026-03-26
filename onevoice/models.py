@@ -30,6 +30,10 @@ class OVClient(models.Model):
         limit_choices_to={'user_type': 'ov_client'},
         null=True, blank=True,
     )
+    prospect = models.OneToOneField(
+        'prospects.Prospect', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='ov_client',
+    )
     program_type = models.CharField(max_length=20, choices=PROGRAM_TYPE_CHOICES, default='onevoice')
     lab_name = models.CharField(max_length=200)
     owner_name = models.CharField(max_length=200)

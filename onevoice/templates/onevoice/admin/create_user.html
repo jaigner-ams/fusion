@@ -14,7 +14,10 @@
 
       {% if form.errors %}
       <div class="portal-alert error">
-        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        {% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}
+        {% for field in form %}
+          {% for error in field.errors %}<strong>{{ field.label }}:</strong> {{ error }}<br>{% endfor %}
+        {% endfor %}
       </div>
       {% endif %}
 

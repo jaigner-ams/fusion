@@ -1,5 +1,6 @@
 from django import forms
 from datetime import time as dt_time
+from django.core.exceptions import ValidationError
 from .models import Prospect, ProspectNote, ProspectServiceType, LeadReferral
 
 
@@ -34,7 +35,7 @@ class ProspectForm(forms.ModelForm):
     class Meta:
         model = Prospect
         fields = [
-            'ams_history', 'status', 'monthly_fee', 'lab_name', 'person_name',
+            'ams_history', 'status', 'quickbooks_id', 'monthly_fee', 'lab_name', 'person_name',
             'address', 'city', 'state', 'zip_code', 'phone', 'email',
             'has_mill', 'dentists_requested', 'next_contact_date', 'next_contact_time',
             'zip_protect_1', 'zip_protect_2', 'zip_protect_3',
@@ -46,6 +47,7 @@ class ProspectForm(forms.ModelForm):
         widgets = {
             'ams_history': forms.RadioSelect(attrs={'class': 'form-check-input'}),
             'status': forms.RadioSelect(attrs={'class': 'form-check-input'}),
+            'quickbooks_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'QuickBooks ID'}),
             'monthly_fee': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
@@ -199,6 +201,27 @@ class ProspectForm(forms.ModelForm):
             }),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        contact_date = cleaned_data.get('next_contact_date')
+        contact_time = cleaned_data.get('next_contact_time')
+        if contact_date and contact_time:
+            conflict = Prospect.objects.filter(
+                next_contact_date=contact_date,
+                next_contact_time=contact_time,
+            )
+            if self.instance and self.instance.pk:
+                conflict = conflict.exclude(pk=self.instance.pk)
+            if conflict.exists():
+                prospect = conflict.first()
+                time_display = contact_time.strftime('%I:%M %p')
+                date_display = contact_date.strftime('%m/%d/%Y')
+                raise ValidationError(
+                    f'That time slot ({date_display} at {time_display}) is already taken by "{prospect.lab_name}". '
+                    f'Please choose a different time.'
+                )
+        return cleaned_data
+
 
 class ProspectNoteForm(forms.ModelForm):
     """Form for adding notes to a prospect"""
@@ -245,26 +268,39 @@ class NextContactDateForm(forms.ModelForm):
             'next_contact_time': 'Time',
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        contact_date = cleaned_data.get('next_contact_date')
+        contact_time = cleaned_data.get('next_contact_time')
+        if contact_date and contact_time:
+            conflict = Prospect.objects.filter(
+                next_contact_date=contact_date,
+                next_contact_time=contact_time,
+            )
+            if self.instance and self.instance.pk:
+                conflict = conflict.exclude(pk=self.instance.pk)
+            if conflict.exists():
+                prospect = conflict.first()
+                time_display = contact_time.strftime('%I:%M %p')
+                date_display = contact_date.strftime('%m/%d/%Y')
+                raise ValidationError(
+                    f'That time slot ({date_display} at {time_display}) is already taken by "{prospect.lab_name}". '
+                    f'Please choose a different time.'
+                )
+        return cleaned_data
+
 
 class CreateLabAccountForm(forms.Form):
-    """Form for creating a lab user account for a prospect"""
-
-    username = forms.CharField(
-        max_length=150,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Username'
-        }),
-        help_text='Username for logging into the price program'
-    )
+    """Form for creating a lab user account for a prospect.
+    Username will be set to the email address. Password will be the prospect's zip code.
+    """
 
     email = forms.EmailField(
-        required=False,
         widget=forms.EmailInput(attrs={
             'class': 'form-control',
             'placeholder': 'Email Address'
         }),
-        help_text='Email to send login credentials'
+        help_text='Used as both login username and email for credentials'
     )
 
     send_email = forms.BooleanField(

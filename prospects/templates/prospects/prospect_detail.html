@@ -101,7 +101,7 @@
 
             <!-- Business Details -->
             <div class="row mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <p class="text-muted mb-1">Monthly Fee</p>
                     <p class="fw-bold fs-5">
                         {% if prospect.monthly_fee %}
@@ -111,7 +111,11 @@
                         {% endif %}
                     </p>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <p class="text-muted mb-1">QuickBooks ID</p>
+                    <p class="fw-bold">{{ prospect.quickbooks_id|default:"—" }}</p>
+                </div>
+                <div class="col-md-3">
                     <p class="text-muted mb-1">Has Mill</p>
                     <p class="fw-bold">
                         {% if prospect.has_mill %}
@@ -177,6 +181,13 @@
             <h4 class="mb-3">Next Contact</h4>
             <form method="post">
                 {% csrf_token %}
+                {% if date_form.non_field_errors %}
+                <div class="alert alert-danger py-2 small">
+                    {% for error in date_form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 <div class="mb-2">
                     <label class="form-label text-muted small">Date</label>
                     {{ date_form.next_contact_date }}
@@ -221,4 +232,46 @@
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    const dateInput = document.getElementById('id_next_contact_date');
+    const timeSelect = document.getElementById('id_next_contact_time');
+    if (!dateInput || !timeSelect) return;
+
+    const allOptions = Array.from(timeSelect.options).map(o => ({value: o.value, text: o.text}));
+    const excludePk = '{{ prospect.pk }}';
+    const originalDate = dateInput.value;
+    const originalTime = timeSelect.value;
+
+    function updateTimeSlots() {
+        const dateVal = dateInput.value;
+        if (!dateVal) {
+            rebuildOptions([]);
+            return;
+        }
+        let url = '{% url "prospects:taken_times_api" %}?date=' + dateVal;
+        if (excludePk) url += '&exclude=' + excludePk;
+        fetch(url)
+            .then(r => r.json())
+            .then(data => rebuildOptions(data.taken || []));
+    }
+
+    function rebuildOptions(takenTimes) {
+        const prevSelected = timeSelect.value;
+        timeSelect.innerHTML = '';
+        allOptions.forEach(opt => {
+            if (opt.value && takenTimes.includes(opt.value)) return;
+            const o = document.createElement('option');
+            o.value = opt.value;
+            o.text = opt.text;
+            if (opt.value === prevSelected) o.selected = true;
+            timeSelect.appendChild(o);
+        });
+    }
+
+    dateInput.addEventListener('change', updateTimeSlots);
+    if (dateInput.value) updateTimeSlots();
+})();
+</script>
 {% endblock %}

@@ -57,7 +57,7 @@
     <div class="panel-body">
       {% if sessions %}
       <table class="portal-table">
-        <thead><tr><th>Date</th><th>Time</th><th>CSR</th><th>Status</th></tr></thead>
+        <thead><tr><th>Date</th><th>Time</th><th>CSR</th><th>Status</th><th></th></tr></thead>
         <tbody>
           {% for s in sessions %}
           <tr>
@@ -65,6 +65,7 @@
             <td>{{ s.scheduled_time|time:"g:i A"|default:"TBD" }}</td>
             <td>{{ s.csr.first_name|default:"Unassigned" }}</td>
             <td><span class="portal-badge {% if s.status == 'completed' %}green{% elif s.status == 'in_progress' %}gold{% elif s.status == 'cancelled' %}red{% else %}navy{% endif %}">{{ s.get_status_display }}</span></td>
+            <td><a href="{% url 'onevoice:edit_call_session' pk=s.pk %}" class="panel-link">Edit</a></td>
           </tr>
           {% endfor %}
         </tbody>

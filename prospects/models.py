@@ -74,6 +74,9 @@ class Prospect(models.Model):
         help_text="Mailer batch this prospect was imported from"
     )
 
+    # QuickBooks
+    quickbooks_id = models.CharField(max_length=50, blank=True, default='', help_text='QuickBooks customer ID')
+
     # Lead fields
     monthly_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     lab_name = models.CharField(max_length=200)
@@ -117,6 +120,9 @@ class Prospect(models.Model):
     zip_qty_8 = models.IntegerField(null=True, blank=True)
     zip_qty_9 = models.IntegerField(null=True, blank=True)
     zip_qty_10 = models.IntegerField(null=True, blank=True)
+
+    # Fusion email tracking
+    fusion_email_sent = models.BooleanField(default=False)
 
     # Next Contact Date - Calendar picker
     next_contact_date = models.DateField(null=True, blank=True)

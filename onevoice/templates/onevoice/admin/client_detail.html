@@ -6,7 +6,7 @@
 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
   <div>
     <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">{{ client.lab_name }}</h1>
-    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.owner_name }} &middot; {{ client.phone }} &middot; {{ client.email }}</p>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ client.owner_name }} &middot; {{ client.phone }} &middot; {{ client.email }}{% if client.prospect and client.prospect.quickbooks_id %} &middot; QB: {{ client.prospect.quickbooks_id }}{% endif %}</p>
   </div>
   <div style="display:flex;gap:8px;">
     <a href="{% url 'onevoice:client_edit' pk=client.pk %}" class="btn-portal-outline btn-portal-sm">Edit</a>
