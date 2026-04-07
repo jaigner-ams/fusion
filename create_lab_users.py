@@ -53,6 +53,6 @@ print(f"Summary: Created {created_count} out of {len(users_to_create)} users")
 # Display all lab users
 print("\nCurrent lab users in the system:")
 print("-" * 40)
-lab_users = CustomUser.objects.filter(user_type='lab')
+lab_users = CustomUser.objects.filter(roles__role='lab')
 for user in lab_users:
     print(f"- {user.username} ({user.email})")

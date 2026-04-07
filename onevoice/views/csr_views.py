@@ -362,7 +362,7 @@ def csr_session_done(request, pk):
 
         # Notify admins
         from mgmt.models import CustomUser
-        admins = CustomUser.objects.filter(user_type__in=['ov_admin', 'superadmin'])
+        admins = CustomUser.objects.filter(roles__role__in=['ov_admin', 'superadmin']).distinct()
         for admin in admins:
             send_ov_notification(
                 'session_done', admin, client=session.client,

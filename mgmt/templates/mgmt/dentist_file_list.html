@@ -19,8 +19,7 @@
                         <th>Description</th>
                         <th>Uploaded By</th>
                         <th>Uploaded At</th>
-                        <th>Status</th>
-                        <th>Downloaded At</th>
+                        <th>Your Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,7 +37,7 @@
                             </td>
                             <td>{{ file.description|default:"-" }}</td>
                             <td>
-                                {% if file.uploaded_by.user_type == 'lab' %}
+                                {% if file.uploaded_by.is_lab_user %}
                                     <span class="portal-badge navy">Your Lab</span>
                                 {% else %}
                                     <span class="portal-badge green">You</span>
@@ -46,17 +45,12 @@
                             </td>
                             <td style="color:var(--text3);">{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
                             <td>
-                                {% if file.status == 'downloaded' %}
+                                {% if file.user_has_downloaded %}
                                     <span class="portal-badge green">Downloaded</span>
+                                    <br>
+                                    <span style="font-size:11px; color:var(--text3);">{{ file.user_downloaded_at|date:"Y-m-d H:i" }}</span>
                                 {% else %}
-                                    <span class="portal-badge gold">Pending</span>
-                                {% endif %}
-                            </td>
-                            <td style="color:var(--text3);">
-                                {% if file.downloaded_at %}
-                                    {{ file.downloaded_at|date:"Y-m-d H:i" }}
-                                {% else %}
-                                    -
+                                    <span class="portal-badge gold">New</span>
                                 {% endif %}
                             </td>
                         </tr>

@@ -26,6 +26,8 @@ urlpatterns = [
     path('admin/postcards/<int:pk>/delete/', admin_views.postcard_delete, name='postcard_delete'),
     path('admin/reports/', admin_views.admin_reports, name='admin_reports'),
     path('admin/create-user/', admin_views.create_ov_user, name='create_ov_user'),
+    path('admin/users/', admin_views.user_list, name='user_list'),
+    path('admin/users/<int:pk>/edit/', admin_views.user_edit, name='user_edit'),
     path('admin/notifications/', admin_views.admin_notifications, name='admin_notifications'),
 
     # ── CSR views ──

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
 from django.db import transaction
+from django.db.models import Exists, OuterRef, Subquery
 from django.contrib import messages
 from django.http import HttpResponse, FileResponse, HttpResponseNotAllowed
 from django.utils import timezone
@@ -17,7 +18,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
-from .models import Dentist, DefaultPriceList, PriceList, CreditPurchase, CreditTransaction, FileUpload, CustomUser
+from .models import Dentist, DefaultPriceList, PriceList, CreditPurchase, CreditTransaction, FileUpload, FileDownload, CustomUser
 from .forms import DentistForm, DefaultPriceForm, CustomPriceForm, DentistWithUserForm, CreditPurchaseForm, CreditDeductionForm, DentistPasswordChangeForm, FileUploadForm, LabProfileForm, ZipCodeSearchForm, DentistSearchForm
 from .decorators import lab_required, lab_or_admin_required, dentist_required, admin_required
 from .dentist_search import search_dentists, deduplicate, FIELDNAMES as DENTIST_FIELDNAMES
@@ -108,12 +109,12 @@ def price_management_view(request):
         lab_name = request.user.first_name or request.user.username
 
     # For lab users, render the new portal dashboard
-    if request.user.user_type == 'lab':
+    if request.user.is_lab_user():
         from prospects.models import Prospect
         from django.db.models import Q
 
         files = FileUpload.objects.filter(dentist__lab=request.user).order_by('-uploaded_at')
-        pending_files = files.filter(status='pending')
+        pending_files = files.exclude(downloads__user=request.user)
         recent_files = files[:10]
 
         # Protected zip codes
@@ -165,7 +166,7 @@ def default_prices_view(request):
     from django.forms import modelformset_factory
     
     # Get lab name for display
-    lab_name = request.user.first_name or request.user.username if request.user.user_type == 'lab' else 'Lab'
+    lab_name = request.user.first_name or request.user.username if request.user.is_lab_user() else 'Lab'
     
     # Create a custom form class that passes the user
     class DefaultPriceFormWithUser(DefaultPriceForm):
@@ -831,8 +832,12 @@ def lab_upload_file_view(request):
 @dentist_required
 def dentist_file_list_view(request):
     dentist = get_object_or_404(Dentist, user=request.user)
-    files = FileUpload.objects.filter(dentist=dentist).order_by('-uploaded_at')
-    
+    user_download = FileDownload.objects.filter(file_upload=OuterRef('pk'), user=request.user)
+    files = FileUpload.objects.filter(dentist=dentist).annotate(
+        user_has_downloaded=Exists(user_download),
+        user_downloaded_at=Subquery(user_download.values('downloaded_at')[:1]),
+    ).order_by('-uploaded_at')
+
     context = {
         'files': files,
         'title': 'My Uploaded Files'
@@ -843,10 +848,17 @@ def dentist_file_list_view(request):
 @lab_or_admin_required
 def lab_file_list_view(request):
     if request.user.is_admin_user():
-        files = FileUpload.objects.all().order_by('-uploaded_at')
+        files = FileUpload.objects.all()
     else:
-        files = FileUpload.objects.filter(lab=request.user).order_by('-uploaded_at')
-    
+        files = FileUpload.objects.filter(lab=request.user)
+
+    # Annotate with whether the current user has downloaded each file
+    user_download = FileDownload.objects.filter(file_upload=OuterRef('pk'), user=request.user)
+    files = files.annotate(
+        user_has_downloaded=Exists(user_download),
+        user_downloaded_at=Subquery(user_download.values('downloaded_at')[:1]),
+    ).order_by('-uploaded_at')
+
     context = {
         'files': files,
         'title': 'Files from Dentists'
@@ -904,7 +916,7 @@ def stl_viewer(request):
     """View for displaying the STL viewer."""
     # Get recent STL files if user is lab or admin
     uploaded_files = []
-    if request.user.user_type in ['lab', 'admin']:
+    if request.user.is_lab_user() or request.user.is_admin_user():
         # Get recent STL files
         uploaded_files = FileUpload.objects.filter(
             file__iendswith='.stl'
@@ -991,7 +1003,7 @@ def lab_profile(request):
 
 def lab_public_page(request, username):
     """Public page for a lab showing their info and default prices"""
-    lab = get_object_or_404(CustomUser, username=username, user_type='lab')
+    lab = get_object_or_404(CustomUser, username=username, roles__role='lab')
 
     # Get default prices for this lab
     default_prices = DefaultPriceList.objects.filter(lab=lab).order_by('product_description', 'applied_after')
@@ -1033,7 +1045,7 @@ def lab_public_page(request, username):
 
 def lab_public_pdf(request, username):
     """Generate a PDF of the lab's public pricing page"""
-    lab = get_object_or_404(CustomUser, username=username, user_type='lab')
+    lab = get_object_or_404(CustomUser, username=username, roles__role='lab')
 
     # Get default prices for this lab (same logic as lab_public_page)
     default_prices = DefaultPriceList.objects.filter(lab=lab).order_by('product_description', 'applied_after')
@@ -1336,3 +1348,52 @@ def dentist_search_csv_view(request):
     response = HttpResponse(output.getvalue(), content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=dentists.csv'
     return response
+
+
+def fusion_program_details(request):
+    """Public program details page. Lab name passed via ?lab= GET parameter.
+    Form submission sends an enrollment email."""
+    lab_name = request.GET.get('lab', '')
+    success = False
+
+    if request.method == 'POST':
+        lab_hidden = request.POST.get('lab', '')
+        lab_input = request.POST.get('lab_name', '')
+        owner_first = request.POST.get('owner_first', '')
+        owner_last = request.POST.get('owner_last', '')
+        phone = request.POST.get('phone', '')
+        email = request.POST.get('email', '')
+        city = request.POST.get('city', '')
+        state = request.POST.get('state', '')
+        zip_code = request.POST.get('zip', '')
+        one_voice = request.POST.get('one_voice', '')
+
+        subject = f'Fusion Enrollment Request — {lab_input or lab_hidden}'
+        body = (
+            f"New Fusion enrollment request:\n\n"
+            f"Referred Lab: {lab_hidden}\n"
+            f"Lab Name: {lab_input}\n"
+            f"Owner: {owner_first} {owner_last}\n"
+            f"Phone: {phone}\n"
+            f"Email: {email}\n"
+            f"City: {city}\n"
+            f"State: {state}\n"
+            f"Zip Code(s): {zip_code}\n"
+            f"One Voice Interest: {one_voice}\n"
+        )
+
+        try:
+            send_mail(
+                subject, body,
+                settings.DEFAULT_FROM_EMAIL,
+                ['jvonthaden@americasmiles.com'],
+                fail_silently=False,
+            )
+            success = True
+        except Exception:
+            messages.error(request, 'There was a problem submitting your request. Please try again.')
+
+    return render(request, 'mgmt/fusion_program_details.html', {
+        'lab_name': lab_name,
+        'success': success,
+    })

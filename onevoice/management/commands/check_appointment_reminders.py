@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
             if latest_appt and latest_appt.appointment_date < today:
                 # Appointment has passed, alert admin and CSRs to resume
-                admins = CustomUser.objects.filter(user_type__in=['ov_admin', 'superadmin'])
+                admins = CustomUser.objects.filter(roles__role__in=['ov_admin', 'superadmin']).distinct()
                 for admin in admins:
                     send_ov_notification(
                         'appointment_passed', admin, client=client,

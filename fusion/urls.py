@@ -27,6 +27,7 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/prices/', permanent=False)),
     path('admin/', admin.site.urls),
     path('find-lab/', mgmt_views.lab_search_view, name='lab_search_root'),
+    path('fusion-program-details/', mgmt_views.fusion_program_details, name='fusion_program_details'),
     path('prices/', include('mgmt.urls')),
     path('prospects/', include('prospects.urls', namespace='prospects')),
     path('onevoice/', include('onevoice.urls', namespace='onevoice')),

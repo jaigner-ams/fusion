@@ -61,7 +61,7 @@ class OVStaffUserForm(forms.ModelForm):
         ('designer', 'Designer'),
     ]
 
-    user_type = forms.ChoiceField(choices=OV_STAFF_TYPES, widget=forms.Select(attrs={'class': 'form-control'}))
+    user_type = forms.ChoiceField(choices=OV_STAFF_TYPES, widget=forms.Select(attrs={'class': 'form-control'}), label='Role')
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     password_confirm = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), label='Confirm Password')
 
@@ -105,7 +105,7 @@ class OVCallSessionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['csr'].queryset = CustomUser.objects.filter(user_type='csr')
+        self.fields['csr'].queryset = CustomUser.objects.filter(roles__role='csr')
 
 
 class OVCallSessionEditForm(forms.ModelForm):
@@ -122,7 +122,7 @@ class OVCallSessionEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['csr'].queryset = CustomUser.objects.filter(user_type='csr')
+        self.fields['csr'].queryset = CustomUser.objects.filter(roles__role='csr')
 
 
 class OVCallRecordForm(forms.ModelForm):

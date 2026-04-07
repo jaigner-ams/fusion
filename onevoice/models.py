@@ -27,7 +27,7 @@ class OVClient(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
         related_name='ov_client_profile',
-        limit_choices_to={'user_type': 'ov_client'},
+        limit_choices_to={'roles__role': 'ov_client'},
         null=True, blank=True,
     )
     prospect = models.OneToOneField(
@@ -52,7 +52,7 @@ class OVClient(models.Model):
     assigned_csrs = models.ManyToManyField(
         settings.AUTH_USER_MODEL, blank=True,
         related_name='ov_assigned_clients',
-        limit_choices_to={'user_type': 'csr'},
+        limit_choices_to={'roles__role': 'csr'},
     )
     onboarded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -150,7 +150,7 @@ class OVDentist(models.Model):
     assigned_csr = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='ov_assigned_dentists',
-        limit_choices_to={'user_type': 'csr'},
+        limit_choices_to={'roles__role': 'csr'},
     )
     list_import = models.ForeignKey(
         OVListImport, on_delete=models.SET_NULL,

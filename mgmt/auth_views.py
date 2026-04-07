@@ -104,7 +104,7 @@ class CustomLogoutView(View):
         
         if request.user.is_authenticated:
             username = request.user.username
-            user_type = request.user.user_type if hasattr(request.user, 'user_type') else 'user'
+            user_type = request.user.get_primary_role() if hasattr(request.user, 'get_primary_role') else 'user'
             logout(request)
             messages.success(request, f'You have been successfully logged out. Thank you for using the system!')
         

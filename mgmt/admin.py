@@ -1,16 +1,23 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase, CreditTransaction, FileUpload
+from .models import Dentist, DefaultPriceList, PriceList, CustomUser, CreditPurchase, CreditTransaction, FileUpload, FileDownload, UserRole
 
 # Configure admin site branding
 admin.site.site_header = "AMS Fusion Administration"
 admin.site.site_title = "AMS Fusion Admin"
 admin.site.index_title = "Welcome to AMS Fusion Administration"
 
+class UserRoleInline(admin.TabularInline):
+    model = UserRole
+    extra = 1
+    fields = ['role', 'is_primary']
+
+
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ['username', 'email', 'user_type', 'credits', 'is_staff', 'is_active']
-    list_filter = ['user_type', 'is_staff', 'is_active']
+    list_display = ['username', 'email', 'get_roles_display', 'credits', 'is_staff', 'is_active']
+    list_filter = ['roles__role', 'is_staff', 'is_active']
+    inlines = [UserRoleInline]
 
     fieldsets = UserAdmin.fieldsets + (
         ('User Information', {'fields': ('user_type', 'credits', 'lab_profile_id')}),
@@ -35,14 +42,19 @@ class CustomUserAdmin(UserAdmin):
         ('User Information', {'fields': ('user_type', 'credits', 'lab_profile_id')}),
     )
     
+    def get_roles_display(self, obj):
+        roles = obj.roles.all()
+        return ', '.join(r.get_role_display() for r in roles) or obj.get_user_type_display()
+    get_roles_display.short_description = 'Roles'
+
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request).prefetch_related('roles')
         if request.user.is_superuser:
             return qs
         elif request.user.is_admin_user():
             return qs
         elif request.user.is_lab_user():
-            return qs.filter(user_type='dentist')
+            return qs.filter(roles__role='dentist')
         else:
             return qs.none()
 
@@ -184,13 +196,20 @@ class CreditTransactionAdmin(admin.ModelAdmin):
         # Prevent deleting transactions through admin
         return False
 
+class FileDownloadInline(admin.TabularInline):
+    model = FileDownload
+    extra = 0
+    readonly_fields = ['user', 'downloaded_at']
+
+
 @admin.register(FileUpload)
 class FileUploadAdmin(admin.ModelAdmin):
     list_display = ['dentist', 'original_filename', 'uploaded_by', 'lab', 'status', 'uploaded_at', 'downloaded_at']
     list_filter = ['status', 'uploaded_at', 'lab']
     search_fields = ['dentist__name', 'original_filename', 'uploaded_by__username']
     readonly_fields = ['uploaded_at', 'downloaded_at', 'downloaded_by']
-    
+    inlines = [FileDownloadInline]
+
     fieldsets = (
         ('File Information', {
             'fields': ('dentist', 'file', 'original_filename', 'description')
@@ -198,11 +217,11 @@ class FileUploadAdmin(admin.ModelAdmin):
         ('Upload Details', {
             'fields': ('uploaded_by', 'lab', 'uploaded_at')
         }),
-        ('Download Information', {
+        ('Legacy Download Information', {
             'fields': ('status', 'downloaded_at', 'downloaded_by')
         })
     )
-    
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser or request.user.is_admin_user():
@@ -211,6 +230,14 @@ class FileUploadAdmin(admin.ModelAdmin):
             return qs.filter(lab=request.user)
         else:
             return qs.none()
+
+
+@admin.register(FileDownload)
+class FileDownloadAdmin(admin.ModelAdmin):
+    list_display = ['file_upload', 'user', 'downloaded_at']
+    list_filter = ['downloaded_at']
+    search_fields = ['file_upload__original_filename', 'user__username']
+    readonly_fields = ['file_upload', 'user', 'downloaded_at']
     
     def has_add_permission(self, request):
         # Files should be uploaded through the app

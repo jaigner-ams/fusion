@@ -116,7 +116,7 @@ def client_correction_request(request, pk):
 
             # Notify admins
             from mgmt.models import CustomUser
-            for admin in CustomUser.objects.filter(user_type__in=['ov_admin', 'superadmin']):
+            for admin in CustomUser.objects.filter(roles__role__in=['ov_admin', 'superadmin']).distinct():
                 send_ov_notification(
                     'correction_request', admin, client=client,
                     title=f'Correction Request: {dentist.name}',
@@ -148,7 +148,7 @@ def client_removal_request(request, pk):
         dentist.save(update_fields=['removal_flagged'])
 
         from mgmt.models import CustomUser
-        for admin in CustomUser.objects.filter(user_type__in=['ov_admin', 'superadmin']):
+        for admin in CustomUser.objects.filter(roles__role__in=['ov_admin', 'superadmin']).distinct():
             send_ov_notification(
                 'removal_request', admin, client=client,
                 title=f'Removal Request: {dentist.name}',

@@ -70,6 +70,27 @@ body {
   margin-top: 3px;
 }
 
+/* Module toggle */
+.module-toggle {
+  display: flex; padding: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.module-toggle a {
+  flex: 1; padding: 10px 0;
+  text-align: center; text-decoration: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  transition: all 0.15s;
+}
+.module-toggle a:hover { color: rgba(255,255,255,0.6); }
+.module-toggle a.active {
+  color: var(--gold3);
+  background: rgba(201,168,76,0.1);
+  border-bottom: 2px solid var(--gold2);
+}
+
 .sidebar-lab {
   padding: 16px 22px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
@@ -657,10 +678,10 @@ body {
     <div class="sidebar-brand-sub">Member Portal</div>
   </div>
 
-  {% if user.user_type == 'superadmin' %}
-  <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.07);">
-    <a href="{% url 'price_management' %}" style="flex:1;padding:10px 0;text-align:center;text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold3);background:rgba(201,168,76,0.1);border-bottom:2px solid var(--gold2);">Fusion</a>
-    <a href="{% url 'onevoice:admin_dashboard' %}" style="flex:1;padding:10px 0;text-align:center;text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);transition:color 0.15s;">One Voice</a>
+  {% if user.is_onevoice_user %}
+  <div class="module-toggle">
+    <a href="{% url 'price_management' %}" class="active">Fusion</a>
+    <a href="{% url 'onevoice:admin_dashboard' %}">One Voice</a>
   </div>
   {% endif %}
 
@@ -670,13 +691,13 @@ body {
     <div class="sidebar-lab-status">
       <div class="status-dot"></div>
       <div class="status-text">
-        {% if user.user_type == 'lab' %}Active Lab{% elif user.user_type == 'dentist' %}Dentist{% elif user.user_type == 'admin' %}Administrator{% else %}{{ user.get_user_type_display }}{% endif %}
+        {% if user.is_lab_user %}Active Lab{% elif user.is_dentist_user %}Dentist{% elif user.is_admin_user %}Administrator{% else %}{{ user.get_primary_role_display }}{% endif %}
       </div>
     </div>
   </div>
 
   <nav class="sidebar-nav">
-    {% if user.user_type == 'lab' or user.user_type == 'admin' %}
+    {% if user.is_lab_user or user.is_admin_user %}
     {# ── LAB / ADMIN NAV ── #}
     <div class="nav-section-label">Overview</div>
     <a class="nav-item {% block nav_dashboard %}{% endblock %}" href="{% url 'price_management' %}">
@@ -722,7 +743,7 @@ body {
       <span class="nav-label">Lab Profile</span>
     </a>
 
-    {% elif user.user_type == 'dentist' %}
+    {% elif user.is_dentist_user %}
     {# ── DENTIST NAV ── #}
     <div class="nav-section-label">Overview</div>
     <a class="nav-item {% block nav_dentist_dashboard %}{% endblock %}" href="{% url 'dentist_dashboard' %}">

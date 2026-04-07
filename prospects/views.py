@@ -395,6 +395,8 @@ def create_lab_account(request, pk):
                 zip_code=prospect.zip_code or '',
             )
 
+            lab_user.add_role('lab', is_primary=True)
+
             # Link the user to the prospect
             prospect.lab_user = lab_user
             prospect.save()
@@ -883,7 +885,7 @@ def caller_activity(request):
         selected_date = date.today()
 
     # Get all caller users
-    callers = CustomUser.objects.filter(user_type='caller')
+    callers = CustomUser.objects.filter(roles__role='caller')
 
     # Build timezone-aware date range for filtering
     from django.utils import timezone as tz

@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
@@ -62,35 +63,81 @@ class CustomUser(AbstractUser):
     zip_code = models.CharField(max_length=20, blank=True, help_text="Zip code")
     website = models.URLField(blank=True, help_text="Website URL")
 
+    @cached_property
+    def _role_set(self):
+        """Cache the set of role strings for this user."""
+        return set(self.roles.values_list('role', flat=True))
+
+    def has_role(self, role_name):
+        """Check if user has a specific role."""
+        return role_name in self._role_set
+
+    def add_role(self, role_name, is_primary=False):
+        """Add a role to this user. Optionally set it as primary."""
+        role, created = UserRole.objects.get_or_create(user=self, role=role_name)
+        if is_primary:
+            self.roles.update(is_primary=False)
+            role.is_primary = True
+            role.save()
+        # Invalidate cache
+        try:
+            del self._role_set
+        except AttributeError:
+            pass
+        return role
+
+    def remove_role(self, role_name):
+        """Remove a role from this user."""
+        self.roles.filter(role=role_name).delete()
+        try:
+            del self._role_set
+        except AttributeError:
+            pass
+
+    def get_primary_role(self):
+        """Return the primary role string, falling back to user_type."""
+        primary = self.roles.filter(is_primary=True).first()
+        if primary:
+            return primary.role
+        return self.user_type
+
+    def get_primary_role_display(self):
+        """Human-readable display of primary role."""
+        role_labels = dict(UserRole.ROLE_CHOICES)
+        return role_labels.get(self.get_primary_role(), self.get_primary_role())
+
     def is_admin_user(self):
-        return self.user_type == 'admin'
-    
+        return self.has_role('admin')
+
     def is_lab_user(self):
-        return self.user_type == 'lab'
-    
+        return self.has_role('lab')
+
     def is_dentist_user(self):
-        return self.user_type == 'dentist'
+        return self.has_role('dentist')
 
     def is_caller_user(self):
-        return self.user_type == 'caller'
+        return self.has_role('caller')
 
     def is_superadmin_user(self):
-        return self.user_type == 'superadmin'
+        return self.has_role('superadmin')
 
     def is_ov_admin_user(self):
-        return self.user_type == 'ov_admin'
+        return self.has_role('ov_admin')
 
     def is_csr_user(self):
-        return self.user_type == 'csr'
+        return self.has_role('csr')
 
     def is_designer_user(self):
-        return self.user_type == 'designer'
+        return self.has_role('designer')
 
     def is_ov_client_user(self):
-        return self.user_type == 'ov_client'
+        return self.has_role('ov_client')
 
     def is_onevoice_user(self):
-        return self.user_type in ('superadmin', 'ov_admin', 'csr', 'designer', 'ov_client')
+        return bool(self._role_set & {'superadmin', 'ov_admin', 'csr', 'designer', 'ov_client'})
+
+    def is_fusion_user(self):
+        return bool(self._role_set & {'admin', 'lab', 'dentist', 'caller'})
     
     def get_total_credits(self):
         """Get total crown credits (economy + premium)"""
@@ -180,7 +227,7 @@ class CustomUser(AbstractUser):
         for i in range(1, 11):
             query |= Q(**{f'zip_protect_{i}': zip_code})
 
-        return cls.objects.filter(user_type='lab').filter(query).first()
+        return cls.objects.filter(roles__role='lab').filter(query).first()
 
     @classmethod
     def find_nearest_labs_by_zip(cls, zip_code, limit=3, include_distance=False):
@@ -207,7 +254,7 @@ class CustomUser(AbstractUser):
         target_coords = ZipCode.get_coordinates(zip_code)
 
         # Get all labs with valid zip codes
-        labs = cls.objects.filter(user_type='lab').exclude(zip_code='')
+        labs = cls.objects.filter(roles__role='lab').exclude(zip_code='')
 
         # Calculate distance for each lab
         labs_with_distance = []
@@ -244,6 +291,37 @@ class CustomUser(AbstractUser):
     class Meta:
         verbose_name = 'User'
         verbose_name_plural = 'Users'
+
+
+class UserRole(models.Model):
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('lab', 'Lab'),
+        ('dentist', 'Dentist'),
+        ('caller', 'Caller'),
+        ('superadmin', 'Super Admin'),
+        ('ov_admin', 'OV Admin'),
+        ('csr', 'CSR'),
+        ('designer', 'Designer'),
+        ('ov_client', 'OV Client'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='roles',
+    )
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    is_primary = models.BooleanField(default=False, help_text="Primary role for login routing and display")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'role')
+        verbose_name = 'User Role'
+        verbose_name_plural = 'User Roles'
+
+    def __str__(self):
+        return f'{self.user.username} - {self.get_role_display()}'
 
 
 class ZipCode(models.Model):
@@ -292,8 +370,8 @@ class ZipCode(models.Model):
 
 class Dentist(models.Model):
     name = models.CharField(max_length=128)
-    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'}, related_name='lab_dentists')
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'user_type': 'dentist'}, related_name='dentist_profile', help_text="Optional: Link to a user account for this dentist")
+    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'roles__role': 'lab'}, related_name='lab_dentists')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'roles__role': 'dentist'}, related_name='dentist_profile', help_text="Optional: Link to a user account for this dentist")
     
     def __str__(self):
         return self.name
@@ -307,7 +385,7 @@ class DefaultPriceList(models.Model):
         ('premium', 'Premium'),
     ]
 
-    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'})
+    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'roles__role': 'lab'})
     applied_after = models.IntegerField(default=0, help_text="Number of units after which this price applies")
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price per unit")
     type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='economy', help_text="Price type")
@@ -526,7 +604,7 @@ class FileUpload(models.Model):
     
     dentist = models.ForeignKey(Dentist, on_delete=models.CASCADE, related_name='uploaded_files')
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='files_uploaded')
-    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'user_type': 'lab'}, related_name='received_files')
+    lab = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'roles__role': 'lab'}, related_name='received_files')
     file = models.FileField(upload_to='dentist_uploads/%Y/%m/%d/')
     original_filename = models.CharField(max_length=255)
     script_file = models.FileField(upload_to='dentist_uploads/scripts/%Y/%m/%d/', null=True, blank=True, help_text="Optional prescription/script document to accompany the case file")
@@ -541,16 +619,42 @@ class FileUpload(models.Model):
         return f"{self.dentist.name} - {self.original_filename} ({self.get_status_display()})"
     
     def mark_as_downloaded(self, user):
+        """Record that this user downloaded the file. Also sets legacy status on first download."""
+        download, created = FileDownload.objects.get_or_create(
+            file_upload=self,
+            user=user,
+            defaults={'downloaded_at': timezone.now()}
+        )
+        if not created:
+            download.downloaded_at = timezone.now()
+            download.save(update_fields=['downloaded_at'])
+        # Keep legacy status field in sync (first download sets it)
         if self.status == 'pending':
             self.status = 'downloaded'
             self.downloaded_at = timezone.now()
             self.downloaded_by = user
             self.save()
-    
+
     class Meta:
         ordering = ['-uploaded_at']
         verbose_name = "File Upload"
         verbose_name_plural = "File Uploads"
+
+
+class FileDownload(models.Model):
+    """Tracks per-user download status for each file upload."""
+    file_upload = models.ForeignKey(FileUpload, on_delete=models.CASCADE, related_name='downloads')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='file_downloads')
+    downloaded_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = ('file_upload', 'user')
+        ordering = ['-downloaded_at']
+        verbose_name = "File Download"
+        verbose_name_plural = "File Downloads"
+
+    def __str__(self):
+        return f"{self.user.username} downloaded {self.file_upload.original_filename}"
 
 
 @receiver(post_save, sender=Dentist)
@@ -588,7 +692,8 @@ def create_user_for_dentist(sender, instance, created, **kwargs):
             user_type='dentist',
             first_name=instance.name
         )
-        
+        user.add_role('dentist', is_primary=True)
+
         # Link the user to the dentist
         instance.user = user
         instance.save()
@@ -637,3 +742,17 @@ def create_user_for_dentist(sender, instance, created, **kwargs):
                 print(f"Failed to send email to {email}: {str(e)}")
                 # Don't fail the user creation if email fails
                 pass
+
+
+@receiver(post_save, sender=CustomUser)
+def sync_user_type_to_role(sender, instance, created, **kwargs):
+    """During transition: keep UserRole in sync when user_type is set."""
+    if instance.user_type:
+        role, role_created = UserRole.objects.get_or_create(
+            user=instance,
+            role=instance.user_type,
+        )
+        # If this is a new user or the role was just created and no primary exists, set as primary
+        if role_created and not UserRole.objects.filter(user=instance, is_primary=True).exists():
+            role.is_primary = True
+            role.save()

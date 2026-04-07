@@ -22,8 +22,7 @@
                         <th>Description</th>
                         <th>Uploaded By</th>
                         <th>Uploaded At</th>
-                        <th>Status</th>
-                        <th>Downloaded By</th>
+                        <th>Your Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -47,7 +46,7 @@
                             </td>
                             <td>{{ file.description|default:"-" }}</td>
                             <td>
-                                {% if file.uploaded_by.user_type == 'lab' %}
+                                {% if file.uploaded_by.is_lab_user %}
                                     <span class="portal-badge navy">Lab</span>
                                 {% else %}
                                     <span class="portal-badge green">{{ file.uploaded_by.first_name|default:file.uploaded_by.username }}</span>
@@ -55,19 +54,12 @@
                             </td>
                             <td style="color:var(--text3);">{{ file.uploaded_at|date:"M d, Y H:i" }}</td>
                             <td>
-                                {% if file.status == 'downloaded' %}
+                                {% if file.user_has_downloaded %}
                                     <span class="portal-badge green">Downloaded</span>
-                                {% else %}
-                                    <span class="portal-badge gold">Pending</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if file.downloaded_by %}
-                                    <span style="font-size:12px;">{{ file.downloaded_by.username }}</span>
                                     <br>
-                                    <span style="font-size:11px; color:var(--text3);">{{ file.downloaded_at|date:"M d, Y H:i" }}</span>
+                                    <span style="font-size:11px; color:var(--text3);">{{ file.user_downloaded_at|date:"M d, Y H:i" }}</span>
                                 {% else %}
-                                    <span style="color:var(--text3);">-</span>
+                                    <span class="portal-badge gold">New</span>
                                 {% endif %}
                             </td>
                             <td>

@@ -37,7 +37,7 @@ class Command(BaseCommand):
         day_end = timezone.make_aware(datetime.datetime.combine(report_date, datetime.time.max))
 
         # Get all caller users
-        callers = CustomUser.objects.filter(user_type='caller')
+        callers = CustomUser.objects.filter(roles__role='caller')
 
         if not callers.exists():
             self.stdout.write('No caller users found. Skipping.')

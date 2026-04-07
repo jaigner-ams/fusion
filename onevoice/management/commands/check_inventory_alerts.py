@@ -11,7 +11,7 @@ class Command(BaseCommand):
         all_inventory = OVPostcardInventory.objects.select_related('client', 'design')
         low_items = [inv for inv in all_inventory if inv.is_below_threshold()]
 
-        admins = CustomUser.objects.filter(user_type__in=['ov_admin', 'superadmin'])
+        admins = CustomUser.objects.filter(roles__role__in=['ov_admin', 'superadmin']).distinct()
 
         for inv in low_items:
             for admin in admins:

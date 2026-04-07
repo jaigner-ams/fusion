@@ -608,7 +608,7 @@ body {
     <div class="sidebar-brand-sub">AmericaSmiles Network</div>
   </div>
 
-  {% if user.user_type == 'superadmin' %}
+  {% if user.is_fusion_user %}
   <div class="module-toggle">
     <a href="{% url 'price_management' %}">Fusion</a>
     <a href="{% url 'onevoice:admin_dashboard' %}" class="active">One Voice</a>
@@ -620,12 +620,12 @@ body {
     <div class="sidebar-user-name">{{ user.first_name|default:user.username }}</div>
     <div class="sidebar-user-role">
       <div class="status-dot"></div>
-      <div class="status-text">{{ user.get_user_type_display }}</div>
+      <div class="status-text">{{ user.get_primary_role_display }}</div>
     </div>
   </div>
 
   <nav class="sidebar-nav">
-    {% if user.user_type == 'ov_admin' or user.user_type == 'superadmin' %}
+    {% if user.is_ov_admin_user or user.is_superadmin_user %}
     {# ADMIN NAV #}
     <div class="nav-section-label">Overview</div>
     <a class="nav-item {% block nav_admin_dashboard %}{% endblock %}" href="{% url 'onevoice:admin_dashboard' %}">
@@ -658,12 +658,16 @@ body {
     </a>
 
     <div class="nav-section-label">Settings</div>
-    <a class="nav-item {% block nav_create_user %}{% endblock %}" href="{% url 'onevoice:create_ov_user' %}">
+    <a class="nav-item {% block nav_user_list %}{% endblock %}" href="{% url 'onevoice:user_list' %}">
       <span class="nav-icon">&#128101;</span>
+      <span class="nav-label">Manage Users</span>
+    </a>
+    <a class="nav-item {% block nav_create_user %}{% endblock %}" href="{% url 'onevoice:create_ov_user' %}">
+      <span class="nav-icon">+</span>
       <span class="nav-label">Create Staff User</span>
     </a>
 
-    {% elif user.user_type == 'csr' %}
+    {% elif user.is_csr_user %}
     {# CSR NAV #}
     <div class="nav-section-label">Overview</div>
     <a class="nav-item {% block nav_csr_dashboard %}{% endblock %}" href="{% url 'onevoice:csr_dashboard' %}">
@@ -681,7 +685,7 @@ body {
       <span class="nav-label">All Clients</span>
     </a>
 
-    {% elif user.user_type == 'designer' %}
+    {% elif user.is_designer_user %}
     {# DESIGNER NAV #}
     <div class="nav-section-label">Overview</div>
     <a class="nav-item {% block nav_designer_dashboard %}{% endblock %}" href="{% url 'onevoice:designer_dashboard' %}">
@@ -695,7 +699,7 @@ body {
       <span class="nav-label">Pending Designs</span>
     </a>
 
-    {% elif user.user_type == 'ov_client' %}
+    {% elif user.is_ov_client_user %}
     {# CLIENT NAV #}
     <div class="nav-section-label">Overview</div>
     <a class="nav-item {% block nav_client_dashboard %}{% endblock %}" href="{% url 'onevoice:client_dashboard' %}">

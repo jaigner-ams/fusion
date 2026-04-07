@@ -13,10 +13,13 @@ class LabProfileBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         if username is None or password is None:
             return None
-        
+
         # Connect to the external database
-        cursor = connections['labprofile'].cursor()
-        
+        try:
+            cursor = connections['labprofile'].cursor()
+        except Exception:
+            return None
+
         try:
             # Query the labprofile table for matching credentials
             cursor.execute("""
@@ -46,6 +49,7 @@ class LabProfileBackend(BaseBackend):
                     # Set unusable password since we authenticate externally
                     user.set_unusable_password()
                     user.save()
+                    user.add_role('lab', is_primary=True)
                 
                 return user
                 

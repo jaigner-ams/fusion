@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.http import JsonResponse
 from django.db.models import Count, Q
-from mgmt.models import CustomUser
+from mgmt.models import CustomUser, UserRole
 from onevoice.decorators import ov_admin_required
 from onevoice.models import (
     OVClient, OVAgreement, OVDentist, OVDentistStatusHistory,
@@ -79,6 +79,7 @@ def admin_dashboard(request):
             first_name=prospect.person_name.split()[0] if prospect.person_name else '',
             last_name=' '.join(prospect.person_name.split()[1:]) if prospect.person_name else '',
         )
+        user.add_role('ov_client', is_primary=True)
         client = OVClient.objects.create(
             prospect=prospect,
             user=user,
@@ -169,6 +170,7 @@ def client_add(request):
                 first_name=client.owner_name.split()[0] if client.owner_name else '',
                 last_name=' '.join(client.owner_name.split()[1:]) if client.owner_name else '',
             )
+            user.add_role('ov_client', is_primary=True)
             client.user = user
             client.save()
 
@@ -478,7 +480,7 @@ def import_dentist_list(request, pk):
 @ov_admin_required
 def assign_csr(request, pk):
     client = get_object_or_404(OVClient, pk=pk)
-    csrs = CustomUser.objects.filter(user_type='csr')
+    csrs = CustomUser.objects.filter(roles__role='csr')
 
     if request.method == 'POST':
         csr_ids = request.POST.getlist('csrs')
@@ -487,7 +489,7 @@ def assign_csr(request, pk):
         client.assigned_csrs.set(csr_ids)
 
         # If two CSRs and split specified, assign dentists
-        selected_csrs = CustomUser.objects.filter(id__in=csr_ids, user_type='csr')
+        selected_csrs = CustomUser.objects.filter(id__in=csr_ids, roles__role='csr')
         if selected_csrs.count() == 2 and split_at:
             try:
                 split_at = int(split_at)
@@ -660,7 +662,7 @@ def client_schedule(request, pk):
     mailing_form = OVMailingScheduleForm()
     session_form = OVCallSessionForm()
 
-    csrs = CustomUser.objects.filter(user_type='csr')
+    csrs = CustomUser.objects.filter(roles__role='csr')
 
     return render(request, 'onevoice/admin/client_schedule.html', {
         'client': client,
@@ -753,7 +755,7 @@ def client_print_order(request, pk):
 @ov_admin_required
 def admin_reports(request):
     # CSR Performance
-    csr_stats = CustomUser.objects.filter(user_type='csr').annotate(
+    csr_stats = CustomUser.objects.filter(roles__role='csr').annotate(
         total_calls=Count('ov_call_records'),
         appointments_booked=Count('ov_booked_appointments'),
         emails_captured=Count('ov_call_records', filter=Q(ov_call_records__email_captured__gt='')),
@@ -800,7 +802,8 @@ def create_ov_user(request):
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
             user.save()
-            messages.success(request, f'User "{user.username}" created as {user.get_user_type_display()}.')
+            user.add_role(user.user_type, is_primary=True)
+            messages.success(request, f'User "{user.username}" created as {user.get_primary_role_display()}.')
             return redirect('onevoice:admin_dashboard')
     else:
         form = OVStaffUserForm()
@@ -820,3 +823,98 @@ def admin_notifications(request):
             return redirect('onevoice:admin_notifications')
 
     return render(request, 'onevoice/admin/notifications.html', {'notifications': notifications})
+
+
+# ── User Management ──
+
+@ov_admin_required
+def user_list(request):
+    users = CustomUser.objects.prefetch_related('roles').order_by('username')
+
+    # Filter by role
+    role_filter = request.GET.get('role', '')
+    if role_filter:
+        users = users.filter(roles__role=role_filter)
+
+    return render(request, 'onevoice/admin/user_list.html', {
+        'users': users,
+        'role_filter': role_filter,
+        'role_choices': UserRole.ROLE_CHOICES,
+    })
+
+
+@ov_admin_required
+def user_edit(request, pk):
+    user = get_object_or_404(CustomUser, pk=pk)
+    current_roles = set(user.roles.values_list('role', flat=True))
+    primary_role = user.roles.filter(is_primary=True).first()
+    primary_role_name = primary_role.role if primary_role else user.user_type
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'update_profile':
+            user.first_name = request.POST.get('first_name', '')
+            user.last_name = request.POST.get('last_name', '')
+            user.email = request.POST.get('email', '')
+            user.save()
+            messages.success(request, f'Profile updated for {user.username}.')
+
+        elif action == 'update_roles':
+            selected_roles = set(request.POST.getlist('roles'))
+            new_primary = request.POST.get('primary_role', '')
+
+            if not selected_roles:
+                messages.error(request, 'A user must have at least one role.')
+            else:
+                # Add new roles
+                for role_name in selected_roles - current_roles:
+                    UserRole.objects.create(user=user, role=role_name)
+
+                # Remove unchecked roles
+                for role_name in current_roles - selected_roles:
+                    UserRole.objects.filter(user=user, role=role_name).delete()
+
+                # Set primary role
+                if new_primary and new_primary in selected_roles:
+                    UserRole.objects.filter(user=user).update(is_primary=False)
+                    UserRole.objects.filter(user=user, role=new_primary).update(is_primary=True)
+                    user.user_type = new_primary
+                    user.save()
+
+                # Invalidate cache
+                try:
+                    del user._role_set
+                except AttributeError:
+                    pass
+
+                messages.success(request, f'Roles updated for {user.username}.')
+
+            # Refresh data
+            current_roles = set(user.roles.values_list('role', flat=True))
+            primary_role = user.roles.filter(is_primary=True).first()
+            primary_role_name = primary_role.role if primary_role else user.user_type
+
+        elif action == 'reset_password':
+            new_password = request.POST.get('new_password', '')
+            if len(new_password) < 6:
+                messages.error(request, 'Password must be at least 6 characters.')
+            else:
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, f'Password reset for {user.username}.')
+
+        elif action == 'toggle_active':
+            user.is_active = not user.is_active
+            user.save()
+            status = 'activated' if user.is_active else 'deactivated'
+            messages.success(request, f'User {user.username} {status}.')
+
+        return redirect('onevoice:user_edit', pk=pk)
+
+    return render(request, 'onevoice/admin/user_edit.html', {
+        'edit_user': user,
+        'current_roles': current_roles,
+        'primary_role_name': primary_role_name,
+        'role_choices': UserRole.ROLE_CHOICES,
+    })

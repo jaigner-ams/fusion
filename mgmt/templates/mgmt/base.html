@@ -396,7 +396,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav ms-auto align-items-center">
                     {% if user.is_authenticated %}
-                        {% if user.user_type in 'lab,admin' %}
+                        {% if user.is_lab_user or user.is_admin_user %}
                             <a class="nav-link" href="{% url 'lab_profile' %}">Lab Profile</a>
                         {% endif %}
                         <span class="navbar-text me-3">Welcome, {{ user.username }}</span>

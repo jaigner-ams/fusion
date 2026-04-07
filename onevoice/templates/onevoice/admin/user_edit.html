@@ -1,0 +1,172 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Edit User: {{ edit_user.username }}{% endblock %}
+{% block nav_user_list %}active{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">EDIT USER</h1>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">{{ edit_user.username }} &mdash; {{ edit_user.get_primary_role_display }}</p>
+  </div>
+  <a href="{% url 'onevoice:user_list' %}" class="btn-portal-outline">Back to Users</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- Profile -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128100;</span> Profile</div>
+    </div>
+    <div class="panel-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_profile">
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Username</label>
+          <input type="text" value="{{ edit_user.username }}" disabled style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--cream);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text3);">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div class="form-group">
+            <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">First Name</label>
+            <input type="text" name="first_name" value="{{ edit_user.first_name }}" style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--white);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);">
+          </div>
+          <div class="form-group">
+            <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Last Name</label>
+            <input type="text" name="last_name" value="{{ edit_user.last_name }}" style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--white);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Email</label>
+          <input type="email" name="email" value="{{ edit_user.email }}" style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--white);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);">
+        </div>
+
+        <button type="submit" class="btn-portal">Save Profile</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Roles -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128273;</span> Roles</div>
+    </div>
+    <div class="panel-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_roles">
+
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">Select the roles this user should have. The primary role determines their default dashboard after login.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:18px;">
+          {% for value, label in role_choices %}
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);cursor:pointer;">
+            <input type="checkbox" name="roles" value="{{ value }}" {% if value in current_roles %}checked{% endif %}
+              style="width:16px;height:16px;accent-color:var(--gold2);"
+              onchange="updatePrimary()">
+            {{ label }}
+          </label>
+          {% endfor %}
+        </div>
+
+        <div class="form-group" style="margin-bottom:18px;">
+          <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Primary Role</label>
+          <select name="primary_role" id="primary-role-select" style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--white);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);">
+            {% for value, label in role_choices %}
+              {% if value in current_roles %}
+              <option value="{{ value }}" {% if value == primary_role_name %}selected{% endif %}>{{ label }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="btn-gold">Update Roles</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Password Reset -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#128274;</span> Reset Password</div>
+    </div>
+    <div class="panel-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reset_password">
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">New Password</label>
+          <input type="password" name="new_password" required minlength="6" style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--white);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);">
+        </div>
+
+        <button type="submit" class="btn-portal">Reset Password</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Account Status -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-title-icon">&#9881;&#65039;</span> Account Status</div>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <span style="font-size:13px;color:var(--text);">Current status:</span>
+        {% if edit_user.is_active %}
+          <span class="portal-badge green">Active</span>
+        {% else %}
+          <span class="portal-badge red">Inactive</span>
+        {% endif %}
+      </div>
+
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">
+        {% if edit_user.is_active %}
+          Deactivating will prevent this user from logging in.
+        {% else %}
+          Activating will allow this user to log in again.
+        {% endif %}
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="toggle_active">
+        {% if edit_user.is_active %}
+          <button type="submit" class="btn-red btn-portal-sm" onclick="return confirm('Deactivate {{ edit_user.username }}?')">Deactivate User</button>
+        {% else %}
+          <button type="submit" class="btn-green btn-portal-sm">Activate User</button>
+        {% endif %}
+      </form>
+
+      <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text3);line-height:1.8;">
+          <strong style="color:var(--text2);">Last login:</strong> {{ edit_user.last_login|date:"M d, Y g:i A"|default:"Never" }}<br>
+          <strong style="color:var(--text2);">Date joined:</strong> {{ edit_user.date_joined|date:"M d, Y" }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function updatePrimary() {
+  var sel = document.getElementById('primary-role-select');
+  var checks = document.querySelectorAll('input[name="roles"]:checked');
+  var checked = Array.from(checks).map(function(c){ return c.value; });
+  var current = sel.value;
+  sel.innerHTML = '';
+  var roleLabels = { {% for value, label in role_choices %}'{{ value }}': '{{ label }}'{% if not forloop.last %}, {% endif %}{% endfor %} };
+  checked.forEach(function(val){
+    var opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = roleLabels[val] || val;
+    if(val === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+</script>
+{% endblock %}

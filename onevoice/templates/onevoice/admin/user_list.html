@@ -1,0 +1,87 @@
+{% extends "onevoice/base_onevoice.html" %}
+{% block title %}One Voice — Manage Users{% endblock %}
+{% block nav_user_list %}active{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--navy);">MANAGE USERS</h1>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">View and manage all system users and their roles</p>
+  </div>
+  <a href="{% url 'onevoice:create_ov_user' %}" class="btn-gold">+ Create User</a>
+</div>
+
+<!-- Filter -->
+<div class="panel" style="margin-bottom:20px;">
+  <div class="panel-body" style="padding:12px 22px;">
+    <form method="get" style="display:flex;align-items:center;gap:12px;">
+      <label style="font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);white-space:nowrap;">Filter by Role:</label>
+      <select name="role" style="padding:6px 12px;border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);background:var(--white);" onchange="this.form.submit()">
+        <option value="">All Roles</option>
+        {% for value, label in role_choices %}
+          <option value="{{ value }}" {% if role_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      {% if role_filter %}
+        <a href="{% url 'onevoice:user_list' %}" class="btn-portal-outline btn-portal-sm">Clear</a>
+      {% endif %}
+      <span style="margin-left:auto;font-size:12px;color:var(--text3);">{{ users|length }} user{{ users|length|pluralize }}</span>
+    </form>
+  </div>
+</div>
+
+<!-- User Table -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span class="panel-title-icon">&#128101;</span> Users</div>
+  </div>
+  <table class="portal-table">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Primary</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td style="font-weight:500;">{{ u.username }}</td>
+        <td>{{ u.first_name }} {{ u.last_name }}</td>
+        <td style="font-size:12px;">{{ u.email|default:"-" }}</td>
+        <td>
+          {% for role in u.roles.all %}
+            <span class="portal-badge {% if role.role == 'admin' %}navy{% elif role.role == 'lab' %}gold{% elif role.role == 'dentist' %}green{% elif role.role == 'superadmin' %}navy{% elif role.role == 'ov_admin' %}navy{% elif role.role == 'csr' %}blue{% elif role.role == 'designer' %}purple{% elif role.role == 'caller' %}orange{% elif role.role == 'ov_client' %}gray{% endif %}">{{ role.get_role_display }}</span>
+          {% empty %}
+            <span class="portal-badge gray">{{ u.get_user_type_display }}</span>
+          {% endfor %}
+        </td>
+        <td>
+          {% for role in u.roles.all %}
+            {% if role.is_primary %}
+              <span style="font-size:12px;color:var(--gold);font-weight:500;">{{ role.get_role_display }}</span>
+            {% endif %}
+          {% endfor %}
+        </td>
+        <td>
+          {% if u.is_active %}
+            <span class="portal-badge green">Active</span>
+          {% else %}
+            <span class="portal-badge red">Inactive</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'onevoice:user_edit' u.pk %}" class="btn-portal-outline btn-portal-sm">Edit</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="empty-state"><div class="empty-state-text">No users found</div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

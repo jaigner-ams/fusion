@@ -62,7 +62,7 @@
 
                         <div class="portal-alert info">
                             <strong>Current User:</strong> {{ dentist.user.username }}<br>
-                            <strong>User Type:</strong> {{ dentist.user.get_user_type_display }}<br>
+                            <strong>User Type:</strong> {{ dentist.user.get_primary_role_display }}<br>
                             <strong>Crown Credits:</strong> {{ dentist.user.credits }}<br>
                             <strong>Note:</strong> To change the password, use the <a href="{% url 'change_dentist_password' dentist.id %}" class="pt-edit">Change Password</a> option.
                         </div>

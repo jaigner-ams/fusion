@@ -1,0 +1,729 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fusion Program Details{% if lab_name %} — {{ lab_name }}{% endif %}</title>
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #07070F;
+  --bg2:      #11102a;
+  --bg3:      #0a0a42;
+  --orange:   #f5800b;
+  --orange2:  #ed5049;
+  --cyan:     #00c2d4;
+  --cyan2:    #0476dd;
+  --white:    #ffffff;
+  --gray:     rgba(255,255,255,0.55);
+  --gray2:    rgba(255,255,255,0.35);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 300;
+  color: var(--white);
+  background: var(--bg);
+  line-height: 1.6;
+}
+
+.gradient-text {
+  background: linear-gradient(to right, var(--orange2), var(--orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--orange);
+}
+
+/* Hero */
+.hero {
+  min-height: 100vh;
+  padding: 60px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(4,118,221,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 80%, rgba(245,128,11,0.05) 0%, transparent 60%);
+}
+.hero-inner {
+  max-width: 1100px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+.hero-logo img { height: 50px; }
+.hero-contact a {
+  color: var(--gray);
+  text-decoration: none;
+  font-size: 13px;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 1px;
+}
+
+.hero-prepared {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.hero-prepared .cyan { color: var(--cyan); }
+
+.hero h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 4rem;
+  line-height: 1.1;
+  margin-bottom: 30px;
+}
+
+.hero-body {
+  border-left: 2px solid var(--cyan2);
+  padding-left: 24px;
+  max-width: 640px;
+  color: var(--gray);
+  font-size: 15px;
+  margin-bottom: 40px;
+}
+.hero-body strong { color: var(--white); font-weight: 500; }
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 640px;
+}
+.hero-stat {
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 20px;
+  background: rgba(255,255,255,0.02);
+}
+.hero-stat-number {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 2.5rem;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.hero-stat-label {
+  font-size: 13px;
+  color: var(--gray);
+}
+
+/* Checklist */
+.hero-checklist {
+  margin-top: 50px;
+}
+.hero-checklist-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: var(--gray2);
+  margin-bottom: 20px;
+}
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.checklist-icon {
+  color: var(--cyan);
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.checklist-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+.checklist-desc {
+  font-size: 13px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+.checklist-desc strong { color: var(--orange); }
+
+/* Sections */
+.section {
+  padding: 80px 40px;
+}
+.section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.section-part {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gray2);
+  margin-bottom: 8px;
+}
+.section h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 3rem;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+.section-sep {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(to right, var(--orange2), var(--orange));
+  margin: 16px 0;
+}
+.section-sub {
+  color: var(--gray);
+  font-size: 15px;
+  max-width: 600px;
+  margin-bottom: 40px;
+}
+
+/* Feature cards */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+.feature-card {
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 28px;
+  background: rgba(255,255,255,0.02);
+  transition: border-color 0.2s;
+}
+.feature-card:hover {
+  border-color: rgba(245,128,11,0.25);
+}
+.feature-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  margin-bottom: 4px;
+}
+.feature-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.feature-body {
+  font-size: 14px;
+  color: var(--gray);
+  line-height: 1.7;
+}
+.feature-body strong { color: var(--white); font-weight: 500; }
+.feature-body .orange { color: var(--orange); }
+.feature-tag {
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+
+/* Enroll section */
+.enroll {
+  padding: 80px 40px;
+  background: var(--bg2);
+}
+.enroll-inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+.enroll h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.enroll-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+.enroll-item {
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.02);
+}
+.enroll-item-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.enroll-item-desc {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.enroll-form-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--gray);
+  margin-bottom: 30px;
+}
+
+/* Form */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.form-row.full {
+  grid-template-columns: 1fr;
+}
+.form-row.triple {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.form-group label {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 6px;
+}
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: var(--white);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.15s;
+}
+.form-group input::placeholder {
+  color: var(--gray2);
+}
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--orange);
+  background: rgba(255,255,255,0.06);
+}
+.form-group select option {
+  background: var(--bg2);
+  color: var(--white);
+}
+
+.btn-submit {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--orange2), var(--orange));
+  border: none;
+  color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-top: 10px;
+}
+.btn-submit:hover { opacity: 0.9; }
+
+.success-msg {
+  text-align: center;
+  padding: 40px;
+  border: 1px solid rgba(0,194,212,0.3);
+  background: rgba(0,194,212,0.05);
+}
+.success-msg h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+.success-msg p {
+  color: var(--gray);
+  font-size: 14px;
+}
+
+/* Footer */
+.footer {
+  padding: 30px 40px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray2);
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2.5rem; }
+  .section h2 { font-size: 2rem; }
+  .hero-stats { grid-template-columns: 1fr; }
+  .features { grid-template-columns: 1fr; }
+  .enroll-summary { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr; }
+  .hero { padding: 40px 20px; }
+  .section { padding: 60px 20px; }
+  .enroll { padding: 60px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-top">
+      <div class="hero-logo">
+        <img src="{% static 'mgmt/logo.png' %}" alt="Fusion Dental Design Centers">
+      </div>
+      <div class="hero-contact">
+        <a href="tel:17085023411">(708) 502-3411</a>
+      </div>
+    </div>
+
+    <div class="hero-prepared">
+      <span class="cyan">Exclusively prepared for:</span> {{ lab_name|default:"Your Lab" }}
+    </div>
+
+    <h1>
+      You've already<br>
+      <span class="gradient-text" style="font-size:inherit;font-weight:400;">Won The</span><br>
+      <span class="outline-text" style="font-size:inherit;font-weight:400;">First Step.</span>
+    </h1>
+
+    <div class="hero-body">
+      <p>You were invited here because you passed our screening. That means you're <strong>independently owned, relationship-driven, and serious about growth</strong> — exactly the kind of lab the AmericaSmiles Fusion network was built for.</p>
+      <p style="margin-top:14px;">What follows is the complete picture. <strong>Everything your lab gains. Everything your dentists gain. And exactly how both multiply each other.</strong></p>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-number gradient-text">$350</div>
+        <div class="hero-stat-label">Monthly Base Membership</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-number gradient-text">$100</div>
+        <div class="hero-stat-label">Earned Per Dentist Signup</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-number gradient-text">$0</div>
+        <div class="hero-stat-label">Net Cost When Active</div>
+      </div>
+    </div>
+
+    <div class="hero-checklist">
+      <div class="hero-checklist-title">— What's Inside This Program</div>
+      <div class="checklist-item">
+        <span class="checklist-icon">&#10003;</span>
+        <div>
+          <div class="checklist-title">Exclusive Territory</div>
+          <div class="checklist-desc">Protected zip code coverage — <strong>no competing labs</strong></div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="checklist-icon">&#10003;</span>
+        <div>
+          <div class="checklist-title">National Campaign</div>
+          <div class="checklist-desc">Your lab in a <strong>national advertising campaign</strong></div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="checklist-icon">&#10003;</span>
+        <div>
+          <div class="checklist-title">Rewards Program</div>
+          <div class="checklist-desc"><strong>$10/disc + $2/crown</strong> in ad credits</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="checklist-icon">&#10003;</span>
+        <div>
+          <div class="checklist-title">One Voice Outreach</div>
+          <div class="checklist-desc">We call dentists. <strong>We set your appointments.</strong></div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="checklist-icon">&#10003;</span>
+        <div>
+          <div class="checklist-title">Revenue Share</div>
+          <div class="checklist-desc"><strong>$100/month per dentist</strong> — membership can pay for itself</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART ONE: What your lab gains -->
+<section class="section" style="background:var(--bg2);">
+  <div class="section-inner">
+    <div class="section-part">Part One</div>
+    <h2>What your lab<br><span class="gradient-text" style="font-weight:400;">Gains Directly</span></h2>
+    <div class="section-sep"></div>
+    <div class="section-sub">These are the tools, programs, and revenue streams that work for your lab — independent of how many dentists you enroll. This is your foundation.</div>
+
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-num gradient-text">01</div>
+        <div class="feature-title">Exclusive Zip Code Territory</div>
+        <div class="feature-body">Your territory is protected. No other AMS Fusion lab can operate in your designated zip codes. We bring dentist relationships <strong>directly to you</strong> — and only you — in your market.</div>
+        <div class="feature-tag">Your market. Your dentists. Protected.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num gradient-text">02</div>
+        <div class="feature-title">National Advertising Campaign</div>
+        <div class="feature-body">Your lab is featured across <strong class="orange">Google, social media, and industry platforms</strong> as part of AMS's ongoing national advertising campaigns. You benefit from enterprise-level marketing spend without paying for it yourself.</div>
+        <div class="feature-tag">Seen nationally. Connected locally.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num gradient-text">03</div>
+        <div class="feature-title">AMS SmartZone Ads</div>
+        <div class="feature-body">We run <strong class="orange">geo-targeted digital ads</strong> pointed at dentists in your specific territory. These ads highlight your lab by name, driving awareness and inbound interest from local dentists.</div>
+        <div class="feature-tag">Dentists in your zip codes see your name.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num gradient-text">04</div>
+        <div class="feature-title">AMS Genesis Zirconia Discs</div>
+        <div class="feature-body">Access <strong class="orange">premium AMS Genesis zirconia discs</strong> at preferred member pricing. Every disc earns $10 in rewards toward your advertising spend.</div>
+        <div class="feature-tag">Premium materials. Built-in rewards.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num gradient-text">05</div>
+        <div class="feature-title">AMS Milling Center</div>
+        <div class="feature-body">Send your overflow to the <strong class="orange">AMS centralized milling center</strong>. Premium crowns at competitive rates — every crown earns $2 in rewards toward your advertising spend.</div>
+        <div class="feature-tag">Capacity when you need it. Credits when you use it.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num gradient-text">06</div>
+        <div class="feature-title">Revenue Share — Fusion Pays You</div>
+        <div class="feature-body">For every dentist enrolled through your lab, AMS pays you <strong class="orange">$100/month</strong>. With just 4 enrolled dentists, your entire Fusion membership is covered.</div>
+        <div class="feature-tag">4 dentists = $0 net membership cost.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART TWO: What dentists get -->
+<section class="section" style="background:var(--bg);">
+  <div class="section-inner">
+    <div class="section-part">Part Two</div>
+    <h2>What you deliver<br><span class="gradient-text" style="font-weight:400;">to your dentists</span></h2>
+    <div class="section-sep"></div>
+    <div class="section-sub">When a dentist joins through your lab, they unlock tools that make their practice more visible, more trusted, and more successful — deepening their loyalty to you.</div>
+
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-title">Local Digital Reach</div>
+        <div class="feature-body">Each enrolled dentist receives <strong class="orange">geo-targeted digital ads</strong> promoting their practice to patients in their area. More patients walk through the door — because of the lab relationship.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-title">White for Life&reg;</div>
+        <div class="feature-body">A turnkey <strong class="orange">patient loyalty program</strong> that brings patients back to the dentist every year for whitening. It drives retention, production, and ongoing lab revenue.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-title">Practice Reviews Program</div>
+        <div class="feature-body">Automated tools to help the dentist <strong class="orange">collect 5-star reviews</strong> and build their online reputation. Better reviews mean more patients and more cases sent to you.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-title">AMS Continuing Education</div>
+        <div class="feature-body">Access to <strong class="orange">industry-leading CE programs</strong> that keep the dentist engaged with new materials and workflows — including yours.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART THREE: How they grow each other -->
+<section class="section" style="background:var(--bg2);">
+  <div class="section-inner">
+    <div class="section-part">Part Three</div>
+    <h2>How Lab &amp; Dentist<br><span class="gradient-text" style="font-weight:400;">Grow Each Other</span></h2>
+    <div class="section-sep"></div>
+
+    <div class="features" style="grid-template-columns:repeat(3, 1fr);">
+      <div class="feature-card" style="border-top:2px solid var(--cyan);">
+        <div class="feature-title">Your Lab Joins Fusion</div>
+        <div class="feature-body">You gain territory protection, national advertising, SmartZone ads, rewards, and milling center access. Your lab becomes part of the most connected dental network in the country.</div>
+      </div>
+      <div class="feature-card" style="border-top:2px solid var(--orange);">
+        <div class="feature-title">Your Dentists Grow</div>
+        <div class="feature-body">Dentists you enroll get digital marketing, White for Life, reviews, and CE. They see real results — more patients, more production — and they credit you for the connection.</div>
+      </div>
+      <div class="feature-card" style="border-top:2px solid #4ade80;">
+        <div class="feature-title">Both Parties Win</div>
+        <div class="feature-body">You earn $100/month per dentist. Your dentists stay loyal. Your cases grow. And AMS's national platform keeps fueling both sides. The network effect compounds over time.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:50px;">
+      <h2 style="text-align:center;">Fusion Can Be<br><span class="gradient-text" style="font-weight:400;">Essentially Free</span></h2>
+      <div class="hero-stats" style="max-width:640px;margin:30px auto 0;">
+        <div class="hero-stat" style="text-align:center;">
+          <div class="hero-stat-number gradient-text">4</div>
+          <div class="hero-stat-label">Dentists enrolled</div>
+        </div>
+        <div class="hero-stat" style="text-align:center;">
+          <div class="hero-stat-number gradient-text">$100</div>
+          <div class="hero-stat-label">Per dentist/month to you</div>
+        </div>
+        <div class="hero-stat" style="text-align:center;">
+          <div class="hero-stat-number gradient-text">Free</div>
+          <div class="hero-stat-label">Net membership cost</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENROLLMENT FORM -->
+<section class="enroll" id="enroll">
+  <div class="enroll-inner">
+    <h2>Enroll {{ lab_name|default:"Your Lab" }}<br>In The <span class="gradient-text" style="font-weight:400;">Fusion Network</span></h2>
+
+    <div class="enroll-summary">
+      <div class="enroll-item">
+        <div class="enroll-item-title">Base Membership</div>
+        <div class="enroll-item-desc">$350/month — includes national campaign + AMS SmartZone Ads</div>
+      </div>
+      <div class="enroll-item">
+        <div class="enroll-item-title">Exclusive Territory</div>
+        <div class="enroll-item-desc">Protected zip codes — your market, your dentists</div>
+      </div>
+      <div class="enroll-item">
+        <div class="enroll-item-title">Rewards Program</div>
+        <div class="enroll-item-desc">$10/zirconia disc + $2/crown toward ad spend</div>
+      </div>
+      <div class="enroll-item">
+        <div class="enroll-item-title">Revenue Share</div>
+        <div class="enroll-item-desc">$100/month per enrolled dentist — paid to your lab by AMS</div>
+      </div>
+      <div class="enroll-item">
+        <div class="enroll-item-title">One Voice — Add-on Available</div>
+        <div class="enroll-item-desc">Postcards $150/100 &middot; Call sessions $150/100</div>
+      </div>
+      <div class="enroll-item">
+        <div class="enroll-item-title">Full Dentist Program Suite</div>
+        <div class="enroll-item-desc">White for Life&reg;, Digital Reach, Reviews, CE — all included</div>
+      </div>
+    </div>
+
+    <div class="enroll-form-title">Let's Get Started</div>
+
+    {% if success %}
+    <div class="success-msg">
+      <h3>Enrollment Request Submitted</h3>
+      <p>Thank you! We've received your enrollment request and will be in touch shortly.</p>
+    </div>
+    {% else %}
+    <form method="post" action="{% url 'fusion_program_details' %}?lab={{ lab_name|urlencode }}#enroll">
+      {% csrf_token %}
+      <input type="hidden" name="lab" value="{{ lab_name }}">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Lab Name <span style="color:var(--orange);">*</span></label>
+          <input type="text" name="lab_name" required placeholder="Your Lab Name">
+        </div>
+        <div class="form-group">
+          <label>Owner Name <span style="color:var(--orange);">*</span></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <input type="text" name="owner_first" required placeholder="First Name">
+            <input type="text" name="owner_last" required placeholder="Last Name">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Phone Number <span style="color:var(--orange);">*</span></label>
+          <input type="tel" name="phone" required placeholder="(xxx) xxx-xxxx">
+        </div>
+        <div class="form-group">
+          <label>Email Address <span style="color:var(--orange);">*</span></label>
+          <input type="email" name="email" required placeholder="you@yourlab.com">
+        </div>
+      </div>
+
+      <div class="form-row triple">
+        <div class="form-group">
+          <label>City <span style="color:var(--orange);">*</span></label>
+          <input type="text" name="city" required placeholder="City">
+        </div>
+        <div class="form-group">
+          <label>State <span style="color:var(--orange);">*</span></label>
+          <input type="text" name="state" required placeholder="State">
+        </div>
+        <div class="form-group">
+          <label>Zip Code(s) to Protect <span style="color:var(--orange);">*</span></label>
+          <input type="text" name="zip" required placeholder="Zip">
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Interested in One Voice add-on? <span style="color:var(--orange);">*</span></label>
+          <select name="one_voice" required>
+            <option value="">- Select -</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">Submit my enrollment request &rarr;</button>
+    </form>
+    {% endif %}
+  </div>
+</section>
+
+<footer class="footer">
+  &copy; {% now "Y" %} AmericaSmiles &middot; Fusion Dental Design Centers
+</footer>
+
+</body>
+</html>

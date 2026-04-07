@@ -93,7 +93,10 @@ DATABASES = {
         'USER': 'americasmiles',
         'PASSWORD': 'smiles2003',
         'HOST': '172.31.18.214',
-        'PORT': '3306'
+        'PORT': '3306',
+        'OPTIONS': {
+            'connect_timeout': 3,
+        }
     }
 }
 

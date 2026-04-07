@@ -19,7 +19,7 @@ class DentistForm(forms.ModelForm):
         if user and not user.is_admin_user():
             self.fields.pop('lab', None)
         elif 'lab' in self.fields:
-            self.fields['lab'].queryset = CustomUser.objects.filter(user_type='lab')
+            self.fields['lab'].queryset = CustomUser.objects.filter(roles__role='lab')
 
 class LabProfileForm(forms.ModelForm):
     class Meta:
@@ -93,7 +93,7 @@ class DefaultPriceForm(forms.ModelForm):
         if user and not user.is_admin_user():
             self.fields.pop('lab', None)
         elif 'lab' in self.fields:
-            self.fields['lab'].queryset = CustomUser.objects.filter(user_type='lab')
+            self.fields['lab'].queryset = CustomUser.objects.filter(roles__role='lab')
 
 class CustomPriceForm(forms.ModelForm):
     class Meta:
@@ -108,27 +108,35 @@ class CustomPriceForm(forms.ModelForm):
         }
 
 class CustomUserCreationForm(UserCreationForm):
+    from .models import UserRole
     user_type = forms.ChoiceField(
-        choices=CustomUser.USER_TYPE_CHOICES,
+        choices=UserRole.ROLE_CHOICES,
         required=True,
-        widget=forms.Select(attrs={'class': 'form-control'})
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Role',
     )
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
-    
+
     class Meta:
         model = CustomUser
         fields = ('username', 'email', 'user_type', 'password1', 'password2')
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['password1'].widget.attrs['class'] = 'form-control'
         self.fields['password2'].widget.attrs['class'] = 'form-control'
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            user.add_role(user.user_type, is_primary=True)
+        return user
 
 class AdminUserCreationForm(CustomUserCreationForm):
     def __init__(self, *args, **kwargs):
@@ -175,8 +183,8 @@ class DentistWithUserForm(forms.ModelForm):
         if user and not user.is_admin_user():
             self.fields.pop('lab', None)
         elif 'lab' in self.fields:
-            self.fields['lab'].queryset = CustomUser.objects.filter(user_type='lab')
-        
+            self.fields['lab'].queryset = CustomUser.objects.filter(roles__role='lab')
+
         # If editing existing dentist with user account
         if self.instance.pk and self.instance.user:
             self.fields['username'].initial = self.instance.user.username
