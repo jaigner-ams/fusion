@@ -178,3 +178,11 @@ ehthumbs.db
 .env.*.local
 
 wordpress/
+
+# Data files and backups
+*.csv
+*.xlsx
+*.docx
+*.json
+backups/
+backup_db.sh
